@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react';
-import { supabase } from './lib/supabaseClient';
-import AuthView from './views/AuthView';
-import DashboardView from './views/DashboardView';
-import InventoryView from './views/InventoryView';
-import MissionsView from './views/MissionsView';
-import MarketView from './views/MarketView';
-import SellItemView from './views/SellItemView';
-import TransferView from './views/TransferView';
-import ChatView from './views/ChatView';
+import { LogOut } from 'lucide-react';
 import './styles/App.css';
+
+import { supabase } from './lib/supabaseClient';
+import ThemedButton from './components/ThemedButton';
+import AuthView from './views/AuthView';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState(null);
-  const [view, setView] = useState('dashboard'); // vista actual
   const [message, setMessage] = useState('');
+  const [session, setSession] = useState(null);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const showMessage = (text) => {
     setMessage(text);
@@ -23,7 +21,6 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
@@ -38,6 +35,24 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) showMessage(error.message);
+    else showMessage('Inicio de sesión exitoso');
+    setLoading(false);
+  };
+
+  const handleSignup = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) showMessage(error.message);
+    else showMessage('Registro exitoso. Revisa tu correo para confirmar.');
+    setLoading(false);
+  };
+
+  // Estado de carga
   if (loading) {
     return (
       <div className="main-background">
@@ -48,34 +63,19 @@ export default function App() {
     );
   }
 
+  // Si no hay sesión
   if (!session) {
-    return (
-      <AuthView
-        setSession={setSession}
-        message={message}
-        showMessage={showMessage}
-        setLoading={setLoading}
-      />
-    );
+    return <AuthView email={email} setEmail={setEmail} password={password} setPassword={setPassword} handleLogin={handleLogin} handleSignup={handleSignup} message={message} loading={loading} />;
   }
 
-  // Renderizado modular según vista
-  const renderView = () => {
-    switch (view) {
-      case 'dashboard': return <DashboardView setView={setView} />;
-      case 'inventory': return <InventoryView setView={setView} showMessage={showMessage} />;
-      case 'missions': return <MissionsView setView={setView} showMessage={showMessage} />;
-      case 'market': return <MarketView setView={setView} showMessage={showMessage} />;
-      case 'sell_item': return <SellItemView setView={setView} showMessage={showMessage} />;
-      case 'transfer': return <TransferView setView={setView} showMessage={showMessage} />;
-      case 'chat': return <ChatView setView={setView} />;
-      default: return <DashboardView setView={setView} />;
-    }
-  };
-
+  // Si hay sesión, renderizamos la app principal
   return (
     <div className="main-background">
-      {renderView()}
+      <div className="app-container">
+        <p>¡Bienvenido, {session.user.email}!</p>
+        <ThemedButton onClick={() => supabase.auth.signOut()} icon={<LogOut />}>Salir</ThemedButton>
+      </div>
     </div>
   );
 }
+
