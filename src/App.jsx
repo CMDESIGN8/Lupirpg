@@ -72,5 +72,9 @@ return (
 
 
 if (!session) {
-return (
+  return (
+    <div className="app-container">
+      <p>Cargando sesión...</p>
+    </div>
+  );
 }
