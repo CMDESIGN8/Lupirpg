@@ -1,24 +1,35 @@
-import PlayerCard from '../components/PlayerCard'
+import { useEffect, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { getMissions } from "../services/missions";
 
-const DashboardView = ({ profile }) => {
-  if(!profile) return <div className="container"><div className="card">No hay perfil aún. Creá tu personaje.</div></div>
+const DashboardView = () => {
+  const { player, signOut } = useAuth();
+  const [missions, setMissions] = useState([]);
+
+  useEffect(() => {
+    const loadMissions = async () => {
+      const { data } = await getMissions();
+      setMissions(data || []);
+    };
+    loadMissions();
+  }, []);
+
+  if (!player) return <p>No hay jugador cargado</p>;
+
   return (
-    <div className="container">
-      <div className="grid grid-3">
-        <PlayerCard username={profile.username} level={profile.level||1} position={profile.position} sport={profile.sport} skills={profile.skills||{}} />
-        <div className="card">
-          <h3>Wallet</h3>
-          <div>Lupicoins: <strong>{profile.wallet?.balance ?? 0}</strong></div>
-          <div>Alias: <span className="badge">{profile.wallet?.alias || `${profile.username}.lupi`}</span></div>
-        </div>
-        <div className="card">
-          <h3>Progreso</h3>
-          <div>XP: <strong>{profile.xp ?? 0}</strong></div>
-          <div>Misiones completadas: <strong>{profile.missionsDone ?? 0}</strong></div>
-        </div>
-      </div>
-    </div>
-  )
-}
+    <div className="p-4">
+      <h1>Bienvenido {player.username}</h1>
+      <p>Nivel: {player.level} | Coins: {player.lupi_coins}</p>
+      <button onClick={signOut}>Salir</button>
 
-export default DashboardView
+      <h2>Misiones disponibles</h2>
+      <ul>
+        {missions.map((m) => (
+          <li key={m.id}>{m.name} - {m.description} (+{m.xp_reward} XP)</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default DashboardView;
