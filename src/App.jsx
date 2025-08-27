@@ -7,7 +7,7 @@ import ClubsView from "./views/ClubsView";
 import MissionsView from "./views/MissionsView";
 import InventoryView from "./views/InventoryView";
 import ChatView from "./views/ChatView";
-import MarketplaceView from "./views/MarketplaceView";
+import MarketView from "./views/MarketView";
 import TrainView from "./views/TrainView";
 
 function App() {
@@ -26,7 +26,7 @@ function App() {
         <Route path="/missions" element={<MissionsView />} />
         <Route path="/inventory" element={<InventoryView />} />
         <Route path="/chat" element={<ChatView />} />
-        <Route path="/market" element={<MarketplaceView />} />
+        <Route path="/market" element={<MarketView />} />
         <Route path="/train" element={<TrainView />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
