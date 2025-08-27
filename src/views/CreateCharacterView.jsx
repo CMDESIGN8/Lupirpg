@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import ThemedButton from '../components/ThemedButton'
-import { positions, sports, skillNames, initialSkillPoints } from '../constants'
+import { positions, sports, skillNames, initialSkillPoints } from "../constants";
 
 const CreateCharacterView = ({ onCreate }) => {
   const [username, setUsername] = useState('')
