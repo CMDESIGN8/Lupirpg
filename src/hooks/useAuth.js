@@ -11,8 +11,7 @@ export const useAuth = () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       if (data.session?.user) {
-        const { data: p } = await getPlayer(data.session.user.id);
-        setPlayer(p);
+        await ensurePlayer(data.session.user);
       }
     };
     loadSession();
@@ -21,27 +20,44 @@ export const useAuth = () => {
       async (_event, session) => {
         setSession(session);
         if (session?.user) {
-          const { data: p } = await getPlayer(session.user.id);
-          setPlayer(p);
+          await ensurePlayer(session.user);
         } else {
           setPlayer(null);
         }
       }
     );
+
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // 👇 Esta función se asegura de que siempre exista el player
+  const ensurePlayer = async (user) => {
+    let { data: p } = await getPlayer(user.id);
+
+    if (!p) {
+      console.log("⚠️ No existe player, creando uno nuevo...");
+      await createPlayer(
+        user.id,
+        user.user_metadata?.username || user.email.split("@")[0] // usa username si existe, sino email
+      );
+      const { data: newP } = await getPlayer(user.id);
+      p = newP;
+    }
+
+    setPlayer(p);
+  };
 
   const signUp = async (email, password, username) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username } }
+      options: { data: { username } },
     });
+
     if (data.user) {
-      await createPlayer(data.user.id, username);
-      const { data: p } = await getPlayer(data.user.id);
-      setPlayer(p);
+      await ensurePlayer(data.user);
     }
+
     return { data, error };
   };
 
