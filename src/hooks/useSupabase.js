@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
-// usePlayers hook - already exported with "export const"
+// usePlayers hook
 export const usePlayers = () => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ export const usePlayers = () => {
   return { players, loading, refetch: fetchPlayers };
 };
 
-// useTeams hook - already exported with "export const"
+// useTeams hook
 export const useTeams = () => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,5 +81,76 @@ export const useTeams = () => {
   return { teams, loading, refetch: fetchTeams };
 };
 
-// REMOVE OR COMMENT OUT THIS DUPLICATE EXPORT SECTION:
-// export { usePlayers, useTeams }; // ← This line causes the duplicate export error
+// useMatches hook
+export const useMatches = () => {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMatches();
+  }, []);
+
+  const fetchMatches = async () => {
+    try {
+      // Datos de ejemplo para partidos
+      const mockMatches = [
+        { 
+          id: 1, 
+          home_team: 'FC Barcelona', 
+          away_team: 'Real Madrid', 
+          date: '2024-01-15', 
+          time: '20:00', 
+          home_score: 3, 
+          away_score: 2,
+          stadium: 'Camp Nou',
+          competition: 'La Liga'
+        },
+        { 
+          id: 2, 
+          home_team: 'Manchester United', 
+          away_team: 'Liverpool', 
+          date: '2024-01-20', 
+          time: '16:30', 
+          home_score: 1, 
+          away_score: 1,
+          stadium: 'Old Trafford',
+          competition: 'Premier League'
+        },
+        { 
+          id: 3, 
+          home_team: 'Bayern Munich', 
+          away_team: 'Borussia Dortmund', 
+          date: '2024-01-25', 
+          time: '18:45', 
+          home_score: 4, 
+          away_score: 0,
+          stadium: 'Allianz Arena',
+          competition: 'Bundesliga'
+        },
+      ];
+      
+      setMatches(mockMatches);
+      
+      // Para Supabase real, descomenta:
+      /*
+      const { data, error } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          home_team:home_team_id (name),
+          away_team:away_team_id (name)
+        `)
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      setMatches(data);
+      */
+    } catch (error) {
+      console.error('Error fetching matches:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { matches, loading, refetch: fetchMatches };
+};
