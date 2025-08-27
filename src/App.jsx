@@ -14,6 +14,8 @@ import CreateClubView from './components/Views/CreateClubView.jsx';
 import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
 import LoadingScreen from './components/UI/LoadingScreen.jsx';
 import React, { useState, useEffect, useRef } from 'react'; // Importación completa
+import { positions, sports, skillNames, initialSkillPoints } from './constants'; // ¡Esta línea es crucial!
+
 
 const App = () => {
   const [session, setSession] = useState(null);
