@@ -6,7 +6,6 @@ import TrainingPanel from './components/TrainingPanel';
 import MatchesPanel from './components/MatchesPanel';
 import TransfersPanel from './components/TransfersPanel';
 import StatsPanel from './components/StatsPanel';
-import SkillsPanel from './components/SkillsPanel';
 import './App.css';
 
 function App() {
@@ -16,7 +15,7 @@ function App() {
 
   const handleSelectPlayer = (player) => {
     setSelectedPlayer(player);
-    setCurrentView('training');
+    setCurrentView('stats'); // Cambiamos a stats en lugar de training
   };
 
   const renderCurrentView = () => {
@@ -33,8 +32,6 @@ function App() {
         return <TransfersPanel budget={budget} />;
       case 'stats':
         return <StatsPanel player={selectedPlayer} />;
-      case 'skills':
-        return <SkillsPanel player={selectedPlayer} />;
       default:
         return <TeamPanel />;
     }

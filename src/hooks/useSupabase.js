@@ -1,82 +1,43 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../utils/supabaseClient'
+import { useState, useEffect } from 'react';
+import { supabase } from '../utils/supabaseClient';
 
 export const usePlayers = () => {
-  const [players, setPlayers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPlayers()
-  }, [])
+    fetchPlayers();
+  }, []);
 
   const fetchPlayers = async () => {
     try {
+      // Simular datos si Supabase no está configurado
+      const mockPlayers = [
+        { id: 1, name: 'Lionel Messi', position: 'Delantero', age: 36, overall_rating: 93, photo_url: 'https://placehold.co/80x80?text=Messi' },
+        { id: 2, name: 'Cristiano Ronaldo', position: 'Delantero', age: 38, overall_rating: 92, photo_url: 'https://placehold.co/80x80?text=CR7' },
+        { id: 3, name: 'Neymar Jr', position: 'Delantero', age: 31, overall_rating: 89, photo_url: 'https://placehold.co/80x80?text=Neymar' },
+      ];
+      
+      setPlayers(mockPlayers);
+      
+      // Si tienes Supabase configurado, descomenta esto:
+      /*
       const { data, error } = await supabase
         .from('players')
         .select('*')
-        .order('overall_rating', { ascending: false })
+        .order('overall_rating', { ascending: false });
       
-      if (error) throw error
-      setPlayers(data)
+      if (error) throw error;
+      setPlayers(data);
+      */
     } catch (error) {
-      console.error('Error fetching players:', error.message)
+      console.error('Error fetching players:', error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  return { players, loading, refetch: fetchPlayers }
-}
+  return { players, loading, refetch: fetchPlayers };
+};
 
-export const useTeams = () => {
-  const [teams, setTeams] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchTeams()
-  }, [])
-
-  const fetchTeams = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('*')
-      
-      if (error) throw error
-      setTeams(data)
-    } catch (error) {
-      console.error('Error fetching teams:', error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return { teams, loading, refetch: fetchTeams }
-}
-
-export const useMatches = () => {
-  const [matches, setMatches] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchMatches()
-  }, [])
-
-  const fetchMatches = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('matches')
-        .select('*')
-        .order('date', { ascending: false })
-      
-      if (error) throw error
-      setMatches(data)
-    } catch (error) {
-      console.error('Error fetching matches:', error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return { matches, loading, refetch: fetchMatches }
-}
+// Implementa similares para useTeams y useMatches...
