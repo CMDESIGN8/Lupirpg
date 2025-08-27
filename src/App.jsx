@@ -13,6 +13,7 @@ import ClubsView from './components/Views/ClubsView.jsx';
 import CreateClubView from './components/Views/CreateClubView.jsx';
 import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
 import LoadingScreen from './components/UI/LoadingScreen.jsx';
+import React, { useState, useEffect, useRef } from 'react'; // Importación completa
 
 const App = () => {
   const [session, setSession] = useState(null);
