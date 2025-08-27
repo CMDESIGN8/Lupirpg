@@ -1,55 +1,43 @@
-import { useState } from 'react'
-import ThemedButton from '../components/ThemedButton'
-import { positions, sports, skillNames, initialSkillPoints } from "../constants";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { updatePlayer } from "../services/players";
+import { useAuth } from "../hooks/useAuth";
 
-const CreateCharacterView = ({ onCreate }) => {
-  const [username, setUsername] = useState('')
-  const [position, setPosition] = useState(positions[4])
-  const [sport, setSport] = useState(sports[0])
-  const [skills, setSkills] = useState(Object.fromEntries(skillNames.map(n=>[n,0])))
-  const [remaining, setRemaining] = useState(initialSkillPoints)
+const CreateCharacterView = () => {
+  const { player } = useAuth();
+  const navigate = useNavigate();
+  const [sport, setSport] = useState("Fútbol");
+  const [position, setPosition] = useState("Delantero");
 
-  function inc(k){ if(remaining>0){ setSkills(s=>({...s,[k]:s[k]+1})); setRemaining(r=>r-1) } }
-  function dec(k){ if(skills[k]>0){ setSkills(s=>({...s,[k]:s[k]-1})); setRemaining(r=>r+1) } }
-
-  function handleCreate(){ onCreate({ username, position, sport, skills }) }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await updatePlayer(player.id, { sport, position });
+    navigate("/dashboard");
+  };
 
   return (
-    <div className="container">
-      <div className="grid grid-2">
-        <div className="card">
-          <h3>Creación de Personaje</h3>
-          <div className="grid" style={{ gap: 12 }}>
-            <input className="input" placeholder="Nombre de usuario" value={username} onChange={e=>setUsername(e.target.value)} />
-            <select className="input" value={position} onChange={e=>setPosition(e.target.value)}>
-              {positions.map(p=> <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select className="input" value={sport} onChange={e=>setSport(e.target.value)}>
-              {sports.map(s=> <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="card">
-          <h3>Skills • <span className="badge">Disponibles: {remaining}</span></h3>
-          <div className="grid" style={{ gap: 8 }}>
-            {skillNames.map((k)=> (
-              <div key={k} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-                <span style={{ width: 140 }}>{k}</span>
-                <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
-                  <button className="btn" onClick={()=>dec(k)}>-</button>
-                  <strong>{skills[k]}</strong>
-                  <button className="btn" onClick={()=>inc(k)}>+</button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <ThemedButton onClick={handleCreate} disabled={!username || remaining!==0}>Crear personaje</ThemedButton>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+    <div className="p-4">
+      <h1>Crear tu personaje</h1>
+      <form onSubmit={handleSubmit}>
+        <label>Deporte</label>
+        <select value={sport} onChange={(e) => setSport(e.target.value)}>
+          <option>Fútbol</option>
+          <option>Voley</option>
+          <option>Basket</option>
+        </select>
 
-export default CreateCharacterView
+        <label>Posición</label>
+        <select value={position} onChange={(e) => setPosition(e.target.value)}>
+          <option>Delantero</option>
+          <option>Mediocampista</option>
+          <option>Arquero</option>
+          <option>Neutro</option>
+        </select>
+
+        <button type="submit">Confirmar personaje</button>
+      </form>
+    </div>
+  );
+};
+
+export default CreateCharacterView;

@@ -15,6 +15,10 @@ export const createPlayer = async (userId, username) => {
   ]);
 };
 
+export const updatePlayer = async (id, fields) => {
+  return await supabase.from("players").update(fields).eq("id", id);
+};
+
 export const getPlayer = async (userId) => {
   const { data, error } = await supabase
     .from("players")
