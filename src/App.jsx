@@ -15,7 +15,7 @@ import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
 import LoadingScreen from './components/UI/LoadingScreen.jsx';
 import React, { useState, useEffect, useRef } from 'react'; // Importación completa
 import { positions, sports, skillNames, initialSkillPoints } from './constants'; // ¡Esta línea es crucial!
-
+import { supabaseClient } from './services/supabase'; // Importación correcta
 
 const App = () => {
   const [session, setSession] = useState(null);
@@ -881,7 +881,7 @@ const App = () => {
         marketItems, handleBuyItem, handleSellItem, itemToSell,
         messages, messagesEndRef, handleSendMessage, newMessage, setNewMessage,
         clubs, currentClub, clubMembers, handleViewClubDetails, handleJoinClub, handleLeaveClub,
-        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription,
+        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, supabaseClient,
     };
 
     switch (view) {
