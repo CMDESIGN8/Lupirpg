@@ -1,81 +1,145 @@
-import { useEffect, useState } from 'react';
-import { LogOut } from 'lucide-react';
-import './styles/App.css';
+import React, { useState, useEffect } from 'react';
+import Header from './components/Header';
+import CharacterPanel from './components/CharacterPanel';
+import Inventory from './components/Inventory';
+import CombatPanel from './components/CombatPanel';
+import StatsPanel from './components/StatsPanel';
+import SkillsPanel from './components/SkillsPanel';
+import QuestLog from './components/QuestLog';
+import './App.css';
 
-import { supabase } from './lib/supabaseClient';
-import ThemedButton from './components/ThemedButton';
-import AuthView from './views/AuthView';
-
-export default function App() {
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [session, setSession] = useState(null);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const showMessage = (text) => {
-    setMessage(text);
-    setTimeout(() => setMessage(''), 3000);
-  };
-
+function App() {
+  const [currentView, setCurrentView] = useState('character');
+  const [character, setCharacter] = useState({
+    name: 'Lupi',
+    level: 1,
+    class: 'Guerrero',
+    health: 100,
+    maxHealth: 100,
+    mana: 50,
+    maxMana: 50,
+    avatar: '/path/to/avatar.png'
+  });
+  
+  const [inventory, setInventory] = useState([]);
+  const [enemies, setEnemies] = useState([]);
+  
+  // Efectos para cargar datos iniciales
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(session);
-      setLoading(false);
-    })();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    // Cargar datos del personaje, inventario, etc.
   }, []);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) showMessage(error.message);
-    else showMessage('Inicio de sesión exitoso');
-    setLoading(false);
+  
+  const handleSaveGame = () => {
+    // Lógica para guardar el juego
+    console.log('Juego guardado');
+  };
+  
+  const handleLoadGame = () => {
+    // Lógica para cargar el juego
+    console.log('Juego cargado');
+  };
+  
+  const handleSettings = () => {
+    // Lógica para ajustes
+    console.log('Ajustes abiertos');
+  };
+  
+  const handleUseItem = (item) => {
+    // Lógica para usar un item
+    console.log('Usando item:', item);
+  };
+  
+  const handleEquipItem = (item) => {
+    // Lógica para equipar un item
+    console.log('Equipando item:', item);
+  };
+  
+  const handleAttack = (enemy) => {
+    // Lógica para atacar a un enemigo
+    console.log('Atacando a:', enemy);
+  };
+  
+  const renderCurrentView = () => {
+    switch(currentView) {
+      case 'character':
+        return <CharacterPanel character={character} />;
+      case 'inventory':
+        return <Inventory 
+                 items={inventory} 
+                 onUseItem={handleUseItem}
+                 onEquipItem={handleEquipItem}
+               />;
+      case 'combat':
+        return <CombatPanel 
+                 enemies={enemies} 
+                 onAttack={handleAttack} 
+               />;
+      case 'stats':
+        return <StatsPanel character={character} />;
+      case 'skills':
+        return <SkillsPanel character={character} />;
+      case 'quests':
+        return <QuestLog />;
+      default:
+        return <CharacterPanel character={character} />;
+    }
   };
 
-  const handleSignup = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) showMessage(error.message);
-    else showMessage('Registro exitoso. Revisa tu correo para confirmar.');
-    setLoading(false);
-  };
-
-  // Estado de carga
-  if (loading) {
-    return (
-      <div className="main-background">
-        <div className="app-container">
-          <p className="loading-text">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Si no hay sesión
-  if (!session) {
-    return <AuthView email={email} setEmail={setEmail} password={password} setPassword={setPassword} handleLogin={handleLogin} handleSignup={handleSignup} message={message} loading={loading} />;
-  }
-
-  // Si hay sesión, renderizamos la app principal
   return (
-    <div className="main-background">
-      <div className="app-container">
-        <p>¡Bienvenido, {session.user.email}!</p>
-        <ThemedButton onClick={() => supabase.auth.signOut()} icon={<LogOut />}>Salir</ThemedButton>
+    <div className="App">
+      <Header 
+        gameTitle="Lupirpg" 
+        onSave={handleSaveGame}
+        onLoad={handleLoadGame}
+        onSettings={handleSettings}
+      />
+      
+      <div className="main-container">
+        <nav className="navigation">
+          <button 
+            className={currentView === 'character' ? 'active' : ''}
+            onClick={() => setCurrentView('character')}
+          >
+            Personaje
+          </button>
+          <button 
+            className={currentView === 'inventory' ? 'active' : ''}
+            onClick={() => setCurrentView('inventory')}
+          >
+            Inventario
+          </button>
+          <button 
+            className={currentView === 'combat' ? 'active' : ''}
+            onClick={() => setCurrentView('combat')}
+          >
+            Combate
+          </button>
+          <button 
+            className={currentView === 'stats' ? 'active' : ''}
+            onClick={() => setCurrentView('stats')}
+          >
+            Estadísticas
+          </button>
+          <button 
+            className={currentView === 'skills' ? 'active' : ''}
+            onClick={() => setCurrentView('skills')}
+          >
+            Habilidades
+          </button>
+          <button 
+            className={currentView === 'quests' ? 'active' : ''}
+            onClick={() => setCurrentView('quests')}
+          >
+            Misiones
+          </button>
+        </nav>
+        
+        <main className="content">
+          {renderCurrentView()}
+        </main>
       </div>
     </div>
   );
 }
 
+export default App;
