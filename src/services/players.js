@@ -20,6 +20,6 @@ export const getPlayer = async (userId) => {
     .from("players")
     .select("*")
     .eq("id", userId)
-    .single();
+    .maybeSingle();   // 👈 en lugar de .single()
   return { data, error };
 };
