@@ -845,6 +845,16 @@ const App = () => {
     }
   };
 
+  const handleLogout = async () => {
+  try {
+    await supabaseClient.auth.signOut();
+    setView('auth');
+    showMessage('Sesión cerrada correctamente');
+  } catch (error) {
+    showMessage('Error al cerrar sesión: ' + error.message);
+  }
+};
+
   const handleViewClubDetails = async (club) => {
     setLoading(true);
     try {
@@ -881,7 +891,7 @@ const App = () => {
         marketItems, handleBuyItem, handleSellItem, itemToSell,
         messages, messagesEndRef, handleSendMessage, newMessage, setNewMessage,
         clubs, currentClub, clubMembers, handleViewClubDetails, handleJoinClub, handleLeaveClub,
-        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, supabaseClient,
+        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient,
     };
 
     switch (view) {

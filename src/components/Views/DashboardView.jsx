@@ -7,7 +7,7 @@ import ThemedButton from '../UI/ThemedButton.jsx';
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
 
-const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, message }) => {
+const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, supabaseClient, handleLogout, message }) => {
   if (!playerData) return <LoadingScreen />;
 
   const nextLevelXp = playerData.level * 100;
@@ -69,7 +69,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             <ThemedButton onClick={() => { fetchLeaderboard(); setView('leaderboard'); }} disabled={loading} icon={<Users size={20} />}>Clasificación</ThemedButton>
             <ThemedButton onClick={() => setView('inventory')} disabled={loading} icon={<Backpack size={20} />}>Inventario</ThemedButton>
             <ThemedButton onClick={() => setView('chat')} disabled={loading} icon={<MessageCircle size={20} />}>Chat</ThemedButton>
-            <button onClick={() => supabaseClient.auth.signOut()} className="flex items-center gap-2 px-4 py-2 font-semibold rounded-md transition duration-300 transform bg-red-600 text-white hover:bg-red-500 hover:scale-105">
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 font-semibold rounded-md transition duration-300 transform bg-red-600 text-white hover:bg-red-500 hover:scale-105">
               <LogOut size={20} /> Salir
             </button>
           </div>
