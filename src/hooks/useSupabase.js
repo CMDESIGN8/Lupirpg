@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
-// usePlayers hook
+// usePlayers hook - already exported with "export const"
 export const usePlayers = () => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ export const usePlayers = () => {
   return { players, loading, refetch: fetchPlayers };
 };
 
-// useTeams hook
+// useTeams hook - already exported with "export const"
 export const useTeams = () => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,5 +81,5 @@ export const useTeams = () => {
   return { teams, loading, refetch: fetchTeams };
 };
 
-// Exportar ambos hooks al final también (opcional, pero buena práctica)
-export { usePlayers, useTeams };
+// REMOVE OR COMMENT OUT THIS DUPLICATE EXPORT SECTION:
+// export { usePlayers, useTeams }; // ← This line causes the duplicate export error
