@@ -68,10 +68,10 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             <ThemedButton onClick={() => { fetchClubs(); setView('clubs'); }} disabled={loading} icon={<Shield size={20} />}>Clubes</ThemedButton>
             <ThemedButton onClick={() => { fetchLeaderboard(); setView('leaderboard'); }} disabled={loading} icon={<Users size={20} />}>Clasificación</ThemedButton>
             <ThemedButton onClick={() => setView('inventory')} disabled={loading} icon={<Backpack size={20} />}>Inventario</ThemedButton>
-            <ThemedButton onClick={() => setView('chat')} disabled={loading} icon={<MessageCircle  size={20} />}>Chat</ThemedButton>
-            <button onClick={() => supabaseClient.auth.signOut()} className="...">
-  <LogOut size={20} /> Salir
-</button>
+            <ThemedButton onClick={() => setView('chat')} disabled={loading} icon={<MessageCircle size={20} />}>Chat</ThemedButton>
+            <button onClick={() => supabaseClient.auth.signOut()} className="flex items-center gap-2 px-4 py-2 font-semibold rounded-md transition duration-300 transform bg-red-600 text-white hover:bg-red-500 hover:scale-105">
+              <LogOut size={20} /> Salir
+            </button>
           </div>
         </div>
       </div>
