@@ -1,7 +1,11 @@
-import { Star, Wallet, DollarSign, Zap, ShoppingCart, CornerUpRight, Compass, CircleCheck, Shield, Users, Backpack, MessageCircleMore, LogOut, ChevronUp, Trophy } from 'lucide-react';
-import ThemedButton from '../UI/ThemedButton';
-import MessageDisplay from '../UI/MessageDisplay';
-import LoadingScreen from '../UI/LoadingScreen';
+import { 
+  Star, Wallet, DollarSign, Zap, ShoppingCart, CornerUpRight, 
+  Compass, CheckCircle, Shield, Users, Backpack, MessageCircle, 
+  LogOut, ChevronUp, Trophy 
+} from 'lucide-react';
+import ThemedButton from '../UI/ThemedButton.jsx';
+import MessageDisplay from '../UI/MessageDisplay.jsx';
+import LoadingScreen from '../UI/LoadingScreen.jsx';
 
 const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, message }) => {
   if (!playerData) return <LoadingScreen />;
@@ -60,7 +64,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             <ThemedButton onClick={() => { fetchMarketItems(); setView('market'); }} disabled={loading} icon={<ShoppingCart size={20} />} className="bg-amber-500 hover:bg-amber-400">Mercado</ThemedButton>
             <ThemedButton onClick={() => setView('transfer')} disabled={loading} icon={<CornerUpRight size={20} />} className="bg-purple-600 hover:bg-purple-500">Transferir</ThemedButton>
             <ThemedButton onClick={handleFindItem} disabled={loading} icon={<Compass size={20} />}>Buscar Objeto</ThemedButton>
-            <ThemedButton onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading} icon={<CircleCheck size={20} />}>Misiones</ThemedButton>
+            <ThemedButton onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading} icon={<CheckCircle size={20} />}>Misiones</ThemedButton>
             <ThemedButton onClick={() => { fetchClubs(); setView('clubs'); }} disabled={loading} icon={<Shield size={20} />}>Clubes</ThemedButton>
             <ThemedButton onClick={() => { fetchLeaderboard(); setView('leaderboard'); }} disabled={loading} icon={<Users size={20} />}>Clasificación</ThemedButton>
             <ThemedButton onClick={() => setView('inventory')} disabled={loading} icon={<Backpack size={20} />}>Inventario</ThemedButton>

@@ -1,4 +1,4 @@
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import { sports, positions } from '../../constants';

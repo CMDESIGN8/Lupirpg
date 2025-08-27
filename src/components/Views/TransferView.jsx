@@ -1,4 +1,4 @@
-import { CornerUpRight, ChevronDown } from 'lucide-react';
+import { CornerUpRight, ChevronDown } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 

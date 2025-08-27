@@ -1,4 +1,4 @@
-import { LogIn, LogOut, ChevronDown } from 'lucide-react';
+import { LogIn, LogOut, ChevronDown } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 

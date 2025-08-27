@@ -1,4 +1,4 @@
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton.jsx';
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 

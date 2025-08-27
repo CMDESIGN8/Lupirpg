@@ -1,4 +1,4 @@
-import { UserPlus, Users, LogIn, ChevronDown, Shield } from 'lucide-react';
+import { UserPlus, Users, LogIn, ChevronDown, Shield } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 

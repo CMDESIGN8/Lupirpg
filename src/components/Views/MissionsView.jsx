@@ -1,4 +1,4 @@
-import { CircleCheck, ChevronDown } from 'lucide-react';
+import { CheckCircle, ChevronDown } from 'lucide-react'; // Cambia CheckCircle a CheckCircle
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 
@@ -14,7 +14,7 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
               <h3 className="text-xl font-semibold text-blue-600">{mission.name}</h3>
               <p className="text-gray-700">{mission.description}</p>
               <p className="text-sm text-gray-500 mt-2">Recompensa: <span className="text-green-600">{mission.xp_reward} XP</span> y <span className="text-green-600">{mission.skill_points_reward} puntos de habilidad</span></p>
-              <ThemedButton onClick={() => handleCompleteMission(mission)} disabled={mission.is_completed || loading} icon={<CircleCheck size={20} />} className={`mt-4 w-full ${mission.is_completed ? 'bg-green-600 hover:bg-green-500' : 'bg-blue-600 hover:bg-blue-500'}`}>
+              <ThemedButton onClick={() => handleCompleteMission(mission)} disabled={mission.is_completed || loading} icon={<CheckCircle size={20} />} className={`mt-4 w-full ${mission.is_completed ? 'bg-green-600 hover:bg-green-500' : 'bg-blue-600 hover:bg-blue-500'}`}>
                 {mission.is_completed ? 'Misión Completada' : 'Completar Misión'}
               </ThemedButton>
             </div>

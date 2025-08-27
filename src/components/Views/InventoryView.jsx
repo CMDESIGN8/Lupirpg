@@ -1,4 +1,4 @@
-import { Swords, Backpack, DollarSign, ChevronDown } from 'lucide-react';
+import { Sword, Backpack, DollarSign, ChevronDown } from 'lucide-react'; // Swords -> Sword
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 
@@ -15,10 +15,10 @@ const InventoryView = ({ inventory, handleEquipItem, handleUnequipItem, setItemT
               <p className="text-sm text-gray-500">Bonificación: {item.items.skill_bonus} <span className="text-green-600">+{item.items.bonus_value}</span></p>
               <div className="flex flex-col sm:flex-row gap-2 mt-4">
                 {!item.is_equipped ? (
-                  <ThemedButton onClick={() => handleEquipItem(item.id, item.items.skill_bonus)} disabled={loading} icon={<Swords size={16} />} className="flex-1 bg-blue-600 hover:bg-blue-500">Equipar</ThemedButton>
-                ) : (
-                  <ThemedButton onClick={() => handleUnequipItem(item.id)} disabled={loading} icon={<Backpack size={16} />} className="flex-1 bg-red-600 hover:bg-red-500">Desequipar</ThemedButton>
-                )}
+  <ThemedButton onClick={() => handleEquipItem(item.id, item.items.skill_bonus)} disabled={loading} icon={<Sword size={16} />} className="flex-1 bg-blue-600 hover:bg-blue-500">Equipar</ThemedButton>
+) : (
+  <ThemedButton onClick={() => handleUnequipItem(item.id)} disabled={loading} icon={<Backpack size={16} />} className="flex-1 bg-red-600 hover:bg-red-500">Desequipar</ThemedButton>
+)}
                 <ThemedButton onClick={() => { setItemToSell(item); setSellPrice(''); setView('sell_item'); }} disabled={item.is_equipped || loading} icon={<DollarSign size={16} />} className={`flex-1 bg-amber-500 hover:bg-amber-400 ${item.is_equipped ? 'disabled:bg-gray-400 disabled:text-gray-600' : ''}`}>Vender</ThemedButton>
               </div>
             </div>

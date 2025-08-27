@@ -1,4 +1,4 @@
-import { ShoppingCart, DollarSign, ChevronDown, Wallet } from 'lucide-react';
+import { ShoppingCart, DollarSign, ChevronDown, Wallet } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 
