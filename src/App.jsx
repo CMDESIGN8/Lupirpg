@@ -1,20 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
-import { supabaseClient } from './services/supabase';
-import { positions, sports, skillNames, initialSkillPoints } from './constants';
-import AuthView from './components/Views/AuthView';
-import CreateCharacterView from './components/Views/CreateCharacterView';
-import DashboardView from './components/Views/DashboardView';
-import LeaderboardView from './components/Views/LeaderboardView';
-import InventoryView from './components/Views/InventoryView';
-import MissionsView from './components/Views/MissionsView';
-import TransferView from './components/Views/TransferView';
-import MarketView from './components/Views/MarketView';
-import SellItemView from './components/Views/SellItemView';
-import ChatView from './components/Views/ChatView';
-import ClubsView from './components/Views/ClubsView';
-import CreateClubView from './components/Views/CreateClubView';
-import ClubDetailsView from './components/Views/ClubDetailsView';
-import LoadingScreen from './components/UI/LoadingScreen';
+// Cambia todas las importaciones de .js a .jsx
+import AuthView from './components/Views/AuthView.jsx';
+import CreateCharacterView from './components/Views/CreateCharacterView.jsx';
+import DashboardView from './components/Views/DashboardView.jsx';
+import LeaderboardView from './components/Views/LeaderboardView.jsx';
+import InventoryView from './components/Views/InventoryView.jsx';
+import MissionsView from './components/Views/MissionsView.jsx';
+import TransferView from './components/Views/TransferView.jsx';
+import MarketView from './components/Views/MarketView.jsx';
+import SellItemView from './components/Views/SellItemView.jsx';
+import ChatView from './components/Views/ChatView.jsx';
+import ClubsView from './components/Views/ClubsView.jsx';
+import CreateClubView from './components/Views/CreateClubView.jsx';
+import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
+import LoadingScreen from './components/UI/LoadingScreen.jsx';
 
 const App = () => {
   const [session, setSession] = useState(null);

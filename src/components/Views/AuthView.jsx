@@ -1,6 +1,6 @@
 import { LogIn, UserPlus } from 'lucide-react';
-import ThemedButton from '../UI/ThemedButton';
-import MessageDisplay from '../UI/MessageDisplay';
+import ThemedButton from '../UI/ThemedButton.jsx';
+import MessageDisplay from '../UI/MessageDisplay.jsx';
 
 const AuthView = ({ handleLogin, handleSignup, setEmail, setPassword, email, password, loading, message }) => (
   <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 font-sans">
