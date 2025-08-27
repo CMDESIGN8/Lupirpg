@@ -18,47 +18,77 @@ function App() {
     maxHealth: 100,
     mana: 50,
     maxMana: 50,
-    avatar: '/path/to/avatar.png'
+    avatar: 'https://placehold.co/100x100?text=Lupi',
+    stats: {
+      strength: 15,
+      dexterity: 12,
+      intelligence: 8,
+      constitution: 14,
+      wisdom: 10,
+      charisma: 13
+    },
+    skills: [
+      { name: 'Espadas', level: 5 },
+      { name: 'Arquería', level: 3 },
+      { name: 'Magia', level: 2 },
+      { name: 'Sigilo', level: 4 }
+    ]
   });
   
-  const [inventory, setInventory] = useState([]);
-  const [enemies, setEnemies] = useState([]);
+  const [inventory, setInventory] = useState([
+    { id: 1, name: 'Poción de vida', description: 'Restaura 50 puntos de salud', count: 3 },
+    { id: 2, name: 'Poción de maná', description: 'Restaura 30 puntos de maná', count: 2 },
+    { id: 3, name: 'Espada de hierro', description: 'Arma cuerpo a cuerpo', count: 1 },
+    { id: 4, name: 'Arco corto', description: 'Arma a distancia', count: 1 },
+    { id: 5, name: 'Flechas', description: 'Munición para arco', count: 20 }
+  ]);
   
-  // Efectos para cargar datos iniciales
-  useEffect(() => {
-    // Cargar datos del personaje, inventario, etc.
-  }, []);
+  const [enemies, setEnemies] = useState([
+    { id: 1, name: 'Goblin', health: 30, maxHealth: 30, image: 'https://placehold.co/80x80?text=Goblin' },
+    { id: 2, name: 'Orco', health: 50, maxHealth: 50, image: 'https://placehold.co/80x80?text=Orco' }
+  ]);
   
   const handleSaveGame = () => {
-    // Lógica para guardar el juego
     console.log('Juego guardado');
   };
   
   const handleLoadGame = () => {
-    // Lógica para cargar el juego
     console.log('Juego cargado');
   };
   
   const handleSettings = () => {
-    // Lógica para ajustes
     console.log('Ajustes abiertos');
   };
   
   const handleUseItem = (item) => {
-    // Lógica para usar un item
     console.log('Usando item:', item);
+    // Lógica para usar el item
   };
   
   const handleEquipItem = (item) => {
-    // Lógica para equipar un item
     console.log('Equipando item:', item);
+    // Lógica para equipar el item
+  };
+  
+  const handleDropItem = (item) => {
+    console.log('Tirando item:', item);
+    // Lógica para tirar el item
+    setInventory(prev => prev.filter(i => i.id !== item.id));
   };
   
   const handleAttack = (enemy) => {
-    // Lógica para atacar a un enemigo
     console.log('Atacando a:', enemy);
+    // Lógica de ataque
+    setEnemies(prev => prev.map(e => 
+      e.id === enemy.id ? {...e, health: Math.max(0, e.health - 10)} : e
+    ));
   };
   
+  const handleFlee = () => {
+    console.log('Huyendo del combate');
+    setCurrentView('character');
+  };
+
   const renderCurrentView = () => {
     switch(currentView) {
       case 'character':
@@ -68,11 +98,13 @@ function App() {
                  items={inventory} 
                  onUseItem={handleUseItem}
                  onEquipItem={handleEquipItem}
+                 onDropItem={handleDropItem}
                />;
       case 'combat':
         return <CombatPanel 
                  enemies={enemies} 
-                 onAttack={handleAttack} 
+                 onAttack={handleAttack}
+                 onFlee={handleFlee}
                />;
       case 'stats':
         return <StatsPanel character={character} />;
