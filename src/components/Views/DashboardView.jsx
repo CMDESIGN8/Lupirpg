@@ -82,7 +82,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 </div>
               </div>
               <p className="avatar-name">
-                {equippedAvatar?.avatars?.name || 'Lupi Predeterminado'}
+                {equippedAvatar?.avatars?.name || 'Lupi'}
               </p>
             </div>
             <div className="info-row">
