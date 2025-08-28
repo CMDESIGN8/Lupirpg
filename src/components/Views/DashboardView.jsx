@@ -62,10 +62,9 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             <div className="mt-4 bg-green-700 p-2 rounded">
               <p className="text-sm text-white">Experiencia ({playerData.experience}/{nextLevelXp})</p>
               <div className="w-full bg-gray-300 rounded-full h-3 mt-1">
-                <div 
-                  className="bg-yellow-500 h-3 rounded-full transition-all duration-500" 
-                  style={{ width: `${xpPercentage}%` }}
-                ></div>
+                <div className="lupi-progress">
+      <div className="lupi-progress-bar" style={{ width: `${xpPercentage}%` }}></div>
+    </div>
               </div>
             </div>
           </div>
