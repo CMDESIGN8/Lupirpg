@@ -60,9 +60,16 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 <span className="info-value highlight-text">{playerData.clubs.name}</span>
               </div>
             )}
-             <div className="info-row">
-              <span className="info-label"><Wallet></Wallet>:</span>
-              <span className="info-value">{playerData.sport}</span>
+             {/* Dirección de Wallet */}
+            <div className="info-row wallet-row">
+              <span className="info-label">Wallet:</span>
+              <div className="wallet-address" onClick={copyToClipboard}>
+                <span className="wallet-text">{playerData.username}.lupi</span>
+                <button className="copy-btn" title="Copiar dirección">
+                  <Copy size={14} />
+                </button>
+                {copied && <span className="copy-tooltip">¡Copiado!</span>}
+              </div>
             </div>
           </div>
           
