@@ -57,6 +57,12 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               <span className="info-value neon-text">{playerData.username}</span>
             </div>
             <div className="info-row">
+              <span className="resource-icon">💰</span>
+              <span className="resource-value">{lupiCoins}</span>
+              <span className="resource-icon">🌟 LVL</span>
+              <span className="resource-value">{playerData.level}</span>
+            </div>
+            <div className="info-row">
               <span className="info-label">Posición:</span>
               <span className="info-value">{playerData.position}</span>
             </div>
