@@ -3,6 +3,7 @@ import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import { avatarService } from '../../services/avatarService';
 import '../styles/MarketView.css';
+import React, { useState, useEffect } from 'react';
 
 
 const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, setView }) => {
