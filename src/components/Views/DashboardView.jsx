@@ -29,16 +29,6 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
           <h1>LUPI FOOTBALL RPG</h1>
           <div className="title-underline"></div>
         </div>
-        <div className="player-resources">
-          <div className="resource-chip">
-            <span className="resource-icon">💰</span>
-            <span className="resource-value">{lupiCoins}</span>
-          </div>
-          <div className="resource-chip">
-            <span className="resource-icon">🌟 LVL</span>
-            <span className="resource-value">{playerData.level}</span>
-          </div>
-        </div>
       </div>
 
       <MessageDisplay message={message} />
@@ -56,6 +46,12 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               <span className="info-label">Jugador:</span>
               <span className="info-value neon-text">{playerData.username}</span>
             </div>
+            <div className="avatar">
+  <img 
+    src="https://picsum.photos/200" 
+    alt="Avatar de prueba" 
+  />
+</div>
             <div className="info-row">
               <span className="resource-icon">💰</span>
               <span className="resource-value">{lupiCoins}</span>

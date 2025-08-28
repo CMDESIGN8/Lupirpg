@@ -1,3 +1,5 @@
+@import '../../styles/variables.css';
+
 /* Estilos para la pantalla de Login LUPI */
 .auth-container {
   min-height: 100vh;
