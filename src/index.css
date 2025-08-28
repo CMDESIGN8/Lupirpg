@@ -18,6 +18,53 @@ body {
   background-attachment: fixed;
 }
 
+/* Barra de progreso estilo LUPI */
+.lupi-progress {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 10px;
+  position: relative;
+}
+
+.lupi-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--lupi-primary), 
+    var(--lupi-accent));
+  border-radius: 10px;
+  position: relative;
+  transition: width 0.5s ease;
+}
+
+.lupi-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    transparent);
+  animation: progress-glow 2s infinite;
+}
+
+@keyframes progress-glow {
+  0% {
+    opacity: 0;
+    left: -100%;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
 body::before {
   content: '';
   position: fixed;
