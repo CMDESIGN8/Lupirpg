@@ -146,9 +146,9 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
                         </div>
 
                         <div className="item-price">
-                          <Wallet size={16} />
+                          <Wallet size={24} />
                           <span className="price-amount">{listing.price}</span>
-                          <span className="price-currency">LupiCoins</span>
+                          <span className="price-currency"> LupiCoins</span>
                         </div>
 
                         <button 
