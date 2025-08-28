@@ -32,10 +32,7 @@
 }
 
 /* Animaciones globales */
-@keyframes shine {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(500px); }
-}
+
 
 @keyframes pulse {
   0% { opacity: 1; }
