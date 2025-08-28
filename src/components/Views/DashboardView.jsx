@@ -154,27 +154,27 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
       <div className="nav-panel">
         <div className="nav-grid">
           <button className="nav-btn" onClick={() => { fetchMarketItems(); setView('market'); }} disabled={loading}>
-            <ShoppingCart size={20} />
+            <span className="nav-icon">🛒</span>
             <span>Mercado</span>
           </button>
           
           <button className="nav-btn" onClick={() => setView('transfer')} disabled={loading}>
-            <CornerUpRight size={20} />
+            <span className="nav-icon">➡️</span>
             <span>Transferir</span>
           </button>
           
           <button className="nav-btn" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
-            <CheckCircle size={20} />
+            <span className="nav-icon">⚽</span>
             <span>Misiones</span>
           </button>
           
           <button className="nav-btn" onClick={() => { fetchClubs(); setView('clubs'); }} disabled={loading}>
-            <Shield size={20} />
+            <span className="nav-icon">🏟️</span>
             <span>Clubes</span>
           </button>
           
           <button className="nav-btn" onClick={() => { fetchLeaderboard(); setView('leaderboard'); }} disabled={loading}>
-            <Users size={20} />
+            <span className="nav-icon">📊</span>
             <span>Ranking</span>
           </button>
           
@@ -184,7 +184,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
           </button>
           
           <button className="nav-btn" onClick={() => setView('chat')} disabled={loading}>
-            <MessageCircle size={20} />
+            <span className="nav-icon">💬</span>
             <span>Chat</span>
           </button>
           
