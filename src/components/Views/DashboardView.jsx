@@ -11,6 +11,14 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
 
+   // Función para copiar la dirección al portapapeles
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(`${playerData.username}.lupi`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+
   return (
     <div className="game-dashboard">
       {/* Header tipo videojuego */}
