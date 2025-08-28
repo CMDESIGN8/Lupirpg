@@ -4,7 +4,7 @@
 }
 
 .messageContent {
-  background: rgba(0, 40, 80, 0.9);
+  background: rgba(0, 128, 255, 0.9);
   border: 1px solid var(--neon-blue);
   border-radius: var(--border-radius-sm);
   padding: var(--spacing-md);
