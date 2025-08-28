@@ -1,4 +1,4 @@
-import './MessageDisplay.css';
+import '../styles/Message.css'   // 👈 acá importás tu CSS
 
 const MessageDisplay = ({ message, type = 'info' }) => {
   if (!message) return null;
