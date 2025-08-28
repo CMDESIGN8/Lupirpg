@@ -15,7 +15,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
   return (
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-b from-green-700 to-green-900 p-4 font-sans">
       <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-2xl border-4 border-yellow-500" style={{
-        backgroundImage: 'radial-gradient(circle at center, #f0fdf4 0%, #dcfce7 100%)'
+        backgroundImage: 'radial-gradient(circle at center, #050210 0%, #0a0420 100%)'
       }}>
         {/* Header con estilo de marcador */}
         <div className="bg-gray-800 text-yellow-400 py-3 px-6 rounded-t-lg flex justify-between items-center mb-6 border-b-4 border-yellow-500">
