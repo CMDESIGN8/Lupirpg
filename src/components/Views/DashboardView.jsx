@@ -8,6 +8,7 @@ import LoadingScreen from '../UI/LoadingScreen.jsx';
 const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message }) => {
   if (!playerData) return <LoadingScreen />;
 
+  const [copied, setCopied] = useState(false);
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
 
