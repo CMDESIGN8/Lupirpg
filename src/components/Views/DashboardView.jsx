@@ -79,12 +79,12 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                   className="player-avatar"
                 />
                 <div className="avatar-overlay">
-                  <Settings size={20} />
-                </div>
-              </div>
-              <p className="avatar-name">
+                  <p className="avatar-name">
                 {equippedAvatar?.avatars?.name || 'Lupi'}
               </p>
+                </div>
+              </div>
+              
               {showAvatarSelector && (
         <AvatarSelector
           playerId={playerData.id}
