@@ -1,22 +1,35 @@
-import { ShoppingCart, DollarSign, ChevronDown, Wallet } from 'lucide-react'; // Correcto
-import ThemedButton from '../UI/ThemedButton';
-import MessageDisplay from '../UI/MessageDisplay';
-import { avatarService } from '../../services/avatarService';
-import '../styles/MarketView.css';
 import React, { useState, useEffect } from 'react';
-import { Package } from "lucide-react";
-import { User } from "lucide-react";
+import { Wallet, ShoppingCart, DollarSign, Package, User, ChevronDown } from 'lucide-react';
+import { avatarService } from '../../services/avatarService';
+import { supabaseClient } from '../../services/supabase';
+import MessageDisplay from '../UI/MessageDisplay';
+import ThemedButton from '../UI/ThemedButton';
+import '../styles/MarketView.css';
 
-
-const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, setView }) => {
+const MarketView = ({ marketItems, handleBuyItem, playerData, setPlayerData, loading, message, setView }) => {
   const [activeTab, setActiveTab] = useState('items');
   const [avatars, setAvatars] = useState([]);
   const [avatarsLoading, setAvatarsLoading] = useState(false);
 
+  // --- Supabase Realtime para LupiCoins ---
   useEffect(() => {
-    if (activeTab === 'avatars') {
-      loadAvatars();
-    }
+    if (!playerData?.id) return;
+
+    const subscription = supabaseClient
+      .from(`players:id=eq.${playerData.id}`)
+      .on('UPDATE', payload => {
+        setPlayerData(prev => ({ ...prev, lupi_coins: payload.new.lupi_coins }));
+      })
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeSubscription(subscription);
+    };
+  }, [playerData?.id, setPlayerData]);
+
+  // --- Cargar avatares ---
+  useEffect(() => {
+    if (activeTab === 'avatars') loadAvatars();
   }, [activeTab]);
 
   const loadAvatars = async () => {
@@ -31,53 +44,39 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
     }
   };
 
+  // --- Comprar avatar ---
   const handleBuyAvatar = async (avatar) => {
-  try {
-    await avatarService.purchaseAvatar(playerData.id, avatar.id);
+    try {
+      await avatarService.purchaseAvatar(playerData.id, avatar.id);
 
-    // Descontar LupiCoins en tiempo real
-    playerData.lupi_coins -= avatar.price;
+      // Descontar monedas localmente para feedback inmediato
+      setPlayerData(prev => ({ ...prev, lupi_coins: prev.lupi_coins - avatar.price }));
 
-    // Si tienes un setPlayerData disponible (recomendado)
-    // setPlayerData(prev => ({ ...prev, lupi_coins: prev.lupi_coins - avatar.price }));
+      loadAvatars();
 
-    loadAvatars();
-    alert(`¡Has comprado el avatar ${avatar.name} por ${avatar.price} LupiCoins!`);
-  } catch (error) {
-    console.error('Error buying avatar:', error);
-    alert(error.message);
-  }
-};
-
-
-
-  const canBuyItem = (item) => {
-    return playerData.id !== item.seller_id && playerData.lupi_coins >= item.price;
+      alert(`¡Has comprado el avatar ${avatar.name} por ${avatar.price} LupiCoins!`);
+    } catch (error) {
+      console.error('Error buying avatar:', error);
+      alert(error.message);
+    }
   };
 
-  const canBuyAvatar = (avatar) => {
-    return playerData.lupi_coins >= avatar.price && playerData.level >= avatar.required_level;
-  };
+  const canBuyItem = (item) => playerData.id !== item.seller_id && playerData.lupi_coins >= item.price;
+  const canBuyAvatar = (avatar) => playerData.lupi_coins >= avatar.price && playerData.level >= avatar.required_level;
 
-  const getRarityColor = (rarity) => {
-    const colors = {
-      common: '#ffffff',
-      rare: '#0070dd',
-      epic: '#a335ee',
-      legendary: '#ff8000'
-    };
-    return colors[rarity] || '#ffffff';
-  };
+  const getRarityColor = (rarity) => ({
+    common: '#ffffff',
+    rare: '#0070dd',
+    epic: '#a335ee',
+    legendary: '#ff8000'
+  }[rarity] || '#ffffff');
 
-  const getRarityName = (rarity) => {
-    const names = {
-      common: 'Común',
-      rare: 'Raro',
-      epic: 'Épico',
-      legendary: 'Legendario'
-    };
-    return names[rarity] || 'Común';
-  };
+  const getRarityName = (rarity) => ({
+    common: 'Común',
+    rare: 'Raro',
+    epic: 'Épico',
+    legendary: 'Legendario'
+  }[rarity] || 'Común');
 
   return (
     <div className="market-container">
@@ -98,35 +97,28 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
             className={`tab-button ${activeTab === 'items' ? 'active' : ''}`}
             onClick={() => setActiveTab('items')}
           >
-            <Package size={18} />
-            Objetos
+            <Package size={18} /> Objetos
           </button>
           <button 
             className={`tab-button ${activeTab === 'avatars' ? 'active' : ''}`}
             onClick={() => setActiveTab('avatars')}
           >
-            <User size={18} />
-            Avatares
+            <User size={18} /> Avatares
           </button>
         </div>
 
         <div className="tab-content">
+          {/* --- Objetos --- */}
           {activeTab === 'items' && (
             <>
               <div className="market-actions">
-                <button 
-                  onClick={() => setView('sell_item')} 
-                  className="sell-button"
-                >
-                  <DollarSign size={16} />
-                  Vender Objeto
+                <button onClick={() => setView('sell_item')} className="sell-button">
+                  <DollarSign size={16} /> Vender Objeto
                 </button>
               </div>
 
               {loading ? (
-                <div className="loading-state">
-                  <p>Cargando objetos del mercado...</p>
-                </div>
+                <div className="loading-state"><p>Cargando objetos del mercado...</p></div>
               ) : (
                 <div className="items-grid">
                   {marketItems.length > 0 ? (
@@ -173,26 +165,18 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
             </>
           )}
 
+          {/* --- Avatares --- */}
           {activeTab === 'avatars' && (
             <>
               {avatarsLoading ? (
-                <div className="loading-state">
-                  <p>Cargando avatares...</p>
-                </div>
+                <div className="loading-state"><p>Cargando avatares...</p></div>
               ) : (
                 <div className="avatars-grid">
                   {avatars.map(avatar => (
-                    <div 
-                      key={avatar.id} 
-                      className="avatar-item"
-                      style={{ borderColor: getRarityColor(avatar.rarity) }}
-                    >
+                    <div key={avatar.id} className="avatar-item" style={{ borderColor: getRarityColor(avatar.rarity) }}>
                       <div className="avatar-image">
                         <img src={avatar.image_url} alt={avatar.name} />
-                        <div 
-                          className="rarity-badge"
-                          style={{ backgroundColor: getRarityColor(avatar.rarity) }}
-                        >
+                        <div className="rarity-badge" style={{ backgroundColor: getRarityColor(avatar.rarity) }}>
                           {getRarityName(avatar.rarity)}
                         </div>
                       </div>
@@ -234,12 +218,8 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
         </div>
 
         <div className="market-footer">
-          <button 
-            onClick={() => setView('dashboard')} 
-            className="back-button"
-          >
-            <ChevronDown size={20} />
-            Volver al Dashboard
+          <button onClick={() => setView('dashboard')} className="back-button">
+            <ChevronDown size={20} /> Volver al Dashboard
           </button>
         </div>
       </div>
