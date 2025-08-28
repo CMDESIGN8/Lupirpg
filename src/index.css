@@ -87,10 +87,10 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, #00ccff, transparent);
-  animation: scanline 3s linear infinite;
+  animation: shine 3s linear infinite;
 }
 
-@keyframes scanline {
+@keyframes shine {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(500px); }
 }
@@ -393,4 +393,31 @@
   .nav-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Avatar Styles */
+.avatar {
+  display: flex;
+  justify-content: center;
+  margin: var(--spacing-md) 0;
+}
+
+.avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid var(--neon-blue);
+  box-shadow: 
+    0 0 20px rgba(0, 204, 255, 0.6),
+    inset 0 0 20px rgba(0, 170, 255, 0.3);
+  transition: all 0.3s ease;
+  object-fit: cover;
+}
+
+.avatar img:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 30px rgba(0, 204, 255, 0.8),
+    inset 0 0 25px rgba(0, 170, 255, 0.4);
+  border-color: var(--neon-cyan);
 }
