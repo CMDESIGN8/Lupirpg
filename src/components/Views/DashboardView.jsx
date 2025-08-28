@@ -138,7 +138,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
           
           <div className="action-buttons">
             <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
-              <Zap size={20} />
+             <span className="nav-icon">⚡</span>
               <span>Entrenar</span>
             </button>
             

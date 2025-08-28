@@ -420,7 +420,7 @@ const App = () => {
   const handleGainXp = async () => {
     setLoading(true);
     try {
-      const xpGained = 10, coinsGained = 5, currentXp = playerData.experience, nextLevelRequirement = playerData.level * 100;
+      const xpGained = 100, coinsGained = 5, currentXp = playerData.experience, nextLevelRequirement = playerData.level * 100;
       let newLevel = playerData.level, newSkillPoints = playerData.skill_points, newXp = currentXp + xpGained, newCoins = playerData.lupi_coins + coinsGained, levelUpMessage = '';
       
       if (newXp >= nextLevelRequirement) { 
