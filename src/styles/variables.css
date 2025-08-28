@@ -1,0 +1,49 @@
+/* Variables CSS globales - Tema LUPI */
+:root {
+  /* Colores principales */
+  --lupi-primary: #8a2be2;
+  --lupi-secondary: #00ff88;
+  --lupi-accent: #ff00aa;
+  --lupi-dark: #0a0420;
+  --lupi-darker: #050210;
+  --lupi-card: #13103a;
+  --lupi-text: #ffffff;
+  --lupi-text-secondary: #b3b3ff;
+  
+  /* Colores azules/cian para neon */
+  --neon-blue: #00ccff;
+  --neon-cyan: #00ffcc;
+  --neon-dark-blue: #0066ff;
+  --neon-bg-dark: #0a1a2f;
+  --neon-bg-darker: #051322;
+  
+  /* Tamaños */
+  --border-radius: 12px;
+  --border-radius-sm: 8px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Sombras y efectos */
+  --shadow-glow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+  --shadow-glow-accent: 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+}
+
+/* Animaciones globales */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(500px); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px var(--neon-blue); }
+  100% { box-shadow: 0 0 15px var(--neon-blue), 0 0 30px var(--neon-blue); }
+}
