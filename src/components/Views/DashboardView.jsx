@@ -5,7 +5,7 @@ import {
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
 import { useState, useEffect } from 'react';
-import { Copy, Settings } from 'lucide-react';
+import {Settings } from 'lucide-react';
 import { avatarService } from '../services/avatarService';
 
 
