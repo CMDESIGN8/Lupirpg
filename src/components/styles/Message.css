@@ -1,5 +1,3 @@
-@import '../variables.css';
-
 .message-display {
   margin-bottom: var(--spacing-lg);
   animation: messageSlideIn 0.3s ease-out;
