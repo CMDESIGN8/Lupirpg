@@ -1,4 +1,4 @@
-import './MessageDisplay.css';
+import styles from './MessageDisplay.module.css';
 
 const MessageDisplay = ({ message, type = 'info' }) => {
   if (!message) return null;
@@ -6,18 +6,18 @@ const MessageDisplay = ({ message, type = 'info' }) => {
   const getMessageClass = () => {
     switch (type) {
       case 'success':
-        return 'message-success';
+        return styles.messageSuccess;
       case 'error':
-        return 'message-error';
+        return styles.messageError;
       case 'warning':
-        return 'message-warning';
+        return styles.messageWarning;
       default:
-        return 'message-content';
+        return styles.messageContent;
     }
   };
 
   return (
-    <div className="message-display" role="alert">
+    <div className={styles.messageContainer} role="alert">
       <div className={getMessageClass()}>
         {message}
       </div>
