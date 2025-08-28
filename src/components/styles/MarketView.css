@@ -152,8 +152,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing-lg);
-  width: 200px;
-  height: 200px;
 }
 
 .market-item,
