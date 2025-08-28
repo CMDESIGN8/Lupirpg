@@ -5,8 +5,8 @@ import {
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
 import { useState, useEffect } from 'react';
-import {Settings } from 'lucide-react';
-import { avatarService } from '../services/avatarService';
+import { Settings } from 'lucide-react';
+import { avatarService } from '../../services/avatarService';
 
 
 const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message }) => {
