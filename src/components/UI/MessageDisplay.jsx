@@ -1,23 +1,10 @@
 import '../styles/Message.css'   // 👈 acá importás tu CSS
 
-const MessageDisplay = ({ message, type = 'info' }) => {
-  if (!message) return null;
-  
-  const getMessageClass = () => {
-    switch (type) {
-      case 'success':
-        return 'message-success';
-      case 'error':
-        return 'message-error';
-      case 'warning':
-        return 'message-warning';
-      default:
-        return 'message-content';
-    }
-  };
 
+const MessageDisplay = ({ message }) => {
+  if (!message) return null;
   return (
-    <div className="message-display" role="alert">
+   <div className="message-display" role="alert">
       <div className={getMessageClass()}>
         {message}
       </div>
