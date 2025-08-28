@@ -60,6 +60,10 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 <span className="info-value highlight-text">{playerData.clubs.name}</span>
               </div>
             )}
+             <div className="info-row">
+              <span className="info-label"><Wallet></Wallet>:</span>
+              <span className="info-value">{playerData.sport}</span>
+            </div>
           </div>
           
           <div className="xp-section">
