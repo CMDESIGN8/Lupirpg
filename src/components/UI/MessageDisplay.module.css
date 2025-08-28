@@ -49,8 +49,8 @@
 /* Tipos de mensajes */
 .messageSuccess {
   composes: messageContent;
-  border-color: var(--neon-cyan);
-  color: var(--neon-cyan);
+  border-color: rgb(0, 204, 255);
+  color: rgb(0, 204, 255);
   box-shadow: 
     0 0 15px rgba(0, 255, 204, 0.4),
     inset 0 0 10px rgba(0, 255, 204, 0.2);
