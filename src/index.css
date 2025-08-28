@@ -395,7 +395,7 @@
   .actions-card {
     grid-column: span 1;
   }
-  
+
    .avatar img {
     width: 100px;
     height: 100px;
@@ -412,13 +412,13 @@
 }
 
 /* Avatar Styles */
-.avatar {
+.avatar-section {
   display: flex;
   justify-content: center;
   margin: var(--spacing-md) 0;
 }
 
-.avatar img {
+.avatar-container img {
   width: 120px;
   height: 120px;
   border-radius: 50%;
