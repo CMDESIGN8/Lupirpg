@@ -87,12 +87,14 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, #00ccff, transparent);
-  animation: scanline 3s linear infinite;
+  animation: shine 3s linear infinite;
 }
 
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(500px); }
+/* Animación de brillo */
+@keyframes shine {
+  0% { left: -150%; }
+  50% { left: 150%; }
+  100% { left: 150%; }
 }
 
 .card-header {
