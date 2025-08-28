@@ -238,6 +238,11 @@
   color: #ffcc00;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
 }
+.price-amount2 {
+  color: #ffcc00;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  font-size: 1.2rem;
+}
 
 .price-currency {
   color: #ffcc00;
