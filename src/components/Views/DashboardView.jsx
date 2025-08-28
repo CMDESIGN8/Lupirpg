@@ -7,6 +7,7 @@ import LoadingScreen from '../UI/LoadingScreen.jsx';
 import { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import { avatarService } from '../../services/avatarService';
+import AvatarSelector from '../AvatarSelector/AvatarSelector';
 
 
 const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message }) => {
@@ -84,6 +85,14 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               <p className="avatar-name">
                 {equippedAvatar?.avatars?.name || 'Lupi'}
               </p>
+              {showAvatarSelector && (
+        <AvatarSelector
+          playerId={playerData.id}
+          currentAvatar={equippedAvatar}
+          onClose={() => setShowAvatarSelector(false)}
+          onAvatarChange={loadEquippedAvatar}
+        />
+      )}
             </div>
             <div className="info-row">
               <span className="resource-icon">💰</span>
