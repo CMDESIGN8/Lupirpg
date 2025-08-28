@@ -482,11 +482,18 @@
   }
 }
 
+.avatar {
+  display: flex;
+  justify-content: center; /* centra horizontal */
+  align-items: center;     /* centra vertical si tiene alto definido */
+  margin-bottom: 15px;     /* opcional, espacio debajo de la foto */
+}
+
 .avatar img {
-  width: 100px; /* o el tamaño que quieras */
+  width: 100px;
   height: 100px;
-  border-radius: 50%; /* para que sea circular */
+  border-radius: 50%; /* redondo */
   object-fit: cover;
-  border: 3px solid var(--primary-color);
-  justify-content: center;
+  border: 3px solid #00ccff; /* usá tu color primario */
+  box-shadow: 0 0 15px rgba(0, 204, 255, 0.4); /* glow futurista */
 }

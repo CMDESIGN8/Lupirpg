@@ -47,11 +47,11 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               <span className="info-value neon-text">{playerData.username}</span>
             </div>
             <div className="avatar">
-  <img 
-    src="https://picsum.photos/200" 
-    alt="Avatar de prueba" 
-  />
-</div>
+    <img 
+      src="https://picsum.photos/200" 
+      alt="Avatar de prueba" 
+    />
+  </div>
             <div className="info-row">
               <span className="resource-icon">💰</span>
               <span className="resource-value">{lupiCoins}</span>
