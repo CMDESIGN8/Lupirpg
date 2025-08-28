@@ -4,7 +4,10 @@ import {
 } from 'lucide-react';
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Copy, Settings } from 'lucide-react';
+import { avatarService } from '../services/avatarService';
+
 
 const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message }) => {
   if (!playerData) return <LoadingScreen />;
@@ -12,6 +15,27 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
   const [copied, setCopied] = useState(false);
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
+  const [equippedAvatar, setEquippedAvatar] = useState(null);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+
+  useEffect(() => {
+    loadEquippedAvatar();
+  }, [playerData]);
+
+  const loadEquippedAvatar = async () => {
+    if (playerData?.id) {
+      try {
+        const avatar = await avatarService.getEquippedAvatar(playerData.id);
+        setEquippedAvatar(avatar);
+      } catch (error) {
+        console.error('Error loading avatar:', error);
+      }
+    }
+  };
+
+  const handleAvatarClick = () => {
+    setShowAvatarSelector(true);
+  };
 
    // Función para copiar la dirección al portapapeles
   const copyToClipboard = () => {
@@ -40,18 +64,27 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             <h2>FICHA TÉCNICA</h2>
             <div className="header-line"></div>
           </div>
-          
           <div className="player-info">
             <div className="info-row">
               <span className="info-label">Jugador:</span>
               <span className="info-value neon-text">{playerData.username}</span>
             </div>
-            <div className="avatar">
-    <img 
-      src="https://picsum.photos/200" 
-      alt="Avatar de prueba" 
-    />
-  </div>
+            {/* Avatar interactivo */}
+            <div className="avatar-section">
+              <div className="avatar-container" onClick={handleAvatarClick}>
+                <img 
+                  src={equippedAvatar?.avatars?.image_url || '/default-avatar.png'} 
+                  alt={`Avatar de ${playerData.username}`}
+                  className="player-avatar"
+                />
+                <div className="avatar-overlay">
+                  <Settings size={20} />
+                </div>
+              </div>
+              <p className="avatar-name">
+                {equippedAvatar?.avatars?.name || 'Lupi Predeterminado'}
+              </p>
+            </div>
             <div className="info-row">
               <span className="resource-icon">💰</span>
               <span className="resource-value">{lupiCoins}</span>
@@ -96,7 +129,6 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             </div>
           </div>
         </div>
-
         {/* Sección central - Habilidades */}
         <div className="skills-card">
           <div className="card-header">

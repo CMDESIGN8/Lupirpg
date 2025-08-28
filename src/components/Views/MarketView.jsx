@@ -1,35 +1,240 @@
 import { ShoppingCart, DollarSign, ChevronDown, Wallet } from 'lucide-react'; // Correcto
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
+import { avatarService } from '../../services/avatarService';
+import '../styles/MarketView.css';
 
-const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, setView }) => (
-  <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
-    <div className="w-full max-w-5xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
-      <h2 className="text-3xl font-bold text-center mb-6 text-blue-600">Mercado</h2>
-      <MessageDisplay message={message} />
-      <div className="flex justify-end mb-4">
-        <ThemedButton onClick={() => setView('sell_item')} icon={<DollarSign size={16} />} className="bg-amber-500 hover:bg-amber-400">Vender Objeto</ThemedButton>
-      </div>
-      {loading ? <p className="text-center text-gray-500">Cargando mercado...</p> : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {marketItems.length > 0 ? marketItems.map(listing => (
-            <div key={listing.id} className="bg-gray-100 p-4 rounded-lg shadow-inner border border-gray-300">
-              <h3 className="text-lg font-semibold text-blue-600">{listing.player_items.items.name}</h3>
-              <p className="text-sm text-gray-500">Bonificación: {listing.player_items.items.skill_bonus} <span className="text-green-600">+{listing.player_items.items.bonus_value}</span></p>
-              <p className="text-sm text-gray-500">Vendedor: <span className="text-blue-800">{listing.players.username}</span></p>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-lg font-bold text-amber-500 flex items-center gap-1"><Wallet size={16} />{listing.price} Lupi Coins</span>
-                <ThemedButton onClick={() => handleBuyItem(listing)} disabled={loading || playerData.id === listing.seller_id} icon={<ShoppingCart size={16} />} className="bg-green-600 hover:bg-green-500">Comprar</ThemedButton>
-              </div>
-            </div>
-          )) : <div className="col-span-full text-center py-8"><p className="text-gray-500">No hay objetos en el mercado.</p></div>}
+
+const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, setView }) => {
+  const [activeTab, setActiveTab] = useState('items');
+  const [avatars, setAvatars] = useState([]);
+  const [avatarsLoading, setAvatarsLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'avatars') {
+      loadAvatars();
+    }
+  }, [activeTab]);
+
+  const loadAvatars = async () => {
+    try {
+      setAvatarsLoading(true);
+      const avatarsData = await avatarService.getAllAvatars();
+      setAvatars(avatarsData);
+    } catch (error) {
+      console.error('Error loading avatars:', error);
+    } finally {
+      setAvatarsLoading(false);
+    }
+  };
+
+  const handleBuyAvatar = async (avatar) => {
+    try {
+      await avatarService.purchaseAvatar(playerData.id, avatar.id);
+      // Recargar los avatares después de la compra
+      loadAvatars();
+      // Mostrar mensaje de éxito
+      alert(`¡Has comprado el avatar ${avatar.name} por ${avatar.price} LupiCoins!`);
+    } catch (error) {
+      console.error('Error buying avatar:', error);
+      alert(error.message);
+    }
+  };
+
+  const canBuyItem = (item) => {
+    return playerData.id !== item.seller_id && playerData.lupi_coins >= item.price;
+  };
+
+  const canBuyAvatar = (avatar) => {
+    return playerData.lupi_coins >= avatar.price && playerData.level >= avatar.required_level;
+  };
+
+  const getRarityColor = (rarity) => {
+    const colors = {
+      common: '#ffffff',
+      rare: '#0070dd',
+      epic: '#a335ee',
+      legendary: '#ff8000'
+    };
+    return colors[rarity] || '#ffffff';
+  };
+
+  const getRarityName = (rarity) => {
+    const names = {
+      common: 'Común',
+      rare: 'Raro',
+      epic: 'Épico',
+      legendary: 'Legendario'
+    };
+    return names[rarity] || 'Común';
+  };
+
+  return (
+    <div className="market-container">
+      <div className="market-box">
+        <div className="market-header">
+          <h2 className="market-title">MERCADO LUPI</h2>
+          <div className="market-balance">
+            <Wallet size={20} />
+            <span className="balance-amount">{playerData?.lupi_coins || 0}</span>
+            <span className="balance-text">LupiCoins</span>
+          </div>
         </div>
-      )}
-      <div className="flex justify-center mt-6">
-        <ThemedButton onClick={() => setView('dashboard')} icon={<ChevronDown size={20} />}>Volver</ThemedButton>
+
+        <MessageDisplay message={message} />
+
+        <div className="market-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'items' ? 'active' : ''}`}
+            onClick={() => setActiveTab('items')}
+          >
+            <Package size={18} />
+            Objetos
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'avatars' ? 'active' : ''}`}
+            onClick={() => setActiveTab('avatars')}
+          >
+            <User size={18} />
+            Avatares
+          </button>
+        </div>
+
+        <div className="tab-content">
+          {activeTab === 'items' && (
+            <>
+              <div className="market-actions">
+                <button 
+                  onClick={() => setView('sell_item')} 
+                  className="sell-button"
+                >
+                  <DollarSign size={16} />
+                  Vender Objeto
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="loading-state">
+                  <p>Cargando objetos del mercado...</p>
+                </div>
+              ) : (
+                <div className="items-grid">
+                  {marketItems.length > 0 ? (
+                    marketItems.map(listing => (
+                      <div key={listing.id} className="market-item">
+                        <div className="item-header">
+                          <h3 className="item-name">{listing.player_items.items.name}</h3>
+                          <p className="item-bonus">
+                            {listing.player_items.items.skill_bonus} 
+                            <span className="bonus-value">+{listing.player_items.items.bonus_value}</span>
+                          </p>
+                        </div>
+
+                        <div className="item-seller">
+                          <span className="seller-label">Vendedor:</span>
+                          <span className="seller-name">{listing.players.username}</span>
+                        </div>
+
+                        <div className="item-price">
+                          <Wallet size={16} />
+                          <span className="price-amount">{listing.price}</span>
+                          <span className="price-currency">LupiCoins</span>
+                        </div>
+
+                        <button 
+                          onClick={() => handleBuyItem(listing)} 
+                          disabled={loading || !canBuyItem(listing)}
+                          className="buy-button"
+                        >
+                          <ShoppingCart size={16} />
+                          {canBuyItem(listing) ? 'Comprar' : 'No disponible'}
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">
+                      <Package size={48} />
+                      <p>No hay objetos en el mercado</p>
+                      <small>¡Sé el primero en vender algo!</small>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'avatars' && (
+            <>
+              {avatarsLoading ? (
+                <div className="loading-state">
+                  <p>Cargando avatares...</p>
+                </div>
+              ) : (
+                <div className="avatars-grid">
+                  {avatars.map(avatar => (
+                    <div 
+                      key={avatar.id} 
+                      className="avatar-item"
+                      style={{ borderColor: getRarityColor(avatar.rarity) }}
+                    >
+                      <div className="avatar-image">
+                        <img src={avatar.image_url} alt={avatar.name} />
+                        <div 
+                          className="rarity-badge"
+                          style={{ backgroundColor: getRarityColor(avatar.rarity) }}
+                        >
+                          {getRarityName(avatar.rarity)}
+                        </div>
+                      </div>
+
+                      <div className="avatar-info">
+                        <h3 className="avatar-name">{avatar.name}</h3>
+                        <p className="avatar-description">{avatar.description}</p>
+                        <div className="avatar-requirements">
+                          <span className="level-requirement">Nvl. {avatar.required_level}+</span>
+                        </div>
+                      </div>
+
+                      <div className="avatar-price">
+                        <Wallet size={16} />
+                        <span className="price-amount">{avatar.price}</span>
+                        <span className="price-currency">LupiCoins</span>
+                      </div>
+
+                      <button 
+                        onClick={() => handleBuyAvatar(avatar)}
+                        disabled={!canBuyAvatar(avatar)}
+                        className="buy-avatar-button"
+                      >
+                        <ShoppingCart size={16} />
+                        {canBuyAvatar(avatar) ? 'Comprar' : 'No disponible'}
+                      </button>
+
+                      {!canBuyAvatar(avatar) && (
+                        <div className="unavailable-reason">
+                          {playerData.lupi_coins < avatar.price ? 'Fondos insuficientes' : 'Nivel insuficiente'}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="market-footer">
+          <button 
+            onClick={() => setView('dashboard')} 
+            className="back-button"
+          >
+            <ChevronDown size={20} />
+            Volver al Dashboard
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default MarketView;
