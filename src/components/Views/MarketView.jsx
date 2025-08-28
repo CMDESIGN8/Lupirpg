@@ -61,7 +61,7 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
 
   const getRarityColor = (rarity) => {
     const colors = {
-      common: '#ffffff',
+      common: '#7e7e7eff',
       rare: '#0070dd',
       epic: '#a335ee',
       legendary: '#ff8000'
