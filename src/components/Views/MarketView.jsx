@@ -33,24 +33,22 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
 
   const handleBuyAvatar = async (avatar) => {
   try {
-    const purchased = await avatarService.purchaseAvatar(playerData.id, avatar.id);
-    
-    // Actualiza las LupiCoins en tiempo real
-    setPlayerData(prev => ({
-      ...prev,
-      lupi_coins: prev.lupi_coins - avatar.price
-    }));
+    await avatarService.purchaseAvatar(playerData.id, avatar.id);
 
-    // Recargar los avatares después de la compra
+    // Descontar LupiCoins en tiempo real
+    playerData.lupi_coins -= avatar.price;
+
+    // Si tienes un setPlayerData disponible (recomendado)
+    // setPlayerData(prev => ({ ...prev, lupi_coins: prev.lupi_coins - avatar.price }));
+
     loadAvatars();
-
-    // Mostrar mensaje de éxito
     alert(`¡Has comprado el avatar ${avatar.name} por ${avatar.price} LupiCoins!`);
   } catch (error) {
     console.error('Error buying avatar:', error);
     alert(error.message);
   }
 };
+
 
 
   const canBuyItem = (item) => {
