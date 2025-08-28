@@ -39,6 +39,10 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 <p className="text-sm text-blue-100">Nivel:</p>
                 <p className="text-lg font-bold text-white">{playerData.level}</p>
               </div>
+              <div className="flex items-center gap-2 bg-green-800 px-3 py-1 rounded-full">
+            <span className="text-white font-bold">LupiCoins:</span>
+            <span className="text-yellow-400 font-bold">{lupiCoins}</span>
+          </div>
               <div>
                 <p className="text-sm text-blue-100">Posición:</p>
                 <p className="text-lg font-bold text-white">{playerData.position}</p>
@@ -63,10 +67,6 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                   style={{ width: `${xpPercentage}%` }}
                 ></div>
               </div>
-              <div className="flex items-center gap-2 bg-green-800 px-3 py-1 rounded-full">
-            <span className="text-white font-bold">LupiCoins:</span>
-            <span className="text-yellow-400 font-bold">{lupiCoins}</span>
-          </div>
             </div>
           </div>
 
