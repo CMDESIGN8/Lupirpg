@@ -21,11 +21,11 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
         </div>
         <div className="player-resources">
           <div className="resource-chip">
-            <span className="resource-icon">⭐</span>
+            <span className="resource-icon">💰</span>
             <span className="resource-value">{lupiCoins}</span>
           </div>
           <div className="resource-chip">
-            <span className="resource-icon">LVL</span>
+            <span className="resource-icon">🌟 LVL</span>
             <span className="resource-value">{playerData.level}</span>
           </div>
         </div>
@@ -143,7 +143,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             </button>
             
             <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
-              <Compass size={20} />
+              <span className="nav-icon">🔍</span>
               <span>Buscar Objeto</span>
             </button>
           </div>
