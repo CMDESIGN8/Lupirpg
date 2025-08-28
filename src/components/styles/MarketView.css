@@ -234,6 +234,16 @@
   font-size: 1.2rem;
 }
 
+.avatar-price {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  color: #ffcc00;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
 .price-amount {
   color: #ffcc00;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
