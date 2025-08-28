@@ -87,12 +87,7 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, #00ccff, transparent);
-  animation: shine 3s linear infinite;
-}
-
-@keyframes shine {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(500px); }
+  
 }
 
 .card-header {
