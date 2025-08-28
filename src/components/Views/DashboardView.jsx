@@ -18,19 +18,19 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
         backgroundImage: 'radial-gradient(circle at center, #f0fdf4 0%, #dcfce7 100%)'
       }}>
         {/* Header con estilo de marcador */}
-        <div className="bg-gray-800 text-yellow-400 py-3 px-6 rounded-t-lg flex justify-between items-center mb-6 border-b-4 border-yellow-500">
-          <h2 className="text-3xl font-bold">⚽ LUPI FOOTBALL RPG ⚽</h2>
+        <div className="lupi-card">
+          <h2 className="neon-text">⚽ LUPI FOOTBALL RPG ⚽</h2>
         </div>
         
         <MessageDisplay message={message} />
         
         <div className="space-y-6">
           {/* Información del Jugador con estilo de ficha técnica */}
-          <div className="bg-gradient-to-r from-green-400 to-blue-400 p-4 rounded-lg shadow-inner border-2 border-white">
-            <h3 className="text-xl font-semibold flex items-center gap-2 mb-2 text-white">
+          <div className="player-card">
+            <h3 className="text-gradient">
               <span className="bg-blue-600 p-1 rounded">👤</span> Ficha Técnica
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-white">
+            <div className="dashboard-container">
               <div>
                 <p className="text-sm text-blue-100">Jugador:</p>
                 <p className="text-lg font-bold text-white">{playerData.username}</p>
@@ -70,8 +70,8 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
           </div>
 
           {/* Habilidades con estilo de estadísticas de jugador */}
-          <div className="bg-gradient-to-r from-blue-400 to-purple-500 p-4 rounded-lg shadow-inner border-2 border-white">
-            <h3 className="text-xl font-semibold flex items-center gap-2 mb-2 text-white">
+          <div className="stats-card">
+            <h3 className="neon-text">
               <span className="bg-purple-600 p-1 rounded">📊</span> Estadísticas
             </h3>
             <p className="text-sm text-white mb-4">Puntos disponibles: <span className="text-yellow-400 font-bold">{playerData.skill_points}</span></p>
@@ -129,7 +129,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 onClick={handleGainXp} 
                 disabled={loading} 
                 icon={<span className="text-xl">⚽</span>} 
-                className="bg-green-600 hover:bg-green-500 text-white font-bold"
+                className="lupi-btn"
               >
                 Entrenar
               </ThemedButton>
@@ -138,7 +138,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 onClick={() => { fetchMarketItems(); setView('market'); }} 
                 disabled={loading} 
                 icon={<ShoppingCart size={18} />} 
-                className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold"
+                className="action-button"
               >
                 Mercado
               </ThemedButton>
