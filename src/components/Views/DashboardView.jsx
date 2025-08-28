@@ -58,7 +58,6 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
             <span className="text-white font-bold">LupiCoins:</span>
             <span className="text-yellow-400 font-bold">{lupiCoins}</span>
           </div>
-          
             <div className="mt-6 bg-lupi-card p-4 rounded-lg lupi-border">
               <p className="text-sm text-lupi-text-secondary mb-2">Experiencia ({playerData.experience}/{nextLevelXp})</p>
               <div className="lupi-progress">
