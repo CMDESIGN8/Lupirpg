@@ -20,10 +20,6 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
         {/* Header con estilo de marcador */}
         <div className="bg-gray-800 text-yellow-400 py-3 px-6 rounded-t-lg flex justify-between items-center mb-6 border-b-4 border-yellow-500">
           <h2 className="text-3xl font-bold">⚽ LUPI FOOTBALL RPG ⚽</h2>
-          <div className="flex items-center gap-2 bg-green-800 px-3 py-1 rounded-full">
-            <span className="text-white font-bold">LupiCoins:</span>
-            <span className="text-yellow-400 font-bold">{lupiCoins}</span>
-          </div>
         </div>
         
         <MessageDisplay message={message} />
@@ -58,7 +54,11 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
                 </div>
               )}
             </div>
-            
+            <div className="flex items-center gap-2 bg-green-800 px-3 py-1 rounded-full">
+            <span className="text-white font-bold">LupiCoins:</span>
+            <span className="text-yellow-400 font-bold">{lupiCoins}</span>
+          </div>
+          
             <div className="mt-6 bg-lupi-card p-4 rounded-lg lupi-border">
               <p className="text-sm text-lupi-text-secondary mb-2">Experiencia ({playerData.experience}/{nextLevelXp})</p>
               <div className="lupi-progress">
