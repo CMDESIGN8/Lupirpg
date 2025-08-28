@@ -52,13 +52,9 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, #00ccff, transparent);
-  animation: shine 3s linear infinite;
 }
 
-@keyframes shine {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(500px); }
-}
+
 
 .auth-title {
   text-align: center;
@@ -163,7 +159,7 @@
 }
 
 .auth-btn:hover::before {
-  animation: shine 1.5s infinite;
+  
 }
 
 .auth-btn:disabled {

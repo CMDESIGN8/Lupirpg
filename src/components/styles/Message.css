@@ -29,7 +29,6 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-  animation: shine 2s linear infinite;
 }
 
 /* Variantes de mensaje */

@@ -49,7 +49,6 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-  animation: shine 5s linear infinite;
 }
 
 .inventory-header {
@@ -107,7 +106,6 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-  animation: shine 3s linear infinite;
 }
 
 .inventory-item:hover {

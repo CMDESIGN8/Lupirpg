@@ -50,7 +50,6 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-  animation: shine 4s linear infinite;
 }
 
 .create-character-title {
