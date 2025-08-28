@@ -240,14 +240,9 @@
 }
 
 .price-currency {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-md);
   color: #ffcc00;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
 }
 
 .buy-button {
