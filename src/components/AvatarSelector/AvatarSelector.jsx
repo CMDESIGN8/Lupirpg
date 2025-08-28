@@ -143,11 +143,20 @@ const AvatarSelector = ({ playerId, currentAvatar, onClose, onAvatarChange }) =>
                   style={{ borderColor: getRarityColor(avatar.rarity) }}
                 >
                   <div className="avatar-image-container">
-                    <img 
-                      src={avatar.image_url} 
-                      alt={avatar.name}
-                      className="avatar-image"
-                    />
+  <img 
+    src={avatar.image_url} 
+    alt={avatar.name}
+    className="avatar-image"
+    onError={(e) => {
+      // Fallback para imágenes rotas
+      e.target.src = 'https://via.placeholder.com/150/0a192f/00ccff?text=LUPI';
+    }}
+    style={{
+      maxWidth: '100%',
+      maxHeight: '100%',
+      objectFit: 'contain'
+    }}
+  />
                     
                     <div 
                       className="rarity-badge"
