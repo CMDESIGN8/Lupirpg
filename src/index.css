@@ -361,10 +361,21 @@
   font-size: 1.5rem;
 }
 
+/* Animations */
+@keyframes gradientShift {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .dashboard-content {
     grid-template-columns: 1fr 1fr;
+  }
+  
+   .avatar img {
+    width: 100px;
+    height: 100px;
   }
   
   .actions-card {
@@ -383,6 +394,11 @@
   
   .actions-card {
     grid-column: span 1;
+  }
+  
+   .avatar img {
+    width: 100px;
+    height: 100px;
   }
   
   .game-header {
