@@ -210,7 +210,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
           </button>
           
           <button className="nav-btn logout" onClick={handleLogout}>
-            <LogOut size={20} />
+            <span className="nav-icon">📲</span>
             <span>Salir</span>
           </button>
         </div>
