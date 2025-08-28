@@ -1,6 +1,6 @@
 import { 
   Zap, ShoppingCart, CornerUpRight, Compass, CheckCircle, 
-  Shield, Users, MessageCircle, LogOut, ChevronUp 
+  Shield, Users, MessageCircle, LogOut, ChevronUp , Copy
 } from 'lucide-react';
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
