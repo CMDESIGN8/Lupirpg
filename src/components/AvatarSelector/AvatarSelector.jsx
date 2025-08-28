@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, ShoppingCart, Star, Zap } from 'lucide-react';
 import { avatarService } from '../../services/avatarService';
-import '../../styles/AvatarSelector.css';
+import '../styles/AvatarSelector.css';
 
 const AvatarSelector = ({ playerId, currentAvatar, onClose, onAvatarChange }) => {
   const [avatars, setAvatars] = useState([]);
