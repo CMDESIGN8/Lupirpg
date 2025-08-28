@@ -207,7 +207,7 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               
               <button 
                 onClick={handleLogout} 
-                className="flex items-center justify-center gap-2 px-3 py-2 font-bold rounded-md transition duration-300 transform bg-red-700 text-white hover:bg-red-600 hover:scale-105 col-span-2 md:col-span-1"
+                className="bg-red-600 hover:bg-red-500 text-white font-bold"
               >
                 <LogOut size={18} /> Salir
               </button>
