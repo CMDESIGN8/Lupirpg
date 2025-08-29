@@ -88,26 +88,6 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Agrega este useEffect para reset diario automático
-useEffect(() => {
-  const checkDailyReset = async () => {
-    if (!playerData) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const lastReset = localStorage.getItem('last_daily_reset');
-    
-    if (lastReset !== today) {
-      // Resetear contador diario
-      localStorage.setItem('last_daily_reset', today);
-      
-      // Aquí puedes agregar lógica para resetear misiones diarias
-      console.log('Nuevo día - reset de misiones diarias');
-    }
-  };
-  
-  checkDailyReset();
-}, [playerData]);
-
   useEffect(() => {
     if (view !== 'chat' || !supabaseClient) return;
     
@@ -890,6 +870,143 @@ const getDailyMissionsCompleted = async (playerId) => {
       setLoading(false);
     }
   };
+
+  // En App.jsx, añade estas funciones antes del renderContent
+
+const handleLogin = async (e) => {
+  e.preventDefault();
+  if (!supabaseClient) { 
+    showMessage('Cliente de Supabase no disponible.'); 
+    return; 
+  }
+  
+  setLoading(true);
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({ 
+      email, 
+      password 
+    });
+    
+    if (error) {
+      showMessage(error.message);
+    } else {
+      showMessage('Inicio de sesión exitoso. Redirigiendo...');
+    }
+  } catch (error) {
+    showMessage('Error al iniciar sesión: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleSignup = async (e) => {
+  e.preventDefault();
+  if (!supabaseClient) { 
+    showMessage('Cliente de Supabase no disponible.'); 
+    return; 
+  }
+  
+  setLoading(true);
+  try {
+    const { error } = await supabaseClient.auth.signUp({ 
+      email, 
+      password 
+    });
+    
+    if (error) {
+      showMessage(error.message);
+    } else {
+      showMessage('Registro exitoso. Revisa tu correo para confirmar.');
+    }
+  } catch (error) {
+    showMessage('Error al registrar: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleCreateAccount = async (e) => {
+  e.preventDefault();
+  if (!supabaseClient || !session) { 
+    showMessage('Cliente de Supabase o sesión no disponible.'); 
+    return; 
+  }
+  
+  setLoading(true);
+  try {
+    // Verificar si el usuario ya existe
+    const { data: existingUser, error: userCheckError } = await supabaseClient
+      .from('players')
+      .select('username')
+      .eq('username', username)
+      .maybeSingle();
+    
+    if (existingUser) {
+      showMessage('El nombre de usuario ya existe. Por favor, elige otro.');
+      return;
+    }
+    
+    if (userCheckError && userCheckError.code !== "PGRST116") {
+      throw userCheckError;
+    }
+    
+    // Crear nuevo jugador
+    const { data: newPlayerData, error: playerError } = await supabaseClient
+      .from('players')
+      .insert([{ 
+        id: session.user.id, 
+        level: 1, 
+        experience: 0, 
+        position, 
+        sport, 
+        skill_points: availablePoints, 
+        username, 
+        lupi_coins: 100,
+        daily_missions_completed: 0
+      }])
+      .select()
+      .single();
+    
+    if (playerError) throw playerError;
+    
+    // Crear habilidades del jugador
+    const skillInserts = Object.entries(skills).map(([skill_name, skill_value]) => ({ 
+      player_id: session.user.id, 
+      skill_name, 
+      skill_value 
+    }));
+    
+    const { error: skillsError } = await supabaseClient
+      .from('player_skills')
+      .insert(skillInserts);
+    
+    if (skillsError) throw skillsError;
+    
+    showMessage('Personaje creado con éxito. ¡Bienvenido a Lupi App!');
+    setPlayerData({ ...newPlayerData, skills: skillInserts });
+    setView('dashboard');
+    
+  } catch (err) {
+    showMessage('Error al crear cuenta: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+const handleCompleteMission = async (mission) => {
+  if (mission.is_completed) {
+    showMessage('Esta misión ya ha sido completada.');
+    return;
+  }
+  
+  setLoading(true);
+  try {
+    await completeMission(mission);
+  } catch (err) {
+    showMessage('Error al completar misión: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderContent = () => {
     if (loading && !isSupabaseReady) return <LoadingScreen />;
