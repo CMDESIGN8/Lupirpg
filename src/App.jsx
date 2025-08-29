@@ -88,26 +88,6 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Agrega este useEffect para reset diario automático
-useEffect(() => {
-  const checkDailyReset = async () => {
-    if (!playerData) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const lastReset = localStorage.getItem('last_daily_reset');
-    
-    if (lastReset !== today) {
-      // Resetear contador diario
-      localStorage.setItem('last_daily_reset', today);
-      
-      // Aquí puedes agregar lógica para resetear misiones diarias
-      console.log('Nuevo día - reset de misiones diarias');
-    }
-  };
-  
-  checkDailyReset();
-}, [playerData]);
-
   useEffect(() => {
     if (view !== 'chat' || !supabaseClient) return;
     
@@ -346,37 +326,7 @@ useEffect(() => {
     console.error('Error in completeMission:', error);
     throw error;
   }
-};// Agrega esta función a tu App.jsx
-const getDailyMissionsCompleted = async (playerId) => {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Intentar obtener de la tabla de tracking
-    const { data: progressData, error: progressError } = await supabaseClient
-      .from('player_daily_progress')
-      .select('daily_missions_completed')
-      .eq('player_id', playerId)
-      .eq('date', today)
-      .single();
-    
-    if (!progressError && progressData) {
-      return progressData.daily_missions_completed;
-    }
-    
-    // Fallback: obtener del campo legacy en players
-    const { data: playerData, error: playerError } = await supabaseClient
-      .from('players')
-      .select('daily_missions_completed')
-      .eq('id', playerId)
-      .single();
-    
-    return playerError ? 0 : (playerData?.daily_missions_completed || 0);
-    
-  } catch (error) {
-    return 0;
-  }
 };
-
 
   const handleSkillChange = (skill, value) => {
     const newPoints = availablePoints - value;
