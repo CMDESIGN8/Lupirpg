@@ -1,5 +1,4 @@
-/* src/styles/Missions.css */
-@import './variables.css';
+@import '../../styles/variables.css';
 
 /* Diseño de panel dividido */
 .missions-dashboard {
