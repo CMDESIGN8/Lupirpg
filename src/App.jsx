@@ -233,16 +233,19 @@ const App = () => {
   };
 
   const handleCompleteMission = async (mission) => {
-  const { canComplete } = canCompleteMission(mission);
-  
-  if (!canComplete) {
-    showMessage('No cumples los requisitos para esta misión');
-    return;
-  }
-  
+  // Verificación básica en lugar de usar canCompleteMission
   if (mission.is_completed) {
     showMessage('Esta misión ya ha sido completada.');
     return;
+  }
+  
+  // Verificación simple de requisitos (puedes hacerla más compleja si necesitas)
+  if (mission.required_mission_id) {
+    const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
+    if (!requiredMission || !requiredMission.is_completed) {
+      showMessage('Debes completar la misión requerida primero.');
+      return;
+    }
   }
   
   setLoading(true);
