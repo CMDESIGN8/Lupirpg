@@ -1,5 +1,5 @@
 // src/views/MissionsView.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import '../styles/Missions.css';
 import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, Heart, Shield, Brain, Users, Castle } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
@@ -8,7 +8,6 @@ import ProgressBar from '../UI/ProgressBar';
 
 /**
  * Helper en scope de módulo: recibe todo lo necesario y devuelve { canComplete, requirements }
- * Esto evita problemas de scope si MissionCard está fuera del componente.
  */
 const canCompleteMission = (mission, missionsData = [], playerData = {}, inventory = []) => {
   if (!mission) return { canComplete: false, requirements: ['Misión inválida'] };
@@ -29,7 +28,6 @@ const canCompleteMission = (mission, missionsData = [], playerData = {}, invento
     let completedCount = 0;
     let targetType = '';
 
-    // Nota: mantengo la lógica similar a la original, pero usando defensiva
     if (mission.reset_interval === 'weekly') {
       completedCount = missionsData.filter(m => m.reset_interval === 'daily' && m.is_completed).length;
       targetType = 'diarias';
@@ -76,31 +74,56 @@ const MissionsView = ({
   playerData = {},
   inventory = []
 }) => {
+  const [activeCategory, setActiveCategory] = useState('all');
 
   const shouldShowMission = (mission) => {
     return true; // Mostrar todas por ahora
   };
 
-  // Agrupar misiones por categoría
-  const groupedMissions = (missionsData || [])
-    .filter(mission => shouldShowMission(mission))
-    .reduce((acc, mission) => {
-      let category = 'general';
-      if (mission.type === 'intelligence') category = 'intelligence';
-      else if (mission.type === 'skill') category = 'skill';
-      else if (mission.type === 'strength') category = 'strength';
-      else if (mission.type === 'social') category = 'social';
-      else if (mission.type === 'club') category = 'club';
-      else if (mission.reset_interval === 'daily') category = 'daily';
-      else if (mission.reset_interval === 'weekly') category = 'weekly';
-      else if (mission.reset_interval === 'monthly') category = 'monthly';
-      else category = mission.category || 'general';
+  // Categorías de misiones
+  const missionCategories = [
+    { id: 'all', name: 'Todas', icon: <Award size={16} /> },
+    { id: 'daily', name: 'Diarias', icon: <Calendar size={16} /> },
+    { id: 'weekly', name: 'Semanales', icon: <Calendar size={16} /> },
+    { id: 'monthly', name: 'Mensuales', icon: <Calendar size={16} /> },
+    { id: 'strength', name: 'Fuerza', icon: <Zap size={16} /> },
+    { id: 'skill', name: 'Habilidad', icon: <Target size={16} /> },
+    { id: 'intelligence', name: 'Inteligencia', icon: <Brain size={16} /> },
+    { id: 'social', name: 'Sociales', icon: <Users size={16} /> },
+    { id: 'club', name: 'Club', icon: <Castle size={16} /> }
+  ];
 
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(mission);
-      return acc;
-    }, {});
+  // Filtrar misiones por categoría
+  const filteredMissions = (missionsData || [])
+    .filter(mission => {
+      if (activeCategory === 'all') return true;
+      if (activeCategory === 'daily') return mission.reset_interval === 'daily';
+      if (activeCategory === 'weekly') return mission.reset_interval === 'weekly';
+      if (activeCategory === 'monthly') return mission.reset_interval === 'monthly';
+      return mission.type === activeCategory;
+    })
+    .filter(mission => shouldShowMission(mission));
 
+  // Agrupar misiones por tipo (manteniendo la estructura original)
+  const groupedMissions = filteredMissions.reduce((acc, mission) => {
+    let category = 'general';
+    
+    if (mission.type === 'intelligence') category = 'intelligence';
+    else if (mission.type === 'skill') category = 'skill';
+    else if (mission.type === 'strength') category = 'strength';
+    else if (mission.type === 'social') category = 'social';
+    else if (mission.type === 'club') category = 'club';
+    else if (mission.reset_interval === 'daily') category = 'daily';
+    else if (mission.reset_interval === 'weekly') category = 'weekly';
+    else if (mission.reset_interval === 'monthly') category = 'monthly';
+    else category = mission.category || 'general';
+    
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(mission);
+    return acc;
+  }, {});
+
+  // Orden de categorías
   const categoryOrder = ['daily', 'weekly', 'monthly', 'intelligence', 'skill', 'strength', 'social', 'club', 'general'];
 
   const getCategoryTitle = (category) => {
@@ -163,6 +186,23 @@ const MissionsView = ({
           <p className="sport-info">Mostrando misiones para: <strong>{playerData?.sport || 'Todos'} - {playerData?.position || 'Todas'}</strong></p>
         </div>
 
+        {/* Filtros de categoría */}
+        <div className="missions-categories">
+          <h3>Filtrar por categoría:</h3>
+          <div className="categories-list">
+            {missionCategories.map(category => (
+              <button
+                key={category.id}
+                className={`category-btn ${activeCategory === category.id ? 'active' : ''}`}
+                onClick={() => setActiveCategory(category.id)}
+              >
+                {category.icon}
+                <span>{category.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <MessageDisplay message={message} />
 
         {loading ? (
@@ -174,7 +214,7 @@ const MissionsView = ({
                 <div key={category} className="mission-category">
                   <h3 className="category-title">
                     {getCategoryIcon(category)}
-                    {getCategoryTitle(category)}
+                    {getCategoryTitle(category)} ({groupedMissions[category].length})
                   </h3>
 
                   <div className="missions-list">
@@ -194,9 +234,9 @@ const MissionsView = ({
               )
             ))}
 
-            {Object.keys(groupedMissions).length === 0 && (
+            {filteredMissions.length === 0 && !loading && (
               <div className="no-missions">
-                <p>No hay misiones disponibles.</p>
+                <p>No hay misiones disponibles en esta categoría.</p>
               </div>
             )}
 
@@ -217,7 +257,6 @@ const MissionsView = ({
 };
 
 // MissionCard (fuera de MissionsView pero en el mismo archivo)
-// Llama a canCompleteMission desde scope del módulo.
 const MissionCard = ({ mission, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
   const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
 
