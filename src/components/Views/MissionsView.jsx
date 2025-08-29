@@ -207,37 +207,38 @@ const getCategoryIcon = (category) => {
 
 // Componente de tarjeta de misión
 const MissionCard = ({ mission, handleCompleteMission, loading, canComplete }) => {
-  // ... resto del código anterior ...
-  
+  const getMissionIcon = (type) => {
+    switch (type) {
+      case 'strength': return <Zap size={18} className="mission-icon" />;
+      case 'skill': return <Target size={18} className="mission-icon" />;
+      case 'intelligence': return <Brain size={18} className="mission-icon" />;
+      case 'social': return <Users size={18} className="mission-icon" />;
+      case 'club': return <Castle size={18} className="mission-icon" />;
+      case 'endurance': return <Heart size={18} className="mission-icon" />;
+      default: return <Award size={18} className="mission-icon" />;
+    }
+  };
+
+  const getMissionBadge = (resetInterval) => {
+    switch (resetInterval) {
+      case 'daily': return 'Diaria';
+      case 'weekly': return 'Semanal';
+      case 'monthly': return 'Mensual';
+      default: return null;
+    }
+  };
+
   const getRequirementText = () => {
     if (mission.required_mission_id) {
-      const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
-      return `Requiere: ${requiredMission?.name || 'misión previa'}`;
+      return "Requiere completar otra misión primero";
     }
     
     if (mission.required_completion_count > 0) {
-      if (mission.reset_interval === 'weekly') {
-        const completedDailyMissions = missionsData.filter(m => 
-          m.reset_interval === 'daily' && m.is_completed
-        ).length;
-        
-        return `Completa ${completedDailyMissions}/${mission.required_completion_count} misiones diarias`;
-      }
-      
-      if (mission.reset_interval === 'monthly') {
-        const completedWeeklyMissions = missionsData.filter(m => 
-          m.reset_interval === 'weekly' && m.is_completed
-        ).length;
-        
-        return `Completa ${completedWeeklyMissions}/${mission.required_completion_count} misiones semanales`;
-      }
-      
-      return `Requiere completar ${mission.required_completion_count} misiones`;
+      return `Requiere completar ${mission.required_completion_count} misiones de esta cadena`;
     }
     
     return null;
   };
-
 
   const requirementText = getRequirementText();
 
