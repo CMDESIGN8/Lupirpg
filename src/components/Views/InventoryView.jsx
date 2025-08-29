@@ -1,6 +1,7 @@
 import { Sword, Backpack, DollarSign, ChevronDown } from 'lucide-react';
 import MessageDisplay from '../UI/MessageDisplay';
 import '../styles/InventoryView.css';
+import itemAssets from '../../utils/itemAssets';
 
 const InventoryView = ({ inventory, handleEquipItem, handleUnequipItem, setItemToSell, setSellPrice, setView, loading, message }) => (
   <div className="inventory-container">
@@ -15,6 +16,14 @@ const InventoryView = ({ inventory, handleEquipItem, handleUnequipItem, setItemT
         {inventory.length > 0 ? (
           inventory.map(item => (
             <div key={item.id} className={`inventory-item ${item.is_equipped ? 'item-equipped' : ''}`}>
+               {/* Imagen estilo RPG */}
+  <div className="item-image-wrapper">
+    <img
+      src={itemAssets[item.items.name] || "/assets/items/default.png"}
+      alt={item.items.name}
+      className="item-image"
+    />
+  </div>
               <div className="item-header">
                 <h3 className="item-name">{item.items.name}</h3>
                 <p className="item-stats">

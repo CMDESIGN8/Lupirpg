@@ -339,3 +339,27 @@
     flex-direction: column;
   }
 }
+
+.item-image-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.item-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  image-rendering: pixelated; /* 🎮 estilo retro RPG */
+  border-radius: 12px;
+  border: 2px solid var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+  background: rgba(0, 30, 60, 0.6);
+  padding: 6px;
+  transition: transform 0.3s ease;
+}
+
+.inventory-item:hover .item-image {
+  transform: scale(1.1) rotate(-3deg);
+}
