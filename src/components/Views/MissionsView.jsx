@@ -34,25 +34,67 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
 
   // Función para verificar requisitos de misiones
   const canCompleteMission = (mission) => {
-    if (mission.is_completed) return false;
-    
-    // Verificar si requiere otra misión completada primero
-    if (mission.required_mission_id) {
-      const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
-      if (!requiredMission || !requiredMission.is_completed) return false;
+  if (mission.is_completed) return false;
+  
+  const requirements = [];
+  
+  // Verificar misión requerida
+  if (mission.required_mission_id) {
+    const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
+    if (!requiredMission || !requiredMission.is_completed) {
+      requirements.push(`Completar misión: ${requiredMission?.name || 'Previa'}`);
     }
+  }
+  
+  // Verificar número de misiones completadas requeridas
+  if (mission.required_completion_count > 0) {
+    let completedCount = 0;
+    let targetType = '';
     
-    // Verificar si requiere un número específico de completadas en una cadena
-    if (mission.required_completion_count > 0) {
-      const completedDailyMissions = missionsData.filter(m => 
+    if (mission.reset_interval === 'weekly') {
+      completedCount = missionsData.filter(m => 
         m.reset_interval === 'daily' && m.is_completed
       ).length;
-      
-      if (completedDailyMissions < mission.required_completion_count) return false;
+      targetType = 'diarias';
+    } 
+    else if (mission.reset_interval === 'monthly') {
+      completedCount = missionsData.filter(m => 
+        m.reset_interval === 'weekly' && m.is_completed
+      ).length;
+      targetType = 'semanales';
+    }
+    else if (mission.quest_chain_id) {
+      completedCount = missionsData.filter(m => 
+        m.quest_chain_id === mission.quest_chain_id && m.is_completed
+      ).length;
+      targetType = 'de esta cadena';
     }
     
-    return true;
+    if (completedCount < mission.required_completion_count) {
+      requirements.push(`Completar ${mission.required_completion_count} misiones ${targetType} (${completedCount}/${mission.required_completion_count})`);
+    }
+  }
+  
+  // Verificar nivel requerido
+  if (mission.required_level && playerData?.level < mission.required_level) {
+    requirements.push(`Nivel ${mission.required_level} requerido (Nivel ${playerData?.level})`);
+  }
+  
+  // Verificar items requeridos
+  if (mission.required_items && mission.required_items.length > 0) {
+    const missingItems = mission.required_items.filter(itemId => 
+      !inventory.some(invItem => invItem.item_id === itemId)
+    );
+    if (missingItems.length > 0) {
+      requirements.push(`Items requeridos: ${missingItems.length} items necesarios`);
+    }
+  }
+  
+  return {
+    canComplete: requirements.length === 0,
+    requirements: requirements
   };
+};
 
   // Agrupar misiones por categoría y filtrar por deporte/posición del jugador
   const filterMissionsByPlayer = (missions) => {
@@ -173,15 +215,16 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
                   
                   <div className="missions-list">
                     {groupedMissions[category].map(mission => (
-                      <MissionCard 
-                        key={mission.id} 
-                        mission={mission} 
-                        handleCompleteMission={handleCompleteMission} 
-                        loading={loading}
-                        canComplete={canCompleteMission(mission)}
-                        missionsData={missionsData}
-                      />
-                    ))}
+  <MissionCard 
+    key={mission.id} 
+    mission={mission} 
+    handleCompleteMission={handleCompleteMission} 
+    loading={loading}
+    missionsData={missionsData}
+    inventory={inventory}
+    playerData={playerData}
+  />
+))}
                   </div>
                 </div>
               )
@@ -210,7 +253,8 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
 };
 
 // Componente de tarjeta de misión (FUERA del componente principal)
-const MissionCard = ({ mission, handleCompleteMission, loading, canComplete, missionsData }) => {
+const MissionCard = ({ mission, handleCompleteMission, loading, missionsData, inventory, playerData }) => {
+  const { canComplete, requirements } = canCompleteMission(mission);
   // Función para obtener icono de misión
   const getMissionIcon = (type) => {
     switch (type) {
@@ -266,7 +310,7 @@ const MissionCard = ({ mission, handleCompleteMission, loading, canComplete, mis
 
   const requirementText = getRequirementText();
 
-  return (
+return (
     <div className={`mission-card ${!canComplete && !mission.is_completed ? 'locked' : ''}`}>
       <div className="mission-header">
         <div className="mission-title-container">
@@ -277,6 +321,9 @@ const MissionCard = ({ mission, handleCompleteMission, loading, canComplete, mis
           <span className={`mission-badge ${mission.reset_interval}`}>
             {getMissionBadge(mission.reset_interval)}
           </span>
+        )}
+        {mission.is_completed && (
+          <span className="mission-badge completed">✓ Completada</span>
         )}
       </div>
       
@@ -289,12 +336,19 @@ const MissionCard = ({ mission, handleCompleteMission, loading, canComplete, mis
         </div>
       )}
       
-      {requirementText && !mission.is_completed && (
-        <div className="mission-requirement">
-          <span className="requirement-text">{requirementText}</span>
+      {/* MOSTRAR REQUISITOS DE DESBLOQUEO */}
+      {!canComplete && !mission.is_completed && requirements.length > 0 && (
+        <div className="mission-requirements">
+          <h4>Requisitos para desbloquear:</h4>
+          <ul>
+            {requirements.map((req, index) => (
+              <li key={index} className="requirement-item">• {req}</li>
+            ))}
+          </ul>
         </div>
       )}
       
+      {/* PROGRESO DE LA MISIÓN */}
       {mission.progress !== undefined && mission.goal_value > 1 && (
         <div className="mission-progress">
           <div className="progress-text">
@@ -308,25 +362,21 @@ const MissionCard = ({ mission, handleCompleteMission, loading, canComplete, mis
         </div>
       )}
       
+      {/* RECOMPENSAS */}
       <div className="mission-rewards">
         <span className="rewards-label">Recompensa:</span>
         <div className="rewards-container">
-          <span className="reward-xp">
-            {mission.xp_reward} XP
-          </span>
+          <span className="reward-xp">{mission.xp_reward} XP</span>
           {mission.skill_points_reward > 0 && (
-            <span className="reward-skill">
-              +{mission.skill_points_reward} Puntos de Habilidad
-            </span>
+            <span className="reward-skill">+{mission.skill_points_reward} Puntos</span>
           )}
           {mission.lupicoins_reward > 0 && (
-            <span className="reward-coins">
-              +{mission.lupicoins_reward} LupiCoins
-            </span>
+            <span className="reward-coins">+{mission.lupicoins_reward} LupiCoins</span>
           )}
         </div>
       </div>
       
+      {/* BOTÓN DE ACCIÓN */}
       <ThemedButton 
         onClick={() => handleCompleteMission(mission)} 
         disabled={mission.is_completed || loading || !canComplete}

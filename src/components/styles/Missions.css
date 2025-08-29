@@ -486,3 +486,40 @@
   margin-bottom: 10px;
   font-size: 0.8rem;
 }
+
+/* Agrega esto a tu Missions.css */
+.mission-requirements {
+  background: rgba(255, 100, 100, 0.1);
+  border: 1px solid rgba(255, 100, 100, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.mission-requirements h4 {
+  color: #ff6666;
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.requirement-item {
+  color: #ff8888;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.mission-card.locked {
+  opacity: 0.8;
+  background: rgba(50, 50, 50, 0.3);
+}
+
+.mission-card.locked .mission-title {
+  color: #888;
+}
+
+.mission-badge.completed {
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  color: #003311;
+}

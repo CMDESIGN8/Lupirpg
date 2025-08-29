@@ -233,48 +233,86 @@ const App = () => {
   };
 
   const handleCompleteMission = async (mission) => {
-    if (mission.is_completed) { 
-      showMessage('Esta misión ya ha sido completada.'); 
-      return; 
-    }
+  const { canComplete } = canCompleteMission(mission);
+  
+  if (!canComplete) {
+    showMessage('No cumples los requisitos para esta misión');
+    return;
+  }
+  
+  if (mission.is_completed) {
+    showMessage('Esta misión ya ha sido completada.');
+    return;
+  }
+  
+  setLoading(true);
+  try {
+    // Usar UPSERT para evitar error de duplicado
+    const { error: upsertError } = await supabaseClient
+      .from('player_missions')
+      .upsert(
+        { 
+          player_id: session.user.id, 
+          mission_id: mission.id,
+          progress: mission.goal_value || 1,
+          completed_at: new Date().toISOString()
+        },
+        {
+          onConflict: 'player_id,mission_id',
+          ignoreDuplicates: false
+        }
+      );
     
-    setLoading(true);
-    try {
-      const { error: insertError } = await supabaseClient
-        .from('player_missions')
-        .insert([{ player_id: session.user.id, mission_id: mission.id }]);
-      
-      if (insertError) throw insertError;
-      
-      const { data: updatedPlayer, error: updateError } = await supabaseClient
-        .from('players')
-        .update({ 
-          experience: playerData.experience + mission.xp_reward, 
-          skill_points: playerData.skill_points + mission.skill_points_reward 
-        })
-        .eq('id', session.user.id)
-        .select();
-      
-      if (updateError) throw updateError;
-      
-      setPlayerData(prev => ({ 
-        ...prev, 
-        experience: prev.experience + mission.xp_reward, 
-        skill_points: prev.skill_points + mission.skill_points_reward 
-      }));
-      
-      setAvailablePoints(prev => prev + mission.skill_points_reward);
+    if (upsertError) throw upsertError;
+
+    // Actualizar recompensas
+    const { data: updatedPlayer, error: updateError } = await supabaseClient
+      .from('players')
+      .update({ 
+        experience: playerData.experience + mission.xp_reward, 
+        skill_points: playerData.skill_points + mission.skill_points_reward,
+        lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0),
+        daily_missions_completed: mission.reset_interval === 'daily' ? 
+          (playerData.daily_missions_completed || 0) + 1 : 
+          playerData.daily_missions_completed
+      })
+      .eq('id', session.user.id)
+      .select();
+    
+    if (updateError) throw updateError;
+
+    // Actualizar estado local
+    setPlayerData(prev => ({
+      ...prev,
+      experience: prev.experience + mission.xp_reward,
+      skill_points: prev.skill_points + mission.skill_points_reward,
+      lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0),
+      daily_missions_completed: mission.reset_interval === 'daily' ? 
+        (prev.daily_missions_completed || 0) + 1 : 
+        prev.daily_missions_completed
+    }));
+    
+    // Marcar misión como completada
+    setMissionsData(prev => prev.map(m => 
+      m.id === mission.id ? { ...m, is_completed: true } : m 
+    ));
+    
+    showMessage(`¡Misión completada! Recompensas obtenidas.`);
+    
+  } catch (err) {
+    if (err.code === '23505') {
+      // Si ya existe, solo actualizar UI
       setMissionsData(prev => prev.map(m => 
-        m.id === mission.id ? { ...m, is_completed: true } : m
+        m.id === mission.id ? { ...m, is_completed: true } : m 
       ));
-      
-      showMessage(`¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`);
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
-      setLoading(false);
+      showMessage('Misión ya completada anteriormente.');
+    } else {
+      showMessage('Error: ' + err.message);
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleLogin = async (e) => {
     e.preventDefault();
