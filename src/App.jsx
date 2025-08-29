@@ -88,6 +88,26 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Agrega este useEffect para reset diario automático
+useEffect(() => {
+  const checkDailyReset = async () => {
+    if (!playerData) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const lastReset = localStorage.getItem('last_daily_reset');
+    
+    if (lastReset !== today) {
+      // Resetear contador diario
+      localStorage.setItem('last_daily_reset', today);
+      
+      // Aquí puedes agregar lógica para resetear misiones diarias
+      console.log('Nuevo día - reset de misiones diarias');
+    }
+  };
+  
+  checkDailyReset();
+}, [playerData]);
+
   useEffect(() => {
     if (view !== 'chat' || !supabaseClient) return;
     
@@ -232,25 +252,9 @@ const App = () => {
     }
   };
 
-  const handleCompleteMission = async (mission) => {
-  // Verificación básica en lugar de usar canCompleteMission
-  if (mission.is_completed) {
-    showMessage('Esta misión ya ha sido completada.');
-    return;
-  }
-  
-  // Verificación simple de requisitos (puedes hacerla más compleja si necesitas)
-  if (mission.required_mission_id) {
-    const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
-    if (!requiredMission || !requiredMission.is_completed) {
-      showMessage('Debes completar la misión requerida primero.');
-      return;
-    }
-  }
-  
-  setLoading(true);
+  const completeMission = async (mission) => {
   try {
-    // Usar UPSERT para evitar error de duplicado
+    // 1. Registrar misión completada
     const { error: upsertError } = await supabaseClient
       .from('player_missions')
       .upsert(
@@ -260,148 +264,119 @@ const App = () => {
           progress: mission.goal_value || 1,
           completed_at: new Date().toISOString()
         },
-        {
-          onConflict: 'player_id,mission_id',
-          ignoreDuplicates: false
-        }
+        { onConflict: 'player_id,mission_id' }
       );
     
     if (upsertError) throw upsertError;
 
-    // Actualizar recompensas
+    // 2. Actualizar jugador (XP, skills, coins)
+    const updateData = {
+      experience: playerData.experience + mission.xp_reward, 
+      skill_points: playerData.skill_points + mission.skill_points_reward,
+      lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0)
+    };
+
     const { data: updatedPlayer, error: updateError } = await supabaseClient
       .from('players')
-      .update({ 
-        experience: playerData.experience + mission.xp_reward, 
-        skill_points: playerData.skill_points + mission.skill_points_reward,
-        lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0),
-        daily_missions_completed: mission.reset_interval === 'daily' ? 
-          (playerData.daily_missions_completed || 0) + 1 : 
-          playerData.daily_missions_completed
-      })
+      .update(updateData)
       .eq('id', session.user.id)
       .select();
     
     if (updateError) throw updateError;
 
-    // Actualizar estado local
+    // 3. Actualizar contador diario (SI ES MISIÓN DIARIA)
+    let newDailyCount = playerData.daily_missions_completed || 0;
+    
+    if (mission.reset_interval === 'daily') {
+      // Actualizar campo simple en players (backup)
+      const { error: dailyError } = await supabaseClient
+        .from('players')
+        .update({ 
+          daily_missions_completed: (playerData.daily_missions_completed || 0) + 1 
+        })
+        .eq('id', session.user.id);
+      
+      if (dailyError) console.warn('Error updating daily count:', dailyError);
+      
+      // Actualizar tabla de tracking diario (sistema principal)
+      const today = new Date().toISOString().split('T')[0];
+      const { error: progressError } = await supabaseClient
+        .from('player_daily_progress')
+        .upsert(
+          {
+            player_id: session.user.id,
+            date: today,
+            daily_missions_completed: (playerData.daily_missions_completed || 0) + 1,
+            last_updated: new Date().toISOString()
+          },
+          { onConflict: 'player_id,date' }
+        );
+      
+      if (progressError) console.warn('Error updating daily progress:', progressError);
+      
+      newDailyCount += 1;
+    }
+
+    // 4. Actualizar estado local
     setPlayerData(prev => ({
       ...prev,
       experience: prev.experience + mission.xp_reward,
       skill_points: prev.skill_points + mission.skill_points_reward,
       lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0),
-      daily_missions_completed: mission.reset_interval === 'daily' ? 
-        (prev.daily_missions_completed || 0) + 1 : 
-        prev.daily_missions_completed
+      daily_missions_completed: newDailyCount
     }));
     
-    // Marcar misión como completada
+    setAvailablePoints(prev => prev + mission.skill_points_reward);
+    setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
+    
+    // 5. Actualizar UI de misiones
     setMissionsData(prev => prev.map(m => 
-      m.id === mission.id ? { ...m, is_completed: true } : m 
+      m.id === mission.id ? { ...m, is_completed: true, progress: mission.goal_value || 1 } : m 
     ));
     
-    showMessage(`¡Misión completada! Recompensas obtenidas.`);
-    
-  } catch (err) {
-    if (err.code === '23505') {
-      // Si ya existe, solo actualizar UI
-      setMissionsData(prev => prev.map(m => 
-        m.id === mission.id ? { ...m, is_completed: true } : m 
-      ));
-      showMessage('Misión ya completada anteriormente.');
-    } else {
-      showMessage('Error: ' + err.message);
+    // 6. Mostrar mensaje de éxito
+    let rewardMessage = `¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`;
+    if (mission.lupicoins_reward > 0) {
+      rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
     }
-  } finally {
-    setLoading(false);
+    
+    showMessage(rewardMessage);
+    
+  } catch (error) {
+    console.error('Error in completeMission:', error);
+    throw error;
+  }
+};// Agrega esta función a tu App.jsx
+const getDailyMissionsCompleted = async (playerId) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Intentar obtener de la tabla de tracking
+    const { data: progressData, error: progressError } = await supabaseClient
+      .from('player_daily_progress')
+      .select('daily_missions_completed')
+      .eq('player_id', playerId)
+      .eq('date', today)
+      .single();
+    
+    if (!progressError && progressData) {
+      return progressData.daily_missions_completed;
+    }
+    
+    // Fallback: obtener del campo legacy en players
+    const { data: playerData, error: playerError } = await supabaseClient
+      .from('players')
+      .select('daily_missions_completed')
+      .eq('id', playerId)
+      .single();
+    
+    return playerError ? 0 : (playerData?.daily_missions_completed || 0);
+    
+  } catch (error) {
+    return 0;
   }
 };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!supabaseClient) { 
-      showMessage('Supabase client not available.'); 
-      return; 
-    }
-    
-    setLoading(true);
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) showMessage(error.message);
-    else showMessage('Inicio de sesión exitoso. Redirigiendo...');
-    setLoading(false);
-  };
-
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    if (!supabaseClient) { 
-      showMessage('Supabase client not available.'); 
-      return; 
-    }
-    
-    setLoading(true);
-    const { error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) showMessage(error.message);
-    else showMessage('Registro exitoso. Revisa tu correo electrónico para confirmar.');
-    setLoading(false);
-  };
-
-  const handleCreateAccount = async (e) => {
-    e.preventDefault();
-    if (!supabaseClient || !session) { 
-      showMessage('Supabase client or session not available.'); 
-      return; 
-    }
-    
-    setLoading(true);
-    try {
-      const { data: existingUser, error: userCheckError } = await supabaseClient
-        .from('players')
-        .select('username')
-        .eq('username', username)
-        .single();
-      
-      if (existingUser) throw new Error('El nombre de usuario ya existe. Por favor, elige otro.');
-      if (userCheckError && userCheckError.code !== "PGRST116") throw userCheckError;
-      
-      const { data: newPlayerData, error: playerError } = await supabaseClient
-        .from('players')
-        .insert([{ 
-          id: session.user.id, 
-          level: 1, 
-          experience: 0, 
-          position, 
-          sport, 
-          skill_points: availablePoints, 
-          username, 
-          lupi_coins: 100 
-        }])
-        .select()
-        .single();
-      
-      if (playerError) throw playerError;
-      
-      const skillInserts = Object.entries(skills).map(([skill_name, skill_value]) => ({ 
-        player_id: session.user.id, 
-        skill_name, 
-        skill_value 
-      }));
-      
-      const { data: skillsData, error: skillsError } = await supabaseClient
-        .from('player_skills')
-        .insert(skillInserts)
-        .select();
-      
-      if (skillsError) throw skillsError;
-      
-      showMessage('Personaje creado con éxito. ¡Bienvenido a Lupi App!');
-      setPlayerData({ ...newPlayerData, skills: skillsData || [] });
-      setView('dashboard');
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSkillChange = (skill, value) => {
     const newPoints = availablePoints - value;
