@@ -23,10 +23,7 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
   };
 
   // Agrupar misiones por categoría
-  // Reemplazar la creación de groupedMissions con esta versión filtrada
-const groupedMissions = filterMissionsByPlayer(missionsData)
-  .filter(mission => shouldShowMission(mission))
-  .reduce((acc, mission) => {
+  const groupedMissions = filterMissionsByPlayer(missionsData).reduce((acc, mission) => {
     let category = 'general';
     
     // Determinar categoría basada en el tipo de misión
