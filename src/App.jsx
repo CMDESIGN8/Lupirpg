@@ -238,6 +238,24 @@ const App = () => {
     return;
   }
   
+  // Verificar requisitos
+  if (mission.required_mission_id) {
+    const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
+    if (!requiredMission || !requiredMission.is_completed) {
+      showMessage('Debes completar la misión requerida primero.');
+      return;
+    }
+  }
+  
+  if (mission.required_completion_count > 0) {
+    const chainMissions = missionsData.filter(m => m.quest_chain_id === mission.quest_chain_id);
+    const completedInChain = chainMissions.filter(m => m.is_completed).length;
+    if (completedInChain < mission.required_completion_count) {
+      showMessage(`Necesitas completar ${mission.required_completion_count} misiones de esta cadena primero.`);
+      return;
+    }
+  }
+  
   setLoading(true);
   try {
     // Para misiones con progreso, actualizar el progreso
@@ -247,46 +265,7 @@ const App = () => {
       
       if (isNowCompleted) {
         // Completar la misión y dar recompensa
-        const { error: insertError } = await supabaseClient
-          .from('player_missions')
-          .insert([{ 
-            player_id: session.user.id, 
-            mission_id: mission.id,
-            progress: newProgress,
-            completed_at: new Date().toISOString()
-          }]);
-        
-        if (insertError) throw insertError;
-        
-        // Actualizar XP, puntos de habilidad Y LupiCoins
-        const { data: updatedPlayer, error: updateError } = await supabaseClient
-          .from('players')
-          .update({ 
-            experience: playerData.experience + mission.xp_reward, 
-            skill_points: playerData.skill_points + mission.skill_points_reward,
-            lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0)
-          })
-          .eq('id', session.user.id)
-          .select();
-        
-        if (updateError) throw updateError;
-        
-        setPlayerData(prev => ({
-          ...prev,
-          experience: prev.experience + mission.xp_reward,
-          skill_points: prev.skill_points + mission.skill_points_reward,
-          lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0)
-        }));
-        
-        setAvailablePoints(prev => prev + mission.skill_points_reward);
-        setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
-        
-        // Mensaje con todas las recompensas
-        let rewardMessage = `¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`;
-        if (mission.lupicoins_reward > 0) {
-          rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
-        }
-        showMessage(rewardMessage);
+        await completeMission(mission);
       } else {
         // Solo actualizar progreso
         const { error: upsertError } = await supabaseClient
@@ -299,62 +278,82 @@ const App = () => {
         
         if (upsertError) throw upsertError;
         showMessage(`Progreso actualizado: ${newProgress}/${mission.goal_value}`);
+        
+        // Actualizar UI
+        setMissionsData(prev => prev.map(m => 
+          m.id === mission.id ? { 
+            ...m, 
+            progress: newProgress
+          } : m 
+        ));
       }
-      
-      // Actualizar UI
-      setMissionsData(prev => prev.map(m => 
-        m.id === mission.id ? { 
-          ...m, 
-          progress: newProgress,
-          is_completed: isNowCompleted
-        } : m 
-      ));
     } else {
       // Para misiones sin progreso (completar directamente)
-      const { error: insertError } = await supabaseClient
-        .from('player_missions')
-        .insert([{ player_id: session.user.id, mission_id: mission.id }]);
-      
-      if (insertError) throw insertError;
-
-      // Actualizar XP, puntos de habilidad Y LupiCoins
-      const { data: updatedPlayer, error: updateError } = await supabaseClient
-        .from('players')
-        .update({ 
-          experience: playerData.experience + mission.xp_reward, 
-          skill_points: playerData.skill_points + mission.skill_points_reward,
-          lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0)
-        })
-        .eq('id', session.user.id)
-        .select();
-      
-      if (updateError) throw updateError;
-
-      setPlayerData(prev => ({
-        ...prev,
-        experience: prev.experience + mission.xp_reward,
-        skill_points: prev.skill_points + mission.skill_points_reward,
-        lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0)
-      }));
-      
-      setAvailablePoints(prev => prev + mission.skill_points_reward);
-      setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
-      
-      setMissionsData(prev => prev.map(m => 
-        m.id === mission.id ? { ...m, is_completed: true } : m 
-      ));
-      
-      // Mensaje con todas las recompensas
-      let rewardMessage = `¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`;
-      if (mission.lupicoins_reward > 0) {
-        rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
-      }
-      showMessage(rewardMessage);
+      await completeMission(mission);
     }
   } catch (err) {
     showMessage(err.message);
   } finally {
     setLoading(false);
+  }
+};
+
+// Función auxiliar para completar misiones
+const completeMission = async (mission) => {
+  const { error: insertError } = await supabaseClient
+    .from('player_missions')
+    .insert([{ 
+      player_id: session.user.id, 
+      mission_id: mission.id,
+      progress: mission.goal_value || 1,
+      completed_at: new Date().toISOString()
+    }]);
+  
+  if (insertError) throw insertError;
+
+  // Actualizar XP, puntos de habilidad Y LupiCoins
+  const { data: updatedPlayer, error: updateError } = await supabaseClient
+    .from('players')
+    .update({ 
+      experience: playerData.experience + mission.xp_reward, 
+      skill_points: playerData.skill_points + mission.skill_points_reward,
+      lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0),
+      daily_missions_completed: mission.reset_interval === 'daily' ? 
+        (playerData.daily_missions_completed || 0) + 1 : 
+        playerData.daily_missions_completed
+    })
+    .eq('id', session.user.id)
+    .select();
+  
+  if (updateError) throw updateError;
+
+  setPlayerData(prev => ({
+    ...prev,
+    experience: prev.experience + mission.xp_reward,
+    skill_points: prev.skill_points + mission.skill_points_reward,
+    lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0),
+    daily_missions_completed: mission.reset_interval === 'daily' ? 
+      (prev.daily_missions_completed || 0) + 1 : 
+      prev.daily_missions_completed
+  }));
+  
+  setAvailablePoints(prev => prev + mission.skill_points_reward);
+  setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
+  
+  setMissionsData(prev => prev.map(m => 
+    m.id === mission.id ? { ...m, is_completed: true, progress: mission.goal_value || 1 } : m 
+  ));
+  
+  // Mensaje con todas las recompensas
+  let rewardMessage = `¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`;
+  if (mission.lupicoins_reward > 0) {
+    rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
+  }
+  showMessage(rewardMessage);
+  
+  // Verificar si se completaron suficientes misiones diarias para desbloquear semanales
+  if (mission.reset_interval === 'daily' && (playerData.daily_missions_completed || 0) + 1 >= 7) {
+    showMessage('¡Felicidades! Has completado 7 misiones diarias. Ahora tienes acceso a misiones semanales.');
   }
 };
 
