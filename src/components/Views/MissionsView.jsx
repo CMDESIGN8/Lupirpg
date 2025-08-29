@@ -1,24 +1,37 @@
-import '../styles/Missions.css'   // 👈 acá importás tu CSS
-import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins } from 'lucide-react';
+import '../styles/Missions.css';
+import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, Heart, Shield } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import ProgressBar from '../UI/ProgressBar';
 
 const MissionsView = ({ missionsData, handleCompleteMission, loading, message, setView, playerData }) => {
-  // Agrupar misiones por categoría
+  // Agrupar misiones por categoría mejorada
   const groupedMissions = missionsData.reduce((acc, mission) => {
-    const category = mission.category || 'general';
+    let category = 'general';
+    
+    // Determinar categoría basada en el tipo de misión
+    if (mission.type === 'strength') category = 'strength';
+    else if (mission.type === 'skill') category = 'skill';
+    else if (mission.type === 'endurance') category = 'endurance';
+    else if (mission.reset_interval === 'daily') category = 'daily';
+    else if (mission.reset_interval === 'weekly') category = 'weekly';
+    else if (mission.reset_interval === 'monthly') category = 'monthly';
+    else category = mission.category || 'general';
+    
     if (!acc[category]) acc[category] = [];
     acc[category].push(mission);
     return acc;
   }, {});
+
+  // Orden de las categorías para mostrarlas
+  const categoryOrder = ['daily', 'weekly', 'monthly', 'strength', 'skill', 'endurance', 'general'];
 
   return (
     <div className="missions-container">
       <div className="missions-box">
         <div className="missions-header">
           <h2 className="missions-title">
-            <span className="neon-text">MISIONES</span>
+            <span className="neon-text">SISTEMA DE MISIONES</span>
           </h2>
           
           <div className="missions-stats">
@@ -32,7 +45,16 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
               <span className="stat-value">{playerData?.lupi_coins || 0}</span>
               <span className="stat-label">LupiCoins</span>
             </div>
+            <div className="stat-item">
+              <Calendar className="stat-icon" size={20} />
+              <span className="stat-value">{playerData?.daily_missions_completed || 0}/7</span>
+              <span className="stat-label">Misiones Diarias</span>
+            </div>
           </div>
+        </div>
+        
+        <div className="missions-info">
+          <p>Completa 7 misiones diarias para desbloquear una semanal y 4 semanales para una mensual</p>
         </div>
         
         <MessageDisplay message={message} />
@@ -41,21 +63,15 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
           <p className="loading-text">Cargando misiones...</p>
         ) : (
           <div className="missions-content">
-            {Object.keys(groupedMissions).length > 0 ? (
-              Object.entries(groupedMissions).map(([category, missions]) => (
+            {categoryOrder.map(category => (
+              groupedMissions[category] && (
                 <div key={category} className="mission-category">
                   <h3 className="category-title">
-                    {category === 'daily' ? 'Misiones Diarias' : 
-                     category === 'training' ? 'Entrenamiento' : 
-                     category === 'distance' ? 'Carreras' : 
-                     category === 'general' ? 'Misiones Generales' : 
-                     category === 'economy' ? 'Economía' : 
-                     category === 'social' ? 'Social' : 
-                     category.charAt(0).toUpperCase() + category.slice(1)}
+                    {getCategoryTitle(category)}
                   </h3>
                   
                   <div className="missions-list">
-                    {missions.map(mission => (
+                    {groupedMissions[category].map(mission => (
                       <MissionCard 
                         key={mission.id} 
                         mission={mission} 
@@ -65,12 +81,8 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
                     ))}
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="no-missions">
-                <p>No hay misiones disponibles.</p>
-              </div>
-            )}
+              )
+            ))}
             
             <div className="missions-footer">
               <ThemedButton 
@@ -88,14 +100,39 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
   );
 };
 
+// Función auxiliar para obtener títulos de categoría
+const getCategoryTitle = (category) => {
+  switch(category) {
+    case 'daily': return 'Misiones Diarias';
+    case 'weekly': return 'Misiones Semanales';
+    case 'monthly': return 'Misiones Mensuales';
+    case 'strength': return 'Mejora de Fuerza';
+    case 'skill': return 'Mejora de Habilidad';
+    case 'endurance': return 'Mejora de Resistencia';
+    default: return 'Misiones Generales';
+  }
+};
+
 // Componente de tarjeta de misión
 const MissionCard = ({ mission, handleCompleteMission, loading }) => {
   const getMissionIcon = (type) => {
     switch (type) {
-      case 'distance': return <Target size={18} className="mission-icon" />;
-      case 'daily': return <Calendar size={18} className="mission-icon" />;
+      case 'strength': return <Zap size={18} className="mission-icon" />;
+      case 'skill': return <Target size={18} className="mission-icon" />;
+      case 'endurance': return <Heart size={18} className="mission-icon" />;
+      case 'distance': return <Shield size={18} className="mission-icon" />;
       case 'economy': return <Coins size={18} className="mission-icon" />;
+      case 'daily': return <Calendar size={18} className="mission-icon" />;
       default: return <Award size={18} className="mission-icon" />;
+    }
+  };
+
+  const getMissionBadge = (resetInterval) => {
+    switch (resetInterval) {
+      case 'daily': return 'Diaria';
+      case 'weekly': return 'Semanal';
+      case 'monthly': return 'Mensual';
+      default: return null;
     }
   };
 
@@ -106,9 +143,9 @@ const MissionCard = ({ mission, handleCompleteMission, loading }) => {
           {getMissionIcon(mission.type)}
           <h3 className="mission-title">{mission.name}</h3>
         </div>
-        {mission.is_daily && (
-          <span className="mission-daily-badge">
-            Diaria
+        {mission.reset_interval && (
+          <span className={`mission-badge ${mission.reset_interval}`}>
+            {getMissionBadge(mission.reset_interval)}
           </span>
         )}
       </div>
