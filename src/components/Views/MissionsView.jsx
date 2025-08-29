@@ -9,7 +9,7 @@ const MissionsView = ({
   handleCompleteMission, 
   loading, 
   message, 
-  setView, 
+  setView, playerData,
   inventory = [] // ← Valor por defecto para evitar undefined
 }) => {
   // Función para determinar si se debe mostrar la misión
