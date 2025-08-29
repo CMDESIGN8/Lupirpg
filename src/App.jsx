@@ -235,7 +235,7 @@ const App = () => {
   const handleCompleteMission = async (mission) => {
     if (mission.is_completed) { 
       showMessage('Esta misión ya ha sido completada.'); 
-      return; 
+      return;   
     }
     
     setLoading(true);
