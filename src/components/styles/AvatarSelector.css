@@ -210,7 +210,7 @@
   border-radius: var(--border-radius-sm);
   font-size: 0.8rem;
   font-weight: 700;
-  color: white;
+  color: rgb(192, 192, 192);
 }
 
 .equipped-badge {
