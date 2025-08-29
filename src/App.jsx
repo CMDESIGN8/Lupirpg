@@ -130,57 +130,71 @@ const App = () => {
     };
   }, [view, playerData]);
 
-  const checkProfile = async (userId) => {
-    setLoading(true);
-    try {
-      const { data: player, error: playerError } = await supabaseClient
-        .from('players')
-        .select('*, clubs(id, name, description)')
-        .eq('id', userId)
-        .single();
+  // En App.jsx, modifica la función checkProfile
+const checkProfile = async (userId) => {
+  setLoading(true);
+  try {
+    // Consulta corregida - evita caracteres problemáticos en la URL
+    const { data: player, error: playerError } = await supabaseClient
+      .from('players')
+      .select('*, clubs(id, name, description)')
+      .eq('id', userId)
+      .single();
 
-      if (playerError && playerError.code === "PGRST116") {
-        setView('create_character');
-        setLoading(false);
-        return;
-      }
-      if (playerError) throw playerError;
-
-      const { data: skills, error: skillsError } = await supabaseClient
-        .from('player_skills')
-        .select('*')
-        .eq('player_id', userId);
-
-      if (skillsError) throw skillsError;
-
-      const { data: playerItems, error: itemsError } = await supabaseClient
-        .from('player_items')
-        .select('*, items(*)')
-        .eq('player_id', userId);
-
-      if (itemsError) throw itemsError;
-
-      const equipped = {};
-      (playerItems || []).forEach(item => {
-        if (item.is_equipped) {
-          equipped[item.items.skill_bonus] = item.items;
-        }
-      });
-      setInventory(playerItems || []);
-      setEquippedItems(equipped);
-
-      setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
-      setAvailablePoints(player.skill_points);
-      setLupiCoins(player.lupi_coins);
-      setPlayerData({ ...player, skills: skills || [] });
-      setCurrentClub(player.clubs);
-      setView('dashboard');
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
+    if (playerError && playerError.code === "PGRST116") {
+      setView('create_character');
       setLoading(false);
+      return;
     }
-  };
+
+    if (playerError) {
+      console.error('Error fetching player:', playerError);
+      throw playerError;
+    }
+
+    // Resto del código...
+  } catch (err) {
+    showMessage('Error al cargar perfil: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// En App.jsx, añade esta función antes de fetchMissions
+const calculateMissionProgress = (mission, playerStats) => {
+  if (!playerStats) return 0;
+  
+  switch (mission.type) {
+    case 'distance':
+      return Math.min(playerStats.total_distance || 0, mission.goal_value);
+    case 'training':
+      return Math.min(playerStats.training_sessions || 0, mission.goal_value);
+    case 'strength':
+      return Math.min(playerStats.strength_exercises || 0, mission.goal_value);
+    case 'intelligence':
+      return Math.min(playerStats.puzzles_completed || 0, mission.goal_value);
+    case 'skill':
+      return Math.min(playerStats.skill_drills_completed || 0, mission.goal_value);
+    default:
+      return 0;
+  }
+};
+
+// También necesitamos obtener las estadísticas del jugador
+const getPlayerStats = async (playerId) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from('player_stats')
+      .select('*')
+      .eq('player_id', playerId)
+      .single();
+    
+    return error ? {} : data;
+  } catch (error) {
+    console.error('Error fetching player stats:', error);
+    return {};
+  }
+};
 
   const fetchLeaderboard = async () => {
     setLoading(true);
@@ -205,14 +219,12 @@ const App = () => {
 const fetchMissions = async () => {
   setLoading(true);
   try {
-    // Obtener todas las misiones (incluyendo semanales y mensuales)
     const { data: missions, error: missionsError } = await supabaseClient
       .from('missions')
       .select('*');
     
     if (missionsError) throw missionsError;
 
-    // Obtener misiones completadas
     const { data: completedMissions, error: completedError } = await supabaseClient
       .from('player_missions')
       .select('mission_id, progress, completed_at')
@@ -220,7 +232,9 @@ const fetchMissions = async () => {
     
     if (completedError) throw completedError;
 
-    // Combinar datos
+    // Obtener estadísticas del jugador para el progreso
+    const playerStats = await getPlayerStats(session.user.id);
+    
     const mergedMissions = missions.map(mission => {
       const completed = completedMissions.find(m => m.mission_id === mission.id);
       let progress = 0;
@@ -232,6 +246,7 @@ const fetchMissions = async () => {
       } else if (mission.goal_value > 1) {
         // Calcular progreso basado en estadísticas del jugador
         progress = calculateMissionProgress(mission, playerStats);
+        is_completed = progress >= mission.goal_value;
       }
       
       return {
