@@ -130,71 +130,57 @@ const App = () => {
     };
   }, [view, playerData]);
 
-  // En App.jsx, modifica la función checkProfile
-const checkProfile = async (userId) => {
-  setLoading(true);
-  try {
-    // Consulta corregida - evita caracteres problemáticos en la URL
-    const { data: player, error: playerError } = await supabaseClient
-      .from('players')
-      .select('*, clubs(id, name, description)')
-      .eq('id', userId)
-      .single();
+  const checkProfile = async (userId) => {
+    setLoading(true);
+    try {
+      const { data: player, error: playerError } = await supabaseClient
+        .from('players')
+        .select('*, clubs(id, name, description)')
+        .eq('id', userId)
+        .single();
 
-    if (playerError && playerError.code === "PGRST116") {
-      setView('create_character');
+      if (playerError && playerError.code === "PGRST116") {
+        setView('create_character');
+        setLoading(false);
+        return;
+      }
+      if (playerError) throw playerError;
+
+      const { data: skills, error: skillsError } = await supabaseClient
+        .from('player_skills')
+        .select('*')
+        .eq('player_id', userId);
+
+      if (skillsError) throw skillsError;
+
+      const { data: playerItems, error: itemsError } = await supabaseClient
+        .from('player_items')
+        .select('*, items(*)')
+        .eq('player_id', userId);
+
+      if (itemsError) throw itemsError;
+
+      const equipped = {};
+      (playerItems || []).forEach(item => {
+        if (item.is_equipped) {
+          equipped[item.items.skill_bonus] = item.items;
+        }
+      });
+      setInventory(playerItems || []);
+      setEquippedItems(equipped);
+
+      setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
+      setAvailablePoints(player.skill_points);
+      setLupiCoins(player.lupi_coins);
+      setPlayerData({ ...player, skills: skills || [] });
+      setCurrentClub(player.clubs);
+      setView('dashboard');
+    } catch (err) {
+      showMessage(err.message);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (playerError) {
-      console.error('Error fetching player:', playerError);
-      throw playerError;
-    }
-
-    // Resto del código...
-  } catch (err) {
-    showMessage('Error al cargar perfil: ' + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-// En App.jsx, añade esta función antes de fetchMissions
-const calculateMissionProgress = (mission, playerStats) => {
-  if (!playerStats) return 0;
-  
-  switch (mission.type) {
-    case 'distance':
-      return Math.min(playerStats.total_distance || 0, mission.goal_value);
-    case 'training':
-      return Math.min(playerStats.training_sessions || 0, mission.goal_value);
-    case 'strength':
-      return Math.min(playerStats.strength_exercises || 0, mission.goal_value);
-    case 'intelligence':
-      return Math.min(playerStats.puzzles_completed || 0, mission.goal_value);
-    case 'skill':
-      return Math.min(playerStats.skill_drills_completed || 0, mission.goal_value);
-    default:
-      return 0;
-  }
-};
-
-// También necesitamos obtener las estadísticas del jugador
-const getPlayerStats = async (playerId) => {
-  try {
-    const { data, error } = await supabaseClient
-      .from('player_stats')
-      .select('*')
-      .eq('player_id', playerId)
-      .single();
-    
-    return error ? {} : data;
-  } catch (error) {
-    console.error('Error fetching player stats:', error);
-    return {};
-  }
-};
+  };
 
   const fetchLeaderboard = async () => {
     setLoading(true);
@@ -215,203 +201,80 @@ const getPlayerStats = async (playerId) => {
     }
   };
 
-  // En la función fetchMissions de App.jsx, asegurarnos de incluir siempre las misiones semanales y mensuales
-const fetchMissions = async () => {
-  setLoading(true);
-  try {
-    const { data: missions, error: missionsError } = await supabaseClient
-      .from('missions')
-      .select('*');
-    
-    if (missionsError) throw missionsError;
-
-    const { data: completedMissions, error: completedError } = await supabaseClient
-      .from('player_missions')
-      .select('mission_id, progress, completed_at')
-      .eq('player_id', session.user.id);
-    
-    if (completedError) throw completedError;
-
-    // Obtener estadísticas del jugador para el progreso
-    const playerStats = await getPlayerStats(session.user.id);
-    
-    const mergedMissions = missions.map(mission => {
-      const completed = completedMissions.find(m => m.mission_id === mission.id);
-      let progress = 0;
-      let is_completed = false;
+  const fetchMissions = async () => {
+    setLoading(true);
+    try {
+      const { data: missions, error: missionsError } = await supabaseClient
+        .from('missions')
+        .select('*');
       
-      if (completed) {
-        is_completed = true;
-        progress = completed.progress || mission.goal_value;
-      } else if (mission.goal_value > 1) {
-        // Calcular progreso basado en estadísticas del jugador
-        progress = calculateMissionProgress(mission, playerStats);
-        is_completed = progress >= mission.goal_value;
-      }
+      if (missionsError) throw missionsError;
       
-      return {
-        ...mission,
-        is_completed,
-        progress
-      };
-    });
-
-    setMissionsData(mergedMissions);
-  } catch (err) {
-    showMessage(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      const { data: completedMissions, error: completedError } = await supabaseClient
+        .from('player_missions')
+        .select('mission_id')
+        .eq('player_id', session.user.id);
+      
+      if (completedError) throw completedError;
+      
+      const completedIds = new Set(completedMissions.map(m => m.mission_id));
+      const mergedMissions = missions.map(mission => ({ 
+        ...mission, 
+        is_completed: completedIds.has(mission.id) 
+      }));
+      
+      setMissionsData(mergedMissions);
+      showMessage('Misiones cargadas.');
+    } catch (err) {
+      showMessage(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCompleteMission = async (mission) => {
-  if (mission.is_completed) {
-    showMessage('Esta misión ya ha sido completada.');
-    return;
-  }
-  
-  // Verificar requisitos
-  if (mission.required_mission_id) {
-    const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
-    if (!requiredMission || !requiredMission.is_completed) {
-      showMessage('Debes completar la misión requerida primero.');
-      return;
+    if (mission.is_completed) { 
+      showMessage('Esta misión ya ha sido completada.'); 
+      return; 
     }
-  }
-  
-  if (mission.required_completion_count > 0) {
-    const chainMissions = missionsData.filter(m => m.quest_chain_id === mission.quest_chain_id);
-    const completedInChain = chainMissions.filter(m => m.is_completed).length;
-    if (completedInChain < mission.required_completion_count) {
-      showMessage(`Necesitas completar ${mission.required_completion_count} misiones de esta cadena primero.`);
-      return;
-    }
-  }
-  
-  setLoading(true);
-  try {
-    // Para misiones con progreso, actualizar el progreso
-    if (mission.progress !== undefined && mission.progress < mission.goal_value) {
-      const newProgress = mission.progress + 1;
-      const isNowCompleted = newProgress >= mission.goal_value;
-      
-      if (isNowCompleted) {
-        // Completar la misión y dar recompensa
-        await completeMission(mission);
-      } else {
-        // Solo actualizar progreso
-        const { error: upsertError } = await supabaseClient
-          .from('player_missions')
-          .upsert({ 
-            player_id: session.user.id, 
-            mission_id: mission.id,
-            progress: newProgress
-          });
-        
-        if (upsertError) throw upsertError;
-        showMessage(`Progreso actualizado: ${newProgress}/${mission.goal_value}`);
-        
-        // Actualizar UI
-        setMissionsData(prev => prev.map(m => 
-          m.id === mission.id ? { 
-            ...m, 
-            progress: newProgress
-          } : m 
-        ));
-      }
-    } else {
-      // Para misiones sin progreso (completar directamente)
-      await completeMission(mission);
-    }
-  } catch (err) {
-    showMessage(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-// Función auxiliar para completar misiones
-const completeMission = async (mission) => {
-  const { error: insertError } = await supabaseClient
-    .from('player_missions')
-    .insert([{ 
-      player_id: session.user.id, 
-      mission_id: mission.id,
-      progress: mission.goal_value || 1,
-      completed_at: new Date().toISOString()
-    }]);
-  
-  if (insertError) throw insertError;
-
-  // Para misiones diarias, incrementar el contador
-  let dailyMissionsCompleted = playerData.daily_missions_completed || 0;
-  if (mission.reset_interval === 'daily') {
-    dailyMissionsCompleted += 1;
-  }
-
-  // Actualizar XP, puntos de habilidad Y LupiCoins
-  const { data: updatedPlayer, error: updateError } = await supabaseClient
-    .from('players')
-    .update({ 
-      experience: playerData.experience + mission.xp_reward, 
-      skill_points: playerData.skill_points + mission.skill_points_reward,
-      lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0),
-      daily_missions_completed: dailyMissionsCompleted
-    })
-    .eq('id', session.user.id)
-    .select();
-  
-  if (updateError) throw updateError;
-
-  setPlayerData(prev => ({
-    ...prev,
-    experience: prev.experience + mission.xp_reward,
-    skill_points: prev.skill_points + mission.skill_points_reward,
-    lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0),
-    daily_missions_completed: dailyMissionsCompleted
-  }));
-  
-  setAvailablePoints(prev => prev + mission.skill_points_reward);
-  setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
-  
-  // Actualizar la misión como completada pero mantenerla visible
-  setMissionsData(prev => prev.map(m => 
-    m.id === mission.id ? { 
-      ...m, 
-      is_completed: true, 
-      progress: mission.goal_value || 1 
-    } : m 
-  ));
-  
-  // Mensaje con todas las recompensas
-  let rewardMessage = `¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`;
-  if (mission.lupicoins_reward > 0) {
-    rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
-  }
-  
-  // Mensaje especial para misiones semanales
-  if (mission.reset_interval === 'weekly') {
-    rewardMessage += " ¡Misión semanal completada!";
-  }
-  
-  showMessage(rewardMessage);
-  
-  // Verificar si se completaron suficientes misiones diarias para desbloquear semanales
-  if (mission.reset_interval === 'daily' && dailyMissionsCompleted >= 7) {
-    showMessage('¡Felicidades! Has completado 7 misiones diarias. Ahora puedes completar misiones semanales.');
-  }
-  
-  // Verificar si se completaron suficientes misiones semanales para desbloquear mensuales
-  if (mission.reset_interval === 'weekly') {
-    const completedWeeklyMissions = missionsData.filter(m => 
-      m.reset_interval === 'weekly' && m.is_completed
-    ).length;
     
-    if (completedWeeklyMissions + 1 >= 4) {
-      showMessage('¡Felicidades! Has completado 4 misiones semanales. Ahora puedes completar misiones mensuales.');
+    setLoading(true);
+    try {
+      const { error: insertError } = await supabaseClient
+        .from('player_missions')
+        .insert([{ player_id: session.user.id, mission_id: mission.id }]);
+      
+      if (insertError) throw insertError;
+      
+      const { data: updatedPlayer, error: updateError } = await supabaseClient
+        .from('players')
+        .update({ 
+          experience: playerData.experience + mission.xp_reward, 
+          skill_points: playerData.skill_points + mission.skill_points_reward 
+        })
+        .eq('id', session.user.id)
+        .select();
+      
+      if (updateError) throw updateError;
+      
+      setPlayerData(prev => ({ 
+        ...prev, 
+        experience: prev.experience + mission.xp_reward, 
+        skill_points: prev.skill_points + mission.skill_points_reward 
+      }));
+      
+      setAvailablePoints(prev => prev + mission.skill_points_reward);
+      setMissionsData(prev => prev.map(m => 
+        m.id === mission.id ? { ...m, is_completed: true } : m
+      ));
+      
+      showMessage(`¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`);
+    } catch (err) {
+      showMessage(err.message);
+    } finally {
+      setLoading(false);
     }
-  }
-};
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
