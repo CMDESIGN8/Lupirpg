@@ -76,32 +76,17 @@ const [position, setPosition] = useState(
   };
 
   // REEMPLAZA tu useEffect principal con este
+// App.jsx - Modifica el useEffect principal
 useEffect(() => {
   const initializeApp = async () => {
     try {
       setIsSupabaseReady(true);
       console.log("Initializing app...");
       
-      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      // No intentamos obtener sesión persistente
+      setView('auth');
+      setLoading(false);
       
-      if (error) {
-        console.error("Error getting session:", error);
-        setView('auth');
-        setLoading(false);
-        return;
-      }
-      
-      setSession(session);
-      console.log("Session:", session);
-
-      if (session) {
-        console.log("User authenticated, checking profile...");
-        await checkProfile(session.user.id);
-      } else {
-        console.log("No session, going to auth");
-        setView('auth');
-        setLoading(false);
-      }
     } catch (error) {
       console.error("Error initializing app:", error);
       setView('auth');
@@ -117,7 +102,7 @@ useEffect(() => {
       console.log("Auth state changed:", event, session);
       setSession(session);
       
-      if (session) {
+      if (session && event === 'SIGNED_IN') {
         await checkProfile(session.user.id);
       } else {
         setView('auth');
@@ -541,6 +526,9 @@ const checkProfile = async (userId) => {
   try {
     console.log("Attempting login with:", email);
     
+    // Cerrar cualquier sesión existente primero
+    await supabaseClient.auth.signOut();
+    
     const { data, error } = await supabaseClient.auth.signInWithPassword({ 
       email, 
       password 
@@ -556,14 +544,28 @@ const checkProfile = async (userId) => {
     console.log("Login successful:", data);
     showMessage('Inicio de sesión exitoso. Redirigiendo...');
     
-    // No necesitas hacer nada más aquí porque onAuthStateChange se encargará
-    
   } catch (error) {
     console.error("Unexpected login error:", error);
     showMessage('Error inesperado al iniciar sesión: ' + error.message);
     setLoading(false);
   }
 };
+
+// Agrega este useEffect para limpiar la sesión al recargar
+useEffect(() => {
+  const handleBeforeUnload = () => {
+    // Limpiar sesión al recargar la página
+    if (supabaseClient) {
+      supabaseClient.auth.signOut().catch(() => {});
+    }
+  };
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, []);
 
   const handleSignup = async (e) => {
     e.preventDefault();
