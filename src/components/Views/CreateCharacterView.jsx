@@ -1,7 +1,7 @@
 import { ChevronUp } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
-import { sports, positions } from '../../constants';
+import { sports, positionsBySport  } from '../../constants';
 import '../styles/CreateCharacterView.css';
 
 const CreateCharacterView = ({ handleCreateAccount, setUsername, setSport, setPosition, handleSkillChange, username, sport, position, skills, availablePoints, loading, message }) => (
@@ -38,15 +38,20 @@ const CreateCharacterView = ({ handleCreateAccount, setUsername, setSport, setPo
         </div>
         
         <div className="form-group">
-          <label className="form-label">Posición</label>
-          <select 
-            value={position} 
-            onChange={(e) => setPosition(e.target.value)} 
-            className="form-select"
-          >
-            {positions.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </div>
+  <label className="form-label">Posición</label>
+  <select 
+    value={position} 
+    onChange={(e) => setPosition(e.target.value)} 
+    className="form-select"
+    disabled={!sport} // se desactiva hasta elegir deporte
+  >
+    <option value="">Selecciona una posición</option>
+    {sport && positionsBySport[sport].map(p => (
+      <option key={p} value={p}>{p}</option>
+    ))}
+  </select>
+</div>
+
         
         <div className="skills-section">
           <div className="skills-header">
