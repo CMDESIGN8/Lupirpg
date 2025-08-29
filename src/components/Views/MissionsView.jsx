@@ -1,3 +1,4 @@
+import React, { useState } from 'react'; // ← Importación corregida
 import '../styles/Missions.css';
 import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, Heart, Shield, Brain, Users, Castle, X } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
@@ -13,7 +14,7 @@ const MissionsView = ({
   playerData,
   inventory = []
 }) => {
-  // Ahora useState estará disponible
+  // Estados locales para el componente
   const [selectedMission, setSelectedMission] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
 
