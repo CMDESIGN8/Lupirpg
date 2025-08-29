@@ -13,6 +13,7 @@ const MissionsView = ({
   playerData,
   inventory = []
 }) => {
+  // Ahora useState estará disponible
   const [selectedMission, setSelectedMission] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
 
