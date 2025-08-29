@@ -75,40 +75,76 @@ const [position, setPosition] = useState(
     return error.message || 'Error desconocido';
   };
 
-  useEffect(() => {
-    const initializeApp = async () => {
+  // REEMPLAZA tu useEffect principal con este
+useEffect(() => {
+  const initializeApp = async () => {
+    try {
       setIsSupabaseReady(true);
+      console.log("Initializing app...");
       
-      try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        setSession(session);
-        
-        if (session) {
-          await checkProfile(session.user.id);
-        } else {
-          setView('auth');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error initializing app:', error);
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      
+      if (error) {
+        console.error("Error getting session:", error);
+        setView('auth');
+        setLoading(false);
+        return;
+      }
+      
+      setSession(session);
+      console.log("Session:", session);
+
+      if (session) {
+        console.log("User authenticated, checking profile...");
+        await checkProfile(session.user.id);
+      } else {
+        console.log("No session, going to auth");
+        setView('auth');
         setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error initializing app:", error);
+      setView('auth');
+      setLoading(false);
+    }
+  };
 
-    initializeApp();
-    
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+  initializeApp();
+  
+  // Suscripción a cambios de estado de autenticación
+  const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
+    async (event, session) => {
+      console.log("Auth state changed:", event, session);
       setSession(session);
+      
       if (session) {
         await checkProfile(session.user.id);
       } else {
         setView('auth');
         setLoading(false);
       }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
+    }
+  );
+  
+  return () => subscription.unsubscribe();
+}, []);
+
+// Agrega este useEffect para prevenir loops infinitos
+useEffect(() => {
+  const timeout = setTimeout(() => {
+    if (loading) {
+      console.warn("Loading timeout - forcing state change");
+      setLoading(false);
+      if (!playerData && session) {
+        setView('create_character');
+      } else if (!session) {
+        setView('auth');
+      }
+    }
+  }, 10000); // 10 segundos timeout
+
+  return () => clearTimeout(timeout);
+}, [loading, session, playerData]);
 
   useEffect(() => {
     if (view !== 'chat' || !supabaseClient) return;
@@ -195,61 +231,83 @@ const [position, setPosition] = useState(
   };
 
   // Función para verificar el perfil del usuario
-  const checkProfile = async (userId) => {
-    setLoading(true);
-    try {
-      const { data: player, error: playerError } = await supabaseClient
-        .from('players')
-        .select('*, clubs(id, name, description)')
-        .eq('id', userId)
-        .single();
+ // REEMPLAZA tu función checkProfile con esta versión mejorada
+const checkProfile = async (userId) => {
+  setLoading(true);
+  try {
+    console.log("Checking profile for user:", userId);
+    
+    const { data: player, error: playerError } = await supabaseClient
+      .from('players')
+      .select('*, clubs(id, name, description)')
+      .eq('id', userId)
+      .maybeSingle();  // Cambia de single() a maybeSingle()
 
-      if (playerError && playerError.code === "PGRST116") {
-        setView('create_character');
-        setLoading(false);
-        return;
-      }
-
-      if (playerError) {
-        console.error('Error fetching player:', playerError);
-        throw playerError;
-      }
-
-      const { data: skills, error: skillsError } = await supabaseClient
-        .from('player_skills')
-        .select('*')
-        .eq('player_id', userId);
-
-      if (skillsError) throw skillsError;
-
-      const { data: playerItems, error: itemsError } = await supabaseClient
-        .from('player_items')
-        .select('*, items(*)')
-        .eq('player_id', userId);
-
-      if (itemsError) throw itemsError;
-
-      const equipped = {};
-      (playerItems || []).forEach(item => {
-        if (item.is_equipped) {
-          equipped[item.items.skill_bonus] = item.items;
-        }
-      });
-
-      setInventory(playerItems || []);
-      setEquippedItems(equipped);
-      setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
-      setAvailablePoints(player.skill_points);
-      setLupiCoins(player.lupi_coins);
-      setPlayerData({ ...player, skills: skills || [] });
-      setCurrentClub(player.clubs);
-      setView('dashboard');
-    } catch (err) {
-      showMessage('Error al cargar perfil: ' + handleSupabaseError(err));
-    } finally {
+    if (playerError) {
+      console.error("Error fetching player:", playerError);
+      // Si hay error o no existe el perfil, vamos a create_character
+      setView('create_character');
       setLoading(false);
+      return;
     }
-  };
+
+    if (!player) {
+      console.log("No player profile found, going to create character");
+      setView('create_character');
+      setLoading(false);
+      return;
+    }
+
+    console.log("Player found:", player);
+
+    // Cargar habilidades
+    const { data: skills, error: skillsError } = await supabaseClient
+      .from('player_skills')
+      .select('*')
+      .eq('player_id', userId);
+
+    if (skillsError) {
+      console.error("Error fetching skills:", skillsError);
+      throw skillsError;
+    }
+
+    // Cargar items
+    const { data: playerItems, error: itemsError } = await supabaseClient
+      .from('player_items')
+      .select('*, items(*)')
+      .eq('player_id', userId);
+
+    if (itemsError) {
+      console.error("Error fetching items:", itemsError);
+      throw itemsError;
+    }
+
+    const equipped = {};
+    (playerItems || []).forEach(item => {
+      if (item.is_equipped) {
+        equipped[item.items.skill_bonus] = item.items;
+      }
+    });
+
+    setInventory(playerItems || []);
+    setEquippedItems(equipped);
+    setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
+    setAvailablePoints(player.skill_points);
+    setLupiCoins(player.lupi_coins);
+    setPlayerData({ ...player, skills: skills || [] });
+    setCurrentClub(player.clubs);
+    
+    console.log("Profile loaded successfully, going to dashboard");
+    setView('dashboard');
+
+  } catch (err) {
+    console.error("Error in checkProfile:", err);
+    showMessage('Error al cargar perfil: ' + err.message);
+    setView('create_character'); // En caso de error, ir a crear personaje
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchLeaderboard = async () => {
     setLoading(true);
@@ -473,26 +531,39 @@ const [position, setPosition] = useState(
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!supabaseClient) { 
-      showMessage('Supabase client not available.'); 
-      return; 
-    }
+  e.preventDefault();
+  if (!supabaseClient) { 
+    showMessage('Cliente de Supabase no disponible.'); 
+    return; 
+  }
+  
+  setLoading(true);
+  try {
+    console.log("Attempting login with:", email);
     
-    setLoading(true);
-    try {
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        showMessage(handleSupabaseError(error));
-      } else {
-        showMessage('Inicio de sesión exitoso. Redirigiendo...');
-      }
-    } catch (error) {
-      showMessage('Error al iniciar sesión: ' + error.message);
-    } finally {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ 
+      email, 
+      password 
+    });
+
+    if (error) {
+      console.error("Login error:", error);
+      showMessage(handleSupabaseError(error));
       setLoading(false);
+      return;
     }
-  };
+
+    console.log("Login successful:", data);
+    showMessage('Inicio de sesión exitoso. Redirigiendo...');
+    
+    // No necesitas hacer nada más aquí porque onAuthStateChange se encargará
+    
+  } catch (error) {
+    console.error("Unexpected login error:", error);
+    showMessage('Error inesperado al iniciar sesión: ' + error.message);
+    setLoading(false);
+  }
+};
 
   const handleSignup = async (e) => {
     e.preventDefault();
