@@ -193,6 +193,7 @@ const MissionsView = ({
                         missionsData={missionsData}
                         inventory={inventory}
                         playerData={playerData}
+                         canCompleteMission={canCompleteMission} // ← PASO IMPORTANTE
                       />
                     ))}
                   </div>
