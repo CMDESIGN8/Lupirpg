@@ -25,7 +25,7 @@ const App = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [sport, setSport] = useState(sports[0]);
-  const [position, setPosition] = useState(positions[sports[0]][0]);
+  const [position, setPosition] = useState(positions[0]);
   const [availablePoints, setAvailablePoints] = useState(initialSkillPoints);
   const [skills, setSkills] = useState(skillNames.reduce((acc, skill) => ({ ...acc, [skill]: 50 }), {}));
   const [message, setMessage] = useState('');
@@ -59,45 +59,26 @@ const App = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Función para manejar errores de Supabase
-  const handleSupabaseError = (error) => {
-    console.error('Supabase Error:', error);
-    if (error.code === '406') {
-      return 'Error de formato en la solicitud. Por favor, intenta nuevamente.';
-    } else if (error.code === 'PGRST116') {
-      return 'Recurso no encontrado.';
-    } else if (error.code === '425') {
-      return 'Demasiadas solicitudes. Por favor, espera un momento.';
-    }
-    return error.message || 'Error desconocido';
-  };
-
   useEffect(() => {
-    const initializeApp = async () => {
-      setIsSupabaseReady(true);
-      
-      try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        setSession(session);
-        
-        if (session) {
-          await checkProfile(session.user.id);
-        } else {
-          setView('auth');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error initializing app:', error);
-        setLoading(false);
-      }
-    };
-
-    initializeApp();
+    setIsSupabaseReady(true);
     
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    const getSession = async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
       setSession(session);
       if (session) {
         await checkProfile(session.user.id);
+      } else {
+        setView('auth');
+        setLoading(false);
+      }
+    };
+    
+    getSession();
+    
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        checkProfile(session.user.id);
       } else {
         setView('auth');
         setLoading(false);
@@ -112,24 +93,18 @@ const App = () => {
     
     const fetchMessages = async () => {
       setLoading(true);
-      try {
-        const { data, error } = await supabaseClient
-          .from('messages')
-          .select(`id, content, created_at, players (username)`)
-          .order('created_at', { ascending: true })
-          .limit(50);
-        
-        if (error) {
-          showMessage(handleSupabaseError(error));
-        } else { 
-          setMessages(data || []); 
-          scrollToBottom(); 
-        }
-      } catch (error) {
-        showMessage('Error al cargar mensajes: ' + error.message);
-      } finally {
-        setLoading(false);
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .select(`id, content, created_at, players (username)`)
+        .order('created_at', { ascending: true })
+        .limit(50);
+      
+      if (error) showMessage(error.message);
+      else { 
+        setMessages(data || []); 
+        scrollToBottom(); 
       }
+      setLoading(false);
     };
     
     fetchMessages();
@@ -155,43 +130,6 @@ const App = () => {
     };
   }, [view, playerData]);
 
-  // Función para obtener estadísticas del jugador
-  const getPlayerStats = async (playerId) => {
-    try {
-      const { data, error } = await supabaseClient
-        .from('player_stats')
-        .select('*')
-        .eq('player_id', playerId)
-        .single();
-      
-      return error ? {} : data;
-    } catch (error) {
-      console.error('Error fetching player stats:', error);
-      return {};
-    }
-  };
-
-  // Función para calcular el progreso de la misión
-  const calculateMissionProgress = (mission, playerStats) => {
-    if (!playerStats) return 0;
-    
-    switch (mission.type) {
-      case 'distance':
-        return Math.min(playerStats.total_distance || 0, mission.goal_value);
-      case 'training':
-        return Math.min(playerStats.training_sessions || 0, mission.goal_value);
-      case 'strength':
-        return Math.min(playerStats.strength_exercises || 0, mission.goal_value);
-      case 'intelligence':
-        return Math.min(playerStats.puzzles_completed || 0, mission.goal_value);
-      case 'skill':
-        return Math.min(playerStats.skill_drills_completed || 0, mission.goal_value);
-      default:
-        return 0;
-    }
-  };
-
-  // Función para verificar el perfil del usuario
   const checkProfile = async (userId) => {
     setLoading(true);
     try {
@@ -206,11 +144,7 @@ const App = () => {
         setLoading(false);
         return;
       }
-
-      if (playerError) {
-        console.error('Error fetching player:', playerError);
-        throw playerError;
-      }
+      if (playerError) throw playerError;
 
       const { data: skills, error: skillsError } = await supabaseClient
         .from('player_skills')
@@ -232,9 +166,9 @@ const App = () => {
           equipped[item.items.skill_bonus] = item.items;
         }
       });
-
       setInventory(playerItems || []);
       setEquippedItems(equipped);
+
       setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
       setAvailablePoints(player.skill_points);
       setLupiCoins(player.lupi_coins);
@@ -242,7 +176,7 @@ const App = () => {
       setCurrentClub(player.clubs);
       setView('dashboard');
     } catch (err) {
-      showMessage('Error al cargar perfil: ' + handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -261,13 +195,12 @@ const App = () => {
       if (error) throw error;
       setLeaderboardData(data);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Función para obtener misiones
   const fetchMissions = async () => {
     setLoading(true);
     try {
@@ -276,194 +209,68 @@ const App = () => {
         .select('*');
       
       if (missionsError) throw missionsError;
-
+      
       const { data: completedMissions, error: completedError } = await supabaseClient
         .from('player_missions')
-        .select('mission_id, progress, completed_at')
+        .select('mission_id')
         .eq('player_id', session.user.id);
       
       if (completedError) throw completedError;
-
-      // Obtener estadísticas del jugador para el progreso
-      const playerStats = await getPlayerStats(session.user.id);
       
-      const mergedMissions = missions.map(mission => {
-        const completed = completedMissions.find(m => m.mission_id === mission.id);
-        let progress = 0;
-        let is_completed = false;
-        
-        if (completed) {
-          is_completed = true;
-          progress = completed.progress || mission.goal_value;
-        } else if (mission.goal_value > 1) {
-          // Calcular progreso basado en estadísticas del jugador
-          progress = calculateMissionProgress(mission, playerStats);
-          is_completed = progress >= mission.goal_value;
-        }
-        
-        return {
-          ...mission,
-          is_completed,
-          progress
-        };
-      });
-
+      const completedIds = new Set(completedMissions.map(m => m.mission_id));
+      const mergedMissions = missions.map(mission => ({ 
+        ...mission, 
+        is_completed: completedIds.has(mission.id) 
+      }));
+      
       setMissionsData(mergedMissions);
+      showMessage('Misiones cargadas.');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Función auxiliar para completar misiones
-  const completeMission = async (mission) => {
+  const handleCompleteMission = async (mission) => {
+    if (mission.is_completed) { 
+      showMessage('Esta misión ya ha sido completada.'); 
+      return;   
+    }
+    
+    setLoading(true);
     try {
       const { error: insertError } = await supabaseClient
         .from('player_missions')
-        .insert([{ 
-          player_id: session.user.id, 
-          mission_id: mission.id,
-          progress: mission.goal_value || 1,
-          completed_at: new Date().toISOString()
-        }]);
+        .insert([{ player_id: session.user.id, mission_id: mission.id }]);
       
       if (insertError) throw insertError;
-
-      // Para misiones diarias, incrementar el contador
-      let dailyMissionsCompleted = playerData.daily_missions_completed || 0;
-      if (mission.reset_interval === 'daily') {
-        dailyMissionsCompleted += 1;
-      }
-
-      // Actualizar XP, puntos de habilidad Y LupiCoins
+      
       const { data: updatedPlayer, error: updateError } = await supabaseClient
         .from('players')
         .update({ 
           experience: playerData.experience + mission.xp_reward, 
-          skill_points: playerData.skill_points + mission.skill_points_reward,
-          lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0),
-          daily_missions_completed: dailyMissionsCompleted
+          skill_points: playerData.skill_points + mission.skill_points_reward 
         })
         .eq('id', session.user.id)
         .select();
       
       if (updateError) throw updateError;
-
-      setPlayerData(prev => ({
-        ...prev,
-        experience: prev.experience + mission.xp_reward,
-        skill_points: prev.skill_points + mission.skill_points_reward,
-        lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0),
-        daily_missions_completed: dailyMissionsCompleted
+      
+      setPlayerData(prev => ({ 
+        ...prev, 
+        experience: prev.experience + mission.xp_reward, 
+        skill_points: prev.skill_points + mission.skill_points_reward 
       }));
       
       setAvailablePoints(prev => prev + mission.skill_points_reward);
-      setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
-      
-      // Actualizar la misión como completada pero mantenerla visible
       setMissionsData(prev => prev.map(m => 
-        m.id === mission.id ? { 
-          ...m, 
-          is_completed: true, 
-          progress: mission.goal_value || 1 
-        } : m 
+        m.id === mission.id ? { ...m, is_completed: true } : m
       ));
       
-      // Mensaje con todas las recompensas
-      let rewardMessage = `¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`;
-      if (mission.lupicoins_reward > 0) {
-        rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
-      }
-      
-      // Mensaje especial para misiones semanales
-      if (mission.reset_interval === 'weekly') {
-        rewardMessage += " ¡Misión semanal completada!";
-      }
-      
-      showMessage(rewardMessage);
-      
-      // Verificar si se completaron suficientes misiones diarias para desbloquear semanales
-      if (mission.reset_interval === 'daily' && dailyMissionsCompleted >= 7) {
-        showMessage('¡Felicidades! Has completado 7 misiones diarias. Ahora puedes completar misiones semanales.');
-      }
-      
-      // Verificar si se completaron suficientes misiones semanales para desbloquear mensuales
-      if (mission.reset_interval === 'weekly') {
-        const completedWeeklyMissions = missionsData.filter(m => 
-          m.reset_interval === 'weekly' && m.is_completed
-        ).length;
-        
-        if (completedWeeklyMissions + 1 >= 4) {
-          showMessage('¡Felicidades! Has completado 4 misiones semanales. Ahora puedes completar misiones mensuales.');
-        }
-      }
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const handleCompleteMission = async (mission) => {
-    if (mission.is_completed) {
-      showMessage('Esta misión ya ha sido completada.');
-      return;
-    }
-    
-    // Verificar requisitos
-    if (mission.required_mission_id) {
-      const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
-      if (!requiredMission || !requiredMission.is_completed) {
-        showMessage('Debes completar la misión requerida primero.');
-        return;
-      }
-    }
-    
-    if (mission.required_completion_count > 0) {
-      const chainMissions = missionsData.filter(m => m.quest_chain_id === mission.quest_chain_id);
-      const completedInChain = chainMissions.filter(m => m.is_completed).length;
-      if (completedInChain < mission.required_completion_count) {
-        showMessage(`Necesitas completar ${mission.required_completion_count} misiones de esta cadena primero.`);
-        return;
-      }
-    }
-    
-    setLoading(true);
-    try {
-      // Para misiones con progreso, actualizar el progreso
-      if (mission.progress !== undefined && mission.progress < mission.goal_value) {
-        const newProgress = mission.progress + 1;
-        const isNowCompleted = newProgress >= mission.goal_value;
-        
-        if (isNowCompleted) {
-          // Completar la misión y dar recompensa
-          await completeMission(mission);
-        } else {
-          // Solo actualizar progreso
-          const { error: upsertError } = await supabaseClient
-            .from('player_missions')
-            .upsert({ 
-              player_id: session.user.id, 
-              mission_id: mission.id,
-              progress: newProgress
-            });
-          
-          if (upsertError) throw upsertError;
-          showMessage(`Progreso actualizado: ${newProgress}/${mission.goal_value}`);
-          
-          // Actualizar UI
-          setMissionsData(prev => prev.map(m => 
-            m.id === mission.id ? { 
-              ...m, 
-              progress: newProgress
-            } : m 
-          ));
-        }
-      } else {
-        // Para misiones sin progreso (completar directamente)
-        await completeMission(mission);
-      }
+      showMessage(`¡Misión completada! Ganaste ${mission.xp_reward} XP y ${mission.skill_points_reward} puntos de habilidad.`);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -477,18 +284,10 @@ const App = () => {
     }
     
     setLoading(true);
-    try {
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        showMessage(handleSupabaseError(error));
-      } else {
-        showMessage('Inicio de sesión exitoso. Redirigiendo...');
-      }
-    } catch (error) {
-      showMessage('Error al iniciar sesión: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) showMessage(error.message);
+    else showMessage('Inicio de sesión exitoso. Redirigiendo...');
+    setLoading(false);
   };
 
   const handleSignup = async (e) => {
@@ -499,18 +298,10 @@ const App = () => {
     }
     
     setLoading(true);
-    try {
-      const { error } = await supabaseClient.auth.signUp({ email, password });
-      if (error) {
-        showMessage(handleSupabaseError(error));
-      } else {
-        showMessage('Registro exitoso. Revisa tu correo electrónico para confirmar.');
-      }
-    } catch (error) {
-      showMessage('Error al registrar: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) showMessage(error.message);
+    else showMessage('Registro exitoso. Revisa tu correo electrónico para confirmar.');
+    setLoading(false);
   };
 
   const handleCreateAccount = async (e) => {
@@ -526,7 +317,7 @@ const App = () => {
         .from('players')
         .select('username')
         .eq('username', username)
-        .maybeSingle();
+        .single();
       
       if (existingUser) throw new Error('El nombre de usuario ya existe. Por favor, elige otro.');
       if (userCheckError && userCheckError.code !== "PGRST116") throw userCheckError;
@@ -565,7 +356,7 @@ const App = () => {
       setPlayerData({ ...newPlayerData, skills: skillsData || [] });
       setView('dashboard');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -620,7 +411,7 @@ const App = () => {
       setAvailablePoints(prev => prev - 1);
       showMessage(`Habilidad "${skill_name}" mejorada con éxito.`);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -658,7 +449,7 @@ const App = () => {
       setLupiCoins(data.lupi_coins);
       showMessage(`${levelUpMessage}Ganaste ${xpGained} XP y ${coinsGained} LupiCoins.`);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -691,7 +482,7 @@ const App = () => {
       setInventory(prev => [...prev, data]);
       showMessage(`¡Has encontrado un nuevo objeto: ${randomItem.name}!`);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -731,7 +522,7 @@ const App = () => {
       setEquippedItems(updatedEquipped);
       showMessage("¡Objeto equipado con éxito!");
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -760,7 +551,7 @@ const App = () => {
       setEquippedItems(updatedEquipped);
       showMessage("¡Objeto desequipado con éxito!");
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -795,7 +586,7 @@ const App = () => {
       
       if (recipientError) {
         if (recipientError.code === "PGRST116") showMessage('El usuario destinatario no existe.');
-        else showMessage(handleSupabaseError(recipientError));
+        else showMessage(recipientError.message);
         setLoading(false); 
         return;
       }
@@ -815,7 +606,7 @@ const App = () => {
       setRecipientAddress('');
       setTransferAmount('');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -833,7 +624,7 @@ const App = () => {
       setMarketItems(listings);
       showMessage('Objetos del mercado cargados.');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -883,7 +674,7 @@ const App = () => {
       await fetchMarketItems();
       showMessage(`¡Has comprado ${listing.player_items.items.name} por ${listing.price} LupiCoins!`);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -922,7 +713,7 @@ const App = () => {
       setView('market');
       await fetchMarketItems();
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -941,7 +732,7 @@ const App = () => {
       if (error) throw error;
       setNewMessage('');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -957,7 +748,7 @@ const App = () => {
       if (error) throw error;
       setClubs(data);
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -993,7 +784,7 @@ const App = () => {
       showMessage(`¡Club "${newClub.name}" creado con éxito!`);
       setView('dashboard');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -1024,7 +815,7 @@ const App = () => {
       showMessage(`Te has unido al club "${clubData.name}"`);
       setView('dashboard');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -1048,21 +839,21 @@ const App = () => {
       setView('clubs');
       await fetchClubs();
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await supabaseClient.auth.signOut();
-      setView('auth');
-      showMessage('Sesión cerrada correctamente');
-    } catch (error) {
-      showMessage('Error al cerrar sesión: ' + error.message);
-    }
-  };
+  try {
+    await supabaseClient.auth.signOut();
+    setView('auth');
+    showMessage('Sesión cerrada correctamente');
+  } catch (error) {
+    showMessage('Error al cerrar sesión: ' + error.message);
+  }
+};
 
   const handleViewClubDetails = async (club) => {
     setLoading(true);
@@ -1078,7 +869,7 @@ const App = () => {
       setCurrentClub(club);
       setView('club_details');
     } catch (err) {
-      showMessage(handleSupabaseError(err));
+      showMessage(err.message);
     } finally {
       setLoading(false);
     }
