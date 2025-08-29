@@ -924,7 +924,7 @@ const App = () => {
         availablePoints, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp,
         handleFindItem, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems,
         leaderboardData, inventory, handleEquipItem, handleUnequipItem, setItemToSell,
-        setSellPrice, missionsData, canCompleteMission, handleCompleteMission, handleTransferCoins, 
+        setSellPrice, missionsData, handleCompleteMission, handleTransferCoins, 
         recipientAddress, setRecipientAddress, transferAmount, setTransferAmount,
         marketItems, handleBuyItem, handleSellItem, itemToSell,
         messages, messagesEndRef, handleSendMessage, newMessage, setNewMessage,
