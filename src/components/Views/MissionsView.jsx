@@ -1,5 +1,5 @@
 import '../styles/Missions.css';
-import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, Heart, Shield, Brain, Users, Castle } from 'lucide-react';
+import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, Heart, Shield, Brain, Users, Castle, X } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import ProgressBar from '../UI/ProgressBar';
@@ -13,66 +13,117 @@ const MissionsView = ({
   playerData,
   inventory = []
 }) => {
+  const [selectedMission, setSelectedMission] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('all');
+
   // Función para determinar si se debe mostrar la misión
   const shouldShowMission = (mission) => {
-    return true; // Mostrar todas las misiones siempre
+    return true;
   };
 
-  // Agrupar misiones por categoría
-  const groupedMissions = (missionsData || [])
-    .filter(mission => shouldShowMission(mission))
-    .reduce((acc, mission) => {
-      let category = 'general';
-      
-      if (mission.type === 'intelligence') category = 'intelligence';
-      else if (mission.type === 'skill') category = 'skill';
-      else if (mission.type === 'strength') category = 'strength';
-      else if (mission.type === 'social') category = 'social';
-      else if (mission.type === 'club') category = 'club';
-      else if (mission.reset_interval === 'daily') category = 'daily';
-      else if (mission.reset_interval === 'weekly') category = 'weekly';
-      else if (mission.reset_interval === 'monthly') category = 'monthly';
-      else category = mission.category || 'general';
-      
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(mission);
-      return acc;
-    }, {});
+  // Categorías de misiones
+  const missionCategories = [
+    { id: 'all', name: 'Todas', icon: <Award size={16} /> },
+    { id: 'daily', name: 'Diarias', icon: <Calendar size={16} /> },
+    { id: 'weekly', name: 'Semanales', icon: <Calendar size={16} /> },
+    { id: 'monthly', name: 'Mensuales', icon: <Calendar size={16} /> },
+    { id: 'strength', name: 'Fuerza', icon: <Zap size={16} /> },
+    { id: 'skill', name: 'Habilidad', icon: <Target size={16} /> },
+    { id: 'intelligence', name: 'Inteligencia', icon: <Brain size={16} /> },
+    { id: 'social', name: 'Sociales', icon: <Users size={16} /> },
+    { id: 'club', name: 'Club', icon: <Castle size={16} /> }
+  ];
 
-  // Orden de las categorías
+  // Filtrar misiones por categoría
+  const filteredMissions = (missionsData || [])
+    .filter(mission => {
+      if (activeCategory === 'all') return true;
+      if (activeCategory === 'daily') return mission.reset_interval === 'daily';
+      if (activeCategory === 'weekly') return mission.reset_interval === 'weekly';
+      if (activeCategory === 'monthly') return mission.reset_interval === 'monthly';
+      return mission.type === activeCategory;
+    })
+    .filter(mission => shouldShowMission(mission));
+
+  // Agrupar misiones por tipo
+  const groupedMissions = filteredMissions.reduce((acc, mission) => {
+    let category = 'general';
+    
+    if (mission.type === 'intelligence') category = 'intelligence';
+    else if (mission.type === 'skill') category = 'skill';
+    else if (mission.type === 'strength') category = 'strength';
+    else if (mission.type === 'social') category = 'social';
+    else if (mission.type === 'club') category = 'club';
+    else if (mission.reset_interval === 'daily') category = 'daily';
+    else if (mission.reset_interval === 'weekly') category = 'weekly';
+    else if (mission.reset_interval === 'monthly') category = 'monthly';
+    else category = mission.category || 'general';
+    
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(mission);
+    return acc;
+  }, {});
+
+  // Orden de categorías
   const categoryOrder = ['daily', 'weekly', 'monthly', 'intelligence', 'skill', 'strength', 'social', 'club', 'general'];
 
-  // Función auxiliar para obtener títulos de categoría
-  const getCategoryTitle = (category) => {
-    switch(category) {
-      case 'daily': return 'Misiones Diarias';
-      case 'weekly': return 'Misiones Semanales';
-      case 'monthly': return 'Misiones Mensuales';
-      case 'intelligence': return 'Inteligencia';
-      case 'skill': return 'Habilidad Técnica';
-      case 'strength': return 'Fuerza y Resistencia';
-      case 'social': return 'Misiones Sociales';
-      case 'club': return 'Misiones de Club';
-      default: return 'Misiones Generales';
+  // Función para verificar requisitos
+  const checkMissionRequirements = (mission) => {
+    if (mission.is_completed) {
+      return { canComplete: false, requirements: [] };
     }
+    
+    const requirements = [];
+    
+    if (mission.required_mission_id) {
+      const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
+      if (!requiredMission || !requiredMission.is_completed) {
+        requirements.push(`Completar misión: ${requiredMission?.name || 'Previa'}`);
+      }
+    }
+    
+    if (mission.required_completion_count > 0) {
+      let completedCount = 0;
+      let targetType = '';
+      
+      if (mission.reset_interval === 'weekly') {
+        completedCount = missionsData.filter(m => m.reset_interval === 'daily' && m.is_completed).length;
+        targetType = 'diarias';
+      } 
+      else if (mission.reset_interval === 'monthly') {
+        completedCount = missionsData.filter(m => m.reset_interval === 'weekly' && m.is_completed).length;
+        targetType = 'semanales';
+      }
+      else {
+        completedCount = missionsData.filter(m => m.quest_chain_id === mission.quest_chain_id && m.is_completed).length;
+        targetType = 'de esta cadena';
+      }
+      
+      if (completedCount < mission.required_completion_count) {
+        requirements.push(`Completar ${mission.required_completion_count} misiones ${targetType} (${completedCount}/${mission.required_completion_count})`);
+      }
+    }
+    
+    if (mission.required_level && playerData?.level < mission.required_level) {
+      requirements.push(`Nivel ${mission.required_level} requerido (Nivel ${playerData?.level})`);
+    }
+    
+    if (mission.required_items && mission.required_items.length > 0) {
+      const missingItems = mission.required_items.filter(itemId => 
+        !inventory.some(invItem => invItem.item_id === itemId)
+      );
+      if (missingItems.length > 0) {
+        requirements.push(`Items requeridos: ${missingItems.length} items necesarios`);
+      }
+    }
+    
+    return {
+      canComplete: requirements.length === 0,
+      requirements: requirements
+    };
   };
 
-  // Función auxiliar para obtener iconos de categoría
-  const getCategoryIcon = (category) => {
-    switch(category) {
-      case 'daily': return <Calendar size={20} />;
-      case 'weekly': return <Calendar size={20} />;
-      case 'monthly': return <Calendar size={20} />;
-      case 'intelligence': return <Brain size={20} />;
-      case 'skill': return <Target size={20} />;
-      case 'strength': return <Zap size={20} />;
-      case 'social': return <Users size={20} />;
-      case 'club': return <Castle size={20} />;
-      default: return <Award size={20} />;
-    }
-  };
-
-   return (
+  return (
     <div className="missions-dashboard">
       {/* Header */}
       <div className="missions-header">
