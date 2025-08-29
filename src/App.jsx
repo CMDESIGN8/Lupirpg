@@ -14,7 +14,7 @@ import CreateClubView from './components/Views/CreateClubView.jsx';
 import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
 import LoadingScreen from './components/UI/LoadingScreen.jsx';
 import React, { useState, useEffect, useRef } from 'react'; // Importación completa
-import { positions, sports, skillNames, initialSkillPoints } from './constants'; // ¡Esta línea es crucial!
+import { positionsBySport, sports, skillNames, initialSkillPoints } from './constants';
 import { supabaseClient } from './services/supabase'; // Importación correcta
 
 const App = () => {
@@ -25,8 +25,11 @@ const App = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [sport, setSport] = useState(sports[0]);
-  const [position, setPosition] = useState(positions[sports[0]][0]);
-  const [availablePoints, setAvailablePoints] = useState(initialSkillPoints);
+const [position, setPosition] = useState(
+  positionsBySport[sports[0]] && positionsBySport[sports[0]][0] 
+    ? positionsBySport[sports[0]][0] 
+    : 'Selecciona posición'
+);  const [availablePoints, setAvailablePoints] = useState(initialSkillPoints);
   const [skills, setSkills] = useState(skillNames.reduce((acc, skill) => ({ ...acc, [skill]: 50 }), {}));
   const [message, setMessage] = useState('');
   const [isSupabaseReady, setIsSupabaseReady] = useState(false);
