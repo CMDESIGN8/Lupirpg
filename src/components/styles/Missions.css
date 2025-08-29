@@ -420,3 +420,69 @@
   align-items: center;
   gap: 10px;
 }
+
+/* Agregar al Missions.css */
+.mission-card {
+  position: relative;
+}
+
+.mission-card.completed {
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.mission-card.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: var(--lupi-text-secondary);
+}
+
+.progress-indicator .progress-bar {
+  flex-grow: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-indicator .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+  border-radius: 3px;
+}
+
+.weekly-requirements {
+  background: rgba(0, 100, 255, 0.1);
+  border: 1px solid rgba(0, 100, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+
+.monthly-requirements {
+  background: rgba(150, 0, 255, 0.1);
+  border: 1px solid rgba(150, 0, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}

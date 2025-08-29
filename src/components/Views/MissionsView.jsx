@@ -23,7 +23,10 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
   };
 
   // Agrupar misiones por categoría
-  const groupedMissions = filterMissionsByPlayer(missionsData).reduce((acc, mission) => {
+  // Reemplazar la creación de groupedMissions con esta versión filtrada
+const groupedMissions = filterMissionsByPlayer(missionsData)
+  .filter(mission => shouldShowMission(mission))
+  .reduce((acc, mission) => {
     let category = 'general';
     
     // Determinar categoría basada en el tipo de misión
@@ -46,24 +49,54 @@ const MissionsView = ({ missionsData, handleCompleteMission, loading, message, s
   const categoryOrder = ['daily', 'weekly', 'monthly', 'intelligence', 'skill', 'strength', 'social', 'club', 'general'];
 
   // Verificar requisitos de misiones
-  const canCompleteMission = (mission) => {
-    if (mission.is_completed) return false;
+  // En el componente MissionsView, actualizar la función canCompleteMission
+const canCompleteMission = (mission) => {
+  if (mission.is_completed) return false;
+  
+  // Verificar si requiere otra misión completada primero
+  if (mission.required_mission_id) {
+    const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
+    if (!requiredMission || !requiredMission.is_completed) return false;
+  }
+  
+  // Verificar si requiere un número específico de completadas en una cadena
+  if (mission.required_completion_count > 0) {
+    const completedDailyMissions = missionsData.filter(m => 
+      m.reset_interval === 'daily' && m.is_completed
+    ).length;
     
-    // Verificar si requiere otra misión completada primero
-    if (mission.required_mission_id) {
-      const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
-      if (!requiredMission || !requiredMission.is_completed) return false;
-    }
+    if (completedDailyMissions < mission.required_completion_count) return false;
+  }
+  
+  return true;
+};
+
+// Nueva función para determinar si se debe mostrar la misión (aunque esté bloqueada)
+const shouldShowMission = (mission) => {
+  // Siempre mostrar misiones diarias y las completadas
+  if (mission.reset_interval === 'daily' || mission.is_completed) return true;
+  
+  // Para misiones semanales, mostrar solo si se han completado algunas diarias
+  if (mission.reset_interval === 'weekly') {
+    const completedDailyMissions = missionsData.filter(m => 
+      m.reset_interval === 'daily' && m.is_completed
+    ).length;
     
-    // Verificar si requiere un número específico de completadas en una cadena
-    if (mission.required_completion_count > 0) {
-      const chainMissions = missionsData.filter(m => m.quest_chain_id === mission.quest_chain_id);
-      const completedInChain = chainMissions.filter(m => m.is_completed).length;
-      if (completedInChain < mission.required_completion_count) return false;
-    }
+    return completedDailyMissions > 0;
+  }
+  
+  // Para misiones mensuales, mostrar solo si se han completado algunas semanales
+  if (mission.reset_interval === 'monthly') {
+    const completedWeeklyMissions = missionsData.filter(m => 
+      m.reset_interval === 'weekly' && m.is_completed
+    ).length;
     
-    return true;
-  };
+    return completedWeeklyMissions > 0;
+  }
+  
+  // Mostrar todas las demás misiones
+  return true;
+};
 
   return (
     <div className="missions-container">
@@ -174,38 +207,37 @@ const getCategoryIcon = (category) => {
 
 // Componente de tarjeta de misión
 const MissionCard = ({ mission, handleCompleteMission, loading, canComplete }) => {
-  const getMissionIcon = (type) => {
-    switch (type) {
-      case 'strength': return <Zap size={18} className="mission-icon" />;
-      case 'skill': return <Target size={18} className="mission-icon" />;
-      case 'intelligence': return <Brain size={18} className="mission-icon" />;
-      case 'social': return <Users size={18} className="mission-icon" />;
-      case 'club': return <Castle size={18} className="mission-icon" />;
-      case 'endurance': return <Heart size={18} className="mission-icon" />;
-      default: return <Award size={18} className="mission-icon" />;
-    }
-  };
-
-  const getMissionBadge = (resetInterval) => {
-    switch (resetInterval) {
-      case 'daily': return 'Diaria';
-      case 'weekly': return 'Semanal';
-      case 'monthly': return 'Mensual';
-      default: return null;
-    }
-  };
-
+  // ... resto del código anterior ...
+  
   const getRequirementText = () => {
     if (mission.required_mission_id) {
-      return "Requiere completar otra misión primero";
+      const requiredMission = missionsData.find(m => m.id === mission.required_mission_id);
+      return `Requiere: ${requiredMission?.name || 'misión previa'}`;
     }
     
     if (mission.required_completion_count > 0) {
-      return `Requiere completar ${mission.required_completion_count} misiones de esta cadena`;
+      if (mission.reset_interval === 'weekly') {
+        const completedDailyMissions = missionsData.filter(m => 
+          m.reset_interval === 'daily' && m.is_completed
+        ).length;
+        
+        return `Completa ${completedDailyMissions}/${mission.required_completion_count} misiones diarias`;
+      }
+      
+      if (mission.reset_interval === 'monthly') {
+        const completedWeeklyMissions = missionsData.filter(m => 
+          m.reset_interval === 'weekly' && m.is_completed
+        ).length;
+        
+        return `Completa ${completedWeeklyMissions}/${mission.required_completion_count} misiones semanales`;
+      }
+      
+      return `Requiere completar ${mission.required_completion_count} misiones`;
     }
     
     return null;
   };
+
 
   const requirementText = getRequirementText();
 

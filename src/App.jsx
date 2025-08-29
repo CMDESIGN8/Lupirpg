@@ -201,36 +201,53 @@ const App = () => {
     }
   };
 
-  const fetchMissions = async () => {
-    setLoading(true);
-    try {
-      const { data: missions, error: missionsError } = await supabaseClient
-        .from('missions')
-        .select('*');
+  // En la función fetchMissions de App.jsx, asegurarnos de incluir siempre las misiones semanales y mensuales
+const fetchMissions = async () => {
+  setLoading(true);
+  try {
+    // Obtener todas las misiones (incluyendo semanales y mensuales)
+    const { data: missions, error: missionsError } = await supabaseClient
+      .from('missions')
+      .select('*');
+    
+    if (missionsError) throw missionsError;
+
+    // Obtener misiones completadas
+    const { data: completedMissions, error: completedError } = await supabaseClient
+      .from('player_missions')
+      .select('mission_id, progress, completed_at')
+      .eq('player_id', session.user.id);
+    
+    if (completedError) throw completedError;
+
+    // Combinar datos
+    const mergedMissions = missions.map(mission => {
+      const completed = completedMissions.find(m => m.mission_id === mission.id);
+      let progress = 0;
+      let is_completed = false;
       
-      if (missionsError) throw missionsError;
+      if (completed) {
+        is_completed = true;
+        progress = completed.progress || mission.goal_value;
+      } else if (mission.goal_value > 1) {
+        // Calcular progreso basado en estadísticas del jugador
+        progress = calculateMissionProgress(mission, playerStats);
+      }
       
-      const { data: completedMissions, error: completedError } = await supabaseClient
-        .from('player_missions')
-        .select('mission_id')
-        .eq('player_id', session.user.id);
-      
-      if (completedError) throw completedError;
-      
-      const completedIds = new Set(completedMissions.map(m => m.mission_id));
-      const mergedMissions = missions.map(mission => ({ 
-        ...mission, 
-        is_completed: completedIds.has(mission.id) 
-      }));
-      
-      setMissionsData(mergedMissions);
-      showMessage('Misiones cargadas.');
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        ...mission,
+        is_completed,
+        progress
+      };
+    });
+
+    setMissionsData(mergedMissions);
+  } catch (err) {
+    showMessage(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCompleteMission = async (mission) => {
   if (mission.is_completed) {
@@ -311,6 +328,12 @@ const completeMission = async (mission) => {
   
   if (insertError) throw insertError;
 
+  // Para misiones diarias, incrementar el contador
+  let dailyMissionsCompleted = playerData.daily_missions_completed || 0;
+  if (mission.reset_interval === 'daily') {
+    dailyMissionsCompleted += 1;
+  }
+
   // Actualizar XP, puntos de habilidad Y LupiCoins
   const { data: updatedPlayer, error: updateError } = await supabaseClient
     .from('players')
@@ -318,9 +341,7 @@ const completeMission = async (mission) => {
       experience: playerData.experience + mission.xp_reward, 
       skill_points: playerData.skill_points + mission.skill_points_reward,
       lupi_coins: playerData.lupi_coins + (mission.lupicoins_reward || 0),
-      daily_missions_completed: mission.reset_interval === 'daily' ? 
-        (playerData.daily_missions_completed || 0) + 1 : 
-        playerData.daily_missions_completed
+      daily_missions_completed: dailyMissionsCompleted
     })
     .eq('id', session.user.id)
     .select();
@@ -332,16 +353,19 @@ const completeMission = async (mission) => {
     experience: prev.experience + mission.xp_reward,
     skill_points: prev.skill_points + mission.skill_points_reward,
     lupi_coins: prev.lupi_coins + (mission.lupicoins_reward || 0),
-    daily_missions_completed: mission.reset_interval === 'daily' ? 
-      (prev.daily_missions_completed || 0) + 1 : 
-      prev.daily_missions_completed
+    daily_missions_completed: dailyMissionsCompleted
   }));
   
   setAvailablePoints(prev => prev + mission.skill_points_reward);
   setLupiCoins(prev => prev + (mission.lupicoins_reward || 0));
   
+  // Actualizar la misión como completada pero mantenerla visible
   setMissionsData(prev => prev.map(m => 
-    m.id === mission.id ? { ...m, is_completed: true, progress: mission.goal_value || 1 } : m 
+    m.id === mission.id ? { 
+      ...m, 
+      is_completed: true, 
+      progress: mission.goal_value || 1 
+    } : m 
   ));
   
   // Mensaje con todas las recompensas
@@ -349,11 +373,28 @@ const completeMission = async (mission) => {
   if (mission.lupicoins_reward > 0) {
     rewardMessage += ` Además, recibiste ${mission.lupicoins_reward} LupiCoins.`;
   }
+  
+  // Mensaje especial para misiones semanales
+  if (mission.reset_interval === 'weekly') {
+    rewardMessage += " ¡Misión semanal completada!";
+  }
+  
   showMessage(rewardMessage);
   
   // Verificar si se completaron suficientes misiones diarias para desbloquear semanales
-  if (mission.reset_interval === 'daily' && (playerData.daily_missions_completed || 0) + 1 >= 7) {
-    showMessage('¡Felicidades! Has completado 7 misiones diarias. Ahora tienes acceso a misiones semanales.');
+  if (mission.reset_interval === 'daily' && dailyMissionsCompleted >= 7) {
+    showMessage('¡Felicidades! Has completado 7 misiones diarias. Ahora puedes completar misiones semanales.');
+  }
+  
+  // Verificar si se completaron suficientes misiones semanales para desbloquear mensuales
+  if (mission.reset_interval === 'weekly') {
+    const completedWeeklyMissions = missionsData.filter(m => 
+      m.reset_interval === 'weekly' && m.is_completed
+    ).length;
+    
+    if (completedWeeklyMissions + 1 >= 4) {
+      showMessage('¡Felicidades! Has completado 4 misiones semanales. Ahora puedes completar misiones mensuales.');
+    }
   }
 };
 
