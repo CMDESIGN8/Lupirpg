@@ -1,4 +1,5 @@
-@import '../../styles/variables.css';
+/* src/styles/Missions.css */
+@import './variables.css';
 
 /* Diseño de panel dividido */
 .missions-dashboard {
@@ -321,6 +322,64 @@
   justify-content: center;
 }
 
+/* Header y estadísticas */
+.missions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(10, 25, 47, 0.7);
+  border-radius: 12px;
+  border: 1px solid var(--neon-blue);
+}
+
+.missions-title {
+  margin: 0;
+  color: white;
+}
+
+.neon-text {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+
+.missions-stats {
+  display: flex;
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: rgba(0, 30, 60, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 170, 255, 0.3);
+}
+
+.stat-icon {
+  color: var(--neon-cyan);
+}
+
+.stat-value {
+  font-weight: bold;
+  color: white;
+}
+
+.stat-label {
+  color: var(--lupi-text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Footer */
+.missions-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
 /* Scrollbar personalizado */
 .missions-scrollable::-webkit-scrollbar,
 .mission-detail-content::-webkit-scrollbar {
@@ -359,6 +418,16 @@
 @media (max-width: 768px) {
   .missions-dashboard {
     padding: 10px;
+  }
+  
+  .missions-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .missions-stats {
+    flex-wrap: wrap;
+    justify-content: center;
   }
   
   .mission-detail-header {
