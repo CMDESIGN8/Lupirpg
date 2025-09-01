@@ -386,16 +386,7 @@
   height: calc(100vh - 100px);
 }
 
-.mission-detail-panel {
-  flex: 4;
-  background: rgba(10, 25, 47, 0.9);
-  border: 1px solid var(--neon-blue);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
-  overflow-y: auto;
-}
-
+/* Panel izquierdo: Lista de misiones */
 .missions-list-panel {
   flex: 6;
   background: rgba(10, 25, 47, 0.9);
@@ -408,6 +399,18 @@
   flex-direction: column;
 }
 
+/* Panel derecho: Vista detallada de misión */
+.mission-detail-panel {
+  flex: 4;
+  background: rgba(10, 25, 47, 0.9);
+  border: 1px solid var(--neon-blue);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
+  overflow-y: auto;
+}
+
+/* El resto del CSS permanece igual */
 .detail-panel-header {
   margin-bottom: 20px;
   padding-bottom: 15px;
@@ -470,10 +473,6 @@
   margin-bottom: 15px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(0, 170, 255, 0.2);
-}
-
-.detail-section p {
-  color: var(--lupi-text-secondary);
 }
 
 .sport-requirements {
@@ -754,7 +753,7 @@
 
 .mission-card {
   background: rgba(19, 16, 58, 0.7);
-  border: 1px solid rgba(0, 170, 255, 0.3);
+  border: 1px solid rgba(0, 170, 255, 极速3);
   border-radius: 12px;
   padding: 20px;
   transition: all 0.3s ease;
@@ -790,7 +789,7 @@
 }
 
 .mission-title {
-  margin: 0;
+  margin: 极速;
   color: white;
   font-size: 1.1rem;
 }
@@ -866,7 +865,7 @@
 }
 
 .progress-text {
-  display: flex;
+  display:极速;
   justify-content: space-between;
   margin-bottom: 5px;
   color: var(--lupi-text-secondary);
@@ -921,7 +920,7 @@
 }
 
 .mission-button.completed {
-  background: linear-gradient(135deg, #00ff88, #00cc66);
+  background: linear-gradient(135deg, #000088, #00cc66);
 }
 
 .mission-button.locked {
@@ -943,7 +942,7 @@
   color: var(--neon-cyan);
   margin-bottom: 15px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 170, 255, 0.3);
+ 极速-bottom: 1px solid rgba(0, 170, 255, 0.3);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -977,17 +976,17 @@
     height: auto;
   }
   
-  .mission-detail-panel,
-  .missions-list-panel {
-    flex: none;
-  }
-  
+  .missions-list-panel,
   .mission-detail-panel {
-    order: 2;
+    flex: none;
   }
   
   .missions-list-panel {
     order: 1;
+  }
+  
+  .mission-detail-panel {
+    order: 2;
   }
 }
 

@@ -82,7 +82,13 @@ const MissionsView = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Función de búsqueda
+  // Seleccionar primera misión al cargar o cambiar categoría
+  useEffect(() => {
+    if (filteredMissions.length > 0 && !selectedMission) {
+      setSelectedMission(filteredMissions[0]);
+    }
+  }, [filteredMissions, selectedMission]);
+
   const shouldShowMission = (mission) => {
     if (searchTerm) {
       return mission.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -90,6 +96,19 @@ const MissionsView = ({
     }
     return true;
   };
+
+  // Categorías de misiones
+  const missionCategories = [
+    { id: 'all', name: 'Todas', icon: <Award size={16} /> },
+    { id: 'daily', name: 'Diarias', icon: <Calendar size={16} /> },
+    { id: 'weekly', name: 'Semanales', icon: <Calendar size={16} /> },
+    { id: 'monthly', name: 'Mensuales', icon: <Calendar size={16} /> },
+    { id: 'strength', name: 'Fuerza', icon: <Zap size={16} /> },
+    { id: 'skill', name: 'Habilidad', icon: <Target size={16} /> },
+    { id: 'intelligence', name: 'Inteligencia', icon: <Brain size={16} /> },
+    { id: 'social', name: 'Sociales', icon: <Users size={16} /> },
+    { id: 'club', name: 'Club', icon: <Castle size={16} /> }
+  ];
 
   // Filtrar misiones por categoría
   const filteredMissions = (missionsData || [])
@@ -120,26 +139,6 @@ const MissionsView = ({
     acc[category].push(mission);
     return acc;
   }, {});
-
-  // Seleccionar primera misión al cargar o cambiar categoría
-  useEffect(() => {
-    if (filteredMissions.length > 0 && !selectedMission) {
-      setSelectedMission(filteredMissions[0]);
-    }
-  }, [filteredMissions, selectedMission]);
-
-  // Categorías de misiones
-  const missionCategories = [
-    { id: 'all', name: 'Todas', icon: <Award size={16} /> },
-    { id: 'daily', name: 'Diarias', icon: <Calendar size={16} /> },
-    { id: 'weekly', name: 'Semanales', icon: <Calendar size={16} /> },
-    { id: 'monthly', name: 'Mensuales', icon: <Calendar size={16} /> },
-    { id: 'strength', name: 'Fuerza', icon: <Zap size={16} /> },
-    { id: 'skill', name: 'Habilidad', icon: <Target size={16} /> },
-    { id: 'intelligence', name: 'Inteligencia', icon: <Brain size={16} /> },
-    { id: 'social', name: 'Sociales', icon: <Users size={16} /> },
-    { id: 'club', name: 'Club', icon: <Castle size={16} /> }
-  ];
 
   // Orden de categorías
   const categoryOrder = ['daily', 'weekly', 'monthly', 'intelligence', 'skill', 'strength', 'social', 'club', 'general'];
@@ -175,31 +174,7 @@ const MissionsView = ({
   return (
     <div className="missions-rpg-container">
       <div className="missions-rpg-layout">
-        {/* Panel izquierdo: Vista detallada de misión */}
-        <div className="mission-detail-panel">
-          <div className="detail-panel-header">
-            <h2>DETALLES DE MISIÓN</h2>
-          </div>
-          <div className="mission-detail-content">
-            {selectedMission ? (
-              <MissionDetail 
-                mission={selectedMission} 
-                handleCompleteMission={handleCompleteMission}
-                missionsData={missionsData}
-                inventory={inventory}
-                playerData={playerData}
-                loading={loading}
-              />
-            ) : (
-              <div className="no-mission-selected">
-                <BookOpen size={48} />
-                <p>Selecciona una misión para ver sus detalles</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Panel derecho: Lista de misiones */}
+        {/* Panel izquierdo: Lista de misiones */}
         <div className="missions-list-panel">
           <div className="missions-header">
             <h2 className="missions-title">
@@ -323,6 +298,30 @@ const MissionsView = ({
             </ThemedButton>
           </div>
         </div>
+
+        {/* Panel derecho: Vista detallada de misión */}
+        <div className="mission-detail-panel">
+          <div className="detail-panel-header">
+            <h2>DETALLES DE MISIÓN</h2>
+          </div>
+          <div className="mission-detail-content">
+            {selectedMission ? (
+              <MissionDetail 
+                mission={selectedMission} 
+                handleCompleteMission={handleCompleteMission}
+                missionsData={missionsData}
+                inventory={inventory}
+                playerData={playerData}
+                loading={loading}
+              />
+            ) : (
+              <div className="no-mission-selected">
+                <BookOpen size={48} />
+                <p>Selecciona una misión para ver sus detalles</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -330,7 +329,7 @@ const MissionsView = ({
 
 // MissionCard component
 const MissionCard = ({ mission, onSelect, isSelected, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
-  const { canComplete } = canCompleteMission(mission, missionsData, playerData, inventory);
+  const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
 
   const getMissionIcon = (type) => {
     switch (type) {
