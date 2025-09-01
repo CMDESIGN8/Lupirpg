@@ -16,19 +16,21 @@ const RewardChest = ({ items, onClose }) => {
 
   return (
     <div className="reward-chest">
+       {/* Partículas en todo el contenedor */}
+  <div className="particles">
+    {[...Array(25)].map((_, i) => (
+      <div
+        key={i}
+        className="particle"
+        style={{
+          left: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * 3}s`,
+          animationDuration: `${2 + Math.random() * 3}s`
+        }}
+      />
+    ))}
+  </div>
       <div className="chest-animation">
-        <div className="particles">
-  {[...Array(15)].map((_, i) => (
-    <div
-      key={i}
-      className="particle"
-      style={{
-        left: `${Math.random() * 100}%`,
-        animationDelay: `${Math.random() * 3}s`
-      }}
-    />
-  ))}
-</div>
         <div className="chest-icon">🎁</div>
         <div className="chest-glows">
           <div className="glow-1"></div>
