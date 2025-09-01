@@ -121,3 +121,41 @@
   transform: translateY(-3px) scale(1.05);
   box-shadow: var(--shadow-glow-accent);
 }
+
+/* Overlay que ocupa toda la pantalla */
+.reward-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(6px);
+  overflow: hidden; /* importante para partículas */
+}
+
+/* Partículas ocupan toda la sección */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  bottom: -20px;
+  width: 6px;
+  height: 6px;
+  background: var(--lupi-secondary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--lupi-secondary);
+  animation: rise linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes rise {
+  0% { transform: translateY(0) scale(0.6); opacity: 1; }
+  70% { opacity: 0.8; }
+  100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
+}
