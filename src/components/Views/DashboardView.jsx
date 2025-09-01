@@ -67,7 +67,7 @@ const DashboardView = ({
   };
 
   // Función que se ejecuta cuando el jugador gana el minijuego
-  const handleGameFinish = async () => {
+  const handleGameFinish = async (gameReward) => {
     setGameLoading(true);
     try {
       const { data: allItems, error: itemsError } = await supabaseClient
@@ -80,11 +80,14 @@ const DashboardView = ({
         return;
       }
 
-      // Seleccionar 5 objetos aleatorios
+      // Seleccionar objetos aleatorios basados en la recompensa del juego
       const randomItems = [];
       const itemsCopy = [...allItems];
       
-      for (let i = 0; i < 5 && itemsCopy.length > 0; i++) {
+      // Usar la recompensa del juego para determinar cuántos objetos dar
+      const itemsToGet = gameReward?.items?.length || 3;
+      
+      for (let i = 0; i < itemsToGet && itemsCopy.length > 0; i++) {
         const randomIndex = Math.floor(Math.random() * itemsCopy.length);
         randomItems.push(itemsCopy[randomIndex]);
         itemsCopy.splice(randomIndex, 1);
@@ -360,18 +363,12 @@ const DashboardView = ({
         </div>
       </div>
 
-      {/* Minijuego */}
+      {/* Minijuego - MODAL CORREGIDO */}
       {activeGame && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setActiveGame(false)}>×</button>
-            <LupiMiniGame 
-              requiredCoins={5} 
-              onFinish={handleGameFinish} 
-              onCancel={() => setActiveGame(false)} 
-            />
-          </div>
-        </div>
+        <LupiMiniGame 
+          onFinish={handleGameFinish} 
+          onCancel={() => setActiveGame(false)} 
+        />
       )}
 
       {/* Cofre de recompensas */}
