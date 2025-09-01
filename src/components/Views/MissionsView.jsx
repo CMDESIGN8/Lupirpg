@@ -296,7 +296,13 @@ const MissionsView = ({
             </ThemedButton>
           </div>
         </div>
-
+<ThemedButton
+              onClick={() => setView('dashboard')}
+              icon={<ChevronDown size={20} />}
+              className="back-button"
+            >
+              Volver al Dashboard
+            </ThemedButton>
         {/* Panel derecho: Vista detallada de misión */}
         <div className="mission-detail-panel">
           <div className="detail-panel-header">
@@ -519,13 +525,6 @@ const MissionDetail = ({ mission, handleCompleteMission, missionsData, inventory
         {mission.is_completed ? 'Misión Completada' :
          !canComplete ? 'Misión Bloqueada' : 'Completar Misión'}
       </ThemedButton>
-      <ThemedButton
-              onClick={() => setView('dashboard')}
-              icon={<ChevronDown size={20} />}
-              className="back-button"
-            >
-              Volver al Dashboard
-            </ThemedButton>
     </div>
     
   );
