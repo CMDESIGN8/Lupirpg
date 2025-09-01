@@ -319,14 +319,14 @@ const MissionsView = ({
             )}
           </div>
         </div>
-         <ThemedButton
+      </div>
+       <ThemedButton
               onClick={() => setView('dashboard')}
               icon={<ChevronDown size={20} />}
               className="back-button"
             >
               Volver al Dashboard
             </ThemedButton>
-      </div>
     </div>
   );
 };
