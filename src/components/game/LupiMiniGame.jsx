@@ -68,15 +68,16 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
       }
 
       create() {
-        // Ajustar escala a pantalla completa y centrado
-        this.cameras.main.setBackgroundColor("#87CEFA");
-        const { width, height } = this.scale;
+        // Obtener dimensiones de la pantalla
+        const { width, height } = this.sys.game.canvas;
+        
+        // Fondo
         this.add.image(width / 2, height / 2, "sky").setDisplaySize(width, height);
 
         // Jugador
         this.player = this.physics.add.sprite(width / 2, height / 2, "player").setScale(1.5);
         this.player.setCollideWorldBounds(true);
-        this.player.setBounce(0.3); // rebote suave
+        this.player.setBounce(0.3);
 
         // Grupo de monedas
         this.coins = this.physics.add.group();
@@ -162,20 +163,41 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
       width: window.innerWidth,
       height: window.innerHeight,
       parent: "lupi-game-container",
-      physics: { default: "arcade", arcade: { gravity: { y: 0 }, debug: false } },
+      physics: { 
+        default: "arcade", 
+        arcade: { 
+          gravity: { y: 0 }, 
+          debug: false 
+        } 
+      },
       scene: MiniScene,
       scale: {
-        mode: Phaser.Scale.RESIZE, // escala automáticamente al tamaño de ventana
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: '100%',
+        height: '100%'
       }
     };
 
     gameRef.current = new Phaser.Game(config);
 
-    return () => {
+    // Ajustar el tamaño cuando cambia la ventana
+    const handleResize = () => {
       if (gameRef.current) {
-        try { gameRef.current.destroy(true); } 
-        catch (e) { console.warn("Error al destruir juego Phaser:", e); }
+        gameRef.current.scale.resize(window.innerWidth, window.innerHeight);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (gameRef.current) {
+        try { 
+          gameRef.current.destroy(true); 
+        } catch (e) { 
+          console.warn("Error al destruir juego Phaser:", e); 
+        }
         gameRef.current = null;
       }
     };
@@ -183,17 +205,19 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
 
   return (
     <div className="game-modal-overlay">
-  <div className="mini-game-container">
-    <div className="game-instructions">
-      <h3>¡Recolecta todas las monedas!</h3>
-      <p>Usa las flechas o WASD para moverte</p>
+      <div className="mini-game-container">
+        <div className="game-instructions">
+          <h3>¡Recolecta todas las monedas!</h3>
+          <p>Usa las flechas o WASD para moverte</p>
+        </div>
+        <div id="lupi-game-container"></div>
+        <div className="game-controls">
+          <button onClick={onCancel} className="cancel-button">
+            Salir del juego
+          </button>
+        </div>
+      </div>
     </div>
-    <div id="lupi-game-container" className="game-canvas" />
-    <div className="game-controls">
-      <button onClick={onCancel} className="cancel-button">Salir del juego</button>
-    </div>
-  </div>
-</div>
   );
 };
 
