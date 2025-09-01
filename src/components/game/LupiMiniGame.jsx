@@ -182,16 +182,18 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
   }, [onFinish, requiredCoins]);
 
   return (
-    <div className="mini-game-container">
-      <div className="game-instructions">
-        <h3>¡Recolecta todas las monedas!</h3>
-        <p>Usa las flechas o WASD para moverte</p>
-      </div>
-      <div id="lupi-game-container" className="game-canvas" style={{ width: '100vw', height: '100vh' }} />
-      <div className="game-controls">
-        <button onClick={onCancel} className="cancel-button">Salir del juego</button>
-      </div>
+    <div className="game-modal-overlay">
+  <div className="mini-game-container">
+    <div className="game-instructions">
+      <h3>¡Recolecta todas las monedas!</h3>
+      <p>Usa las flechas o WASD para moverte</p>
     </div>
+    <div id="lupi-game-container" className="game-canvas" />
+    <div className="game-controls">
+      <button onClick={onCancel} className="cancel-button">Salir del juego</button>
+    </div>
+  </div>
+</div>
   );
 };
 
