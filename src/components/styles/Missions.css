@@ -472,6 +472,10 @@
   border-bottom: 1px solid rgba(0, 170, 255, 0.2);
 }
 
+.detail-section p {
+  color: var(--lupi-text-secondary);
+}
+
 .sport-requirements {
   display: flex;
   gap: 20px;
