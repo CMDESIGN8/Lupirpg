@@ -510,7 +510,6 @@ const MissionDetail = ({ mission, handleCompleteMission, missionsData, inventory
           )}
         </div>
       </div>
-
       <ThemedButton
         onClick={() => handleCompleteMission(mission)}
         disabled={mission.is_completed || loading || !canComplete}
@@ -520,7 +519,15 @@ const MissionDetail = ({ mission, handleCompleteMission, missionsData, inventory
         {mission.is_completed ? 'Misión Completada' :
          !canComplete ? 'Misión Bloqueada' : 'Completar Misión'}
       </ThemedButton>
+      <ThemedButton
+              onClick={() => setView('dashboard')}
+              icon={<ChevronDown size={20} />}
+              className="back-button"
+            >
+              Volver al Dashboard
+            </ThemedButton>
     </div>
+    
   );
 };
 
