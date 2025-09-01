@@ -82,13 +82,7 @@ const MissionsView = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Seleccionar primera misión al cargar o cambiar categoría
-  useEffect(() => {
-    if (filteredMissions.length > 0 && !selectedMission) {
-      setSelectedMission(filteredMissions[0]);
-    }
-  }, [filteredMissions, selectedMission]);
-
+  // Función de búsqueda
   const shouldShowMission = (mission) => {
     if (searchTerm) {
       return mission.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -96,19 +90,6 @@ const MissionsView = ({
     }
     return true;
   };
-
-  // Categorías de misiones
-  const missionCategories = [
-    { id: 'all', name: 'Todas', icon: <Award size={16} /> },
-    { id: 'daily', name: 'Diarias', icon: <Calendar size={16} /> },
-    { id: 'weekly', name: 'Semanales', icon: <Calendar size={16} /> },
-    { id: 'monthly', name: 'Mensuales', icon: <Calendar size={16} /> },
-    { id: 'strength', name: 'Fuerza', icon: <Zap size={16} /> },
-    { id: 'skill', name: 'Habilidad', icon: <Target size={16} /> },
-    { id: 'intelligence', name: 'Inteligencia', icon: <Brain size={16} /> },
-    { id: 'social', name: 'Sociales', icon: <Users size={16} /> },
-    { id: 'club', name: 'Club', icon: <Castle size={16} /> }
-  ];
 
   // Filtrar misiones por categoría
   const filteredMissions = (missionsData || [])
@@ -139,6 +120,26 @@ const MissionsView = ({
     acc[category].push(mission);
     return acc;
   }, {});
+
+  // Seleccionar primera misión al cargar o cambiar categoría
+  useEffect(() => {
+    if (filteredMissions.length > 0 && !selectedMission) {
+      setSelectedMission(filteredMissions[0]);
+    }
+  }, [filteredMissions, selectedMission]);
+
+  // Categorías de misiones
+  const missionCategories = [
+    { id: 'all', name: 'Todas', icon: <Award size={16} /> },
+    { id: 'daily', name: 'Diarias', icon: <Calendar size={16} /> },
+    { id: 'weekly', name: 'Semanales', icon: <Calendar size={16} /> },
+    { id: 'monthly', name: 'Mensuales', icon: <Calendar size={16} /> },
+    { id: 'strength', name: 'Fuerza', icon: <Zap size={16} /> },
+    { id: 'skill', name: 'Habilidad', icon: <Target size={16} /> },
+    { id: 'intelligence', name: 'Inteligencia', icon: <Brain size={16} /> },
+    { id: 'social', name: 'Sociales', icon: <Users size={16} /> },
+    { id: 'club', name: 'Club', icon: <Castle size={16} /> }
+  ];
 
   // Orden de categorías
   const categoryOrder = ['daily', 'weekly', 'monthly', 'intelligence', 'skill', 'strength', 'social', 'club', 'general'];
@@ -329,7 +330,7 @@ const MissionsView = ({
 
 // MissionCard component
 const MissionCard = ({ mission, onSelect, isSelected, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
-  const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
+  const { canComplete } = canCompleteMission(mission, missionsData, playerData, inventory);
 
   const getMissionIcon = (type) => {
     switch (type) {
