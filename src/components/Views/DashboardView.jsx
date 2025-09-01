@@ -10,7 +10,7 @@ import { avatarService } from '../../services/avatarService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
 
 
-const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message, onFindItem, loading }) => {
+const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message, onFindItem }) => {
   if (!playerData) return <LoadingScreen />;
 
   const [copied, setCopied] = useState(false);
