@@ -210,6 +210,12 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               <span className="nav-icon">🔍</span>
               <span>Buscar Objeto</span>
             </button>
+
+             <button className="nav-btn" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
+            <span className="nav-icon">⚽</span>
+            <span>Misiones</span>
+          </button>
+          
           </div>
         </div>
       </div>
