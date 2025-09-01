@@ -1,78 +1,133 @@
-/* src/styles/lupigame.css */
-/* Modal overlay para el juego - PANTALLA COMPLETA */
-.game-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.95);
+/* src/styles/footballgame.css */
+.football-game-container {
+  background: linear-gradient(135deg, #0a192f 0%, #162b4d 100%);
+  border: 2px solid #0ff;
+  border-radius: 16px;
+  padding: 20px;
+  color: white;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.game-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  z-index: 10000;
-  padding: 0;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.game-header h2 {
+  color: #FFD700;
   margin: 0;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.game-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat {
+  background: rgba(0, 255, 255, 0.1);
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid #0ff;
+  font-weight: bold;
+}
+
+.game-message {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #e2e8f0;
+  font-weight: bold;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.grid-cell {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #0ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  position: relative;
   overflow: hidden;
 }
 
-/* Contenedor principal - OCUPA TODA LA PANTALLA */
-.mini-game-container {
+.grid-cell:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
+  background: rgba(0, 255, 255, 0.2);
+}
+
+.grid-cell.found {
+  background: rgba(0, 255, 0, 0.2);
+  border-color: #00ff00;
+  cursor: default;
+}
+
+.grid-cell.found.item {
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.3), rgba(0, 200, 0, 0.2));
+}
+
+.item-hidden {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: bold;
+}
+
+.item-found {
   display: flex;
   flex-direction: column;
-  width: 100vw;
-  height: 100vh;
-  padding: 0;
-  margin: 0;
-  background: #0a192f;
-  position: relative;
+  align-items: center;
+  gap: 5px;
 }
 
-/* Instrucciones del juego */
-.game-instructions {
-  text-align: center;
-  padding: 15px;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10002;
+.item-icon {
+  font-size: 2rem;
 }
 
-.game-instructions h3 {
-  color: #FFD700;
-  margin-bottom: 5px;
-  font-size: 1.5rem;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+.item-points {
+  font-size: 0.8rem;
+  color: #00ff00;
+  font-weight: bold;
 }
 
-.game-instructions p {
-  color: #e2e8f0;
-  margin: 0;
-  font-size: 1rem;
-}
-
-/* Canvas Phaser a pantalla completa */
-#lupi-game-container {
-  width: 100vw;
-  height: 100vh;
-  display: block;
-  padding: 0;
-  margin: 0;
-}
-
-/* Controles en la parte inferior */
 .game-controls {
-  padding: 15px;
-  width: 100%;
   display: flex;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.7);
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 10002;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.finish-button {
+  background: linear-gradient(145deg, #00cc00, #00aa00);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.finish-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
 }
 
 .cancel-button {
@@ -85,30 +140,97 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
 }
 
 .cancel-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(255, 71, 87, 0.5);
+  box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
 }
 
-.cancel-button:active {
-  transform: translateY(0);
+.items-to-find {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
 }
 
-/* Responsive design */
+.items-to-find h3 {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.items-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+.item-name {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+/* Modal overlay */
+.game-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+/* Responsive */
 @media (max-width: 600px) {
-  .game-instructions h3 {
+  .football-game-container {
+    padding: 15px;
+  }
+  
+  .game-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .game-stats {
+    justify-content: center;
+  }
+  
+  .game-grid {
+    gap: 5px;
+  }
+  
+  .grid-cell {
     font-size: 1.2rem;
   }
   
-  .game-instructions p {
-    font-size: 0.9rem;
+  .items-list {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
   
+  .game-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .finish-button,
   .cancel-button {
-    padding: 10px 20px;
-    font-size: 0.9rem;
+    width: 100%;
+    max-width: 250px;
   }
 }

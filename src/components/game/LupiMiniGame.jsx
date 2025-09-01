@@ -1,220 +1,170 @@
 // src/components/game/LupiMiniGame.jsx
-import React, { useEffect, useRef } from "react";
-import Phaser from "phaser";
+import React, { useState, useEffect } from "react";
 import '../styles/lupigame.css';
 
-const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
-  const gameRef = useRef(null);
+const LupiMiniGame = ({ onFinish, onCancel }) => {
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [score, setScore] = useState(0);
+  const [items, setItems] = useState([]);
+  const [gameStatus, setGameStatus] = useState('playing'); // playing, won, lost
 
+  // Elementos de fútbol para buscar
+  const footballItems = [
+    { id: 1, name: "Pelota", icon: "⚽", points: 10 },
+    { id: 2, name: "Botines", icon: "👟", points: 15 },
+    { id: 3, name: "Guantes", icon: "🧤", points: 12 },
+    { id: 4, name: "Silbato", icon: "📣", points: 8 },
+    { id: 5, name: "Red", icon: "🥅", points: 20 },
+    { id: 6, name: "Trofeo", icon: "🏆", points: 25 },
+    { id: 7, name: "Medalla", icon: "🎖️", points: 18 },
+    { id: 8, name: "Bandera", icon: "🚩", points: 7 }
+  ];
+
+  // Inicializar el juego
   useEffect(() => {
-    if (gameRef.current) return;
-
-    class MiniScene extends Phaser.Scene {
-      constructor() {
-        super({ key: "MiniScene" });
-      }
-
-      preload() {
-        this.createSkyTexture();
-        this.createPlayerTexture();
-        this.createCoinTexture();
-      }
-
-      createSkyTexture() {
-        const g = this.make.graphics({ x: 0, y: 0, add: false });
-        const colorTop = 0x87CEFA;
-        const colorBottom = 0x4682B4;
-        const height = 600;
-        for (let i = 0; i < height; i++) {
-          const t = i / height;
-          const color = Phaser.Display.Color.Interpolate.ColorWithColor(
-            Phaser.Display.Color.ValueToColor(colorTop),
-            Phaser.Display.Color.ValueToColor(colorBottom),
-            1,
-            t
-          );
-          g.lineStyle(1, Phaser.Display.Color.GetColor(color.r, color.g, color.b), 1);
-          g.beginPath();
-          g.moveTo(0, i);
-          g.lineTo(800, i);
-          g.strokePath();
+    initializeGame();
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setGameStatus('lost');
+          return 0;
         }
-        g.generateTexture("sky", 800, 600);
-        g.destroy();
-      }
+        return prev - 1;
+      });
+    }, 1000);
 
-      createPlayerTexture() {
-        const g = this.make.graphics({ x: 0, y: 0, add: false });
-        g.fillStyle(0xFF6F61, 1);
-        g.fillRoundedRect(0, 0, 32, 48, 8);
-        g.fillStyle(0xffffff, 1);
-        g.fillCircle(8, 12, 4);
-        g.fillCircle(24, 12, 4);
-        g.fillStyle(0x000000, 1);
-        g.fillCircle(8, 12, 2);
-        g.fillCircle(24, 12, 2);
-        g.generateTexture("player", 32, 48);
-        g.destroy();
-      }
+    return () => clearInterval(timer);
+  }, []);
 
-      createCoinTexture() {
-        const g = this.make.graphics({ x: 0, y: 0, add: false });
-        g.fillStyle(0xFFD700, 1);
-        g.fillCircle(16, 16, 16);
-        g.fillStyle(0xFFFFE0, 0.6);
-        g.fillCircle(12, 12, 8);
-        g.generateTexture("coin", 32, 32);
-        g.destroy();
-      }
-
-      create() {
-        // Obtener dimensiones de la pantalla
-        const { width, height } = this.sys.game.canvas;
-        
-        // Fondo
-        this.add.image(width / 2, height / 2, "sky").setDisplaySize(width, height);
-
-        // Jugador
-        this.player = this.physics.add.sprite(width / 2, height / 2, "player").setScale(1.5);
-        this.player.setCollideWorldBounds(true);
-        this.player.setBounce(0.3);
-
-        // Grupo de monedas
-        this.coins = this.physics.add.group();
-        for (let i = 0; i < requiredCoins; i++) {
-          const x = Phaser.Math.Between(50, width - 50);
-          const y = Phaser.Math.Between(50, height - 50);
-          const coin = this.coins.create(x, y, "coin");
-          coin.setScale(1.2);
-        }
-
-        // Texto de puntuación
-        this.score = 0;
-        this.scoreText = this.add.text(20, 20, `Monedas: ${this.score}/${requiredCoins}`, {
-          fontSize: "28px",
-          fill: "#ffffff",
-          stroke: "#000000",
-          strokeThickness: 6
-        }).setScrollFactor(0);
-
-        // Colisiones
-        this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this);
-
-        // Controles
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.wasd = {
-          up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-          down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-          left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-          right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
-        };
-      }
-
-      update() {
-        this.player.setVelocity(0);
-
-        // Movimiento
-        let moving = false;
-        const speed = 300;
-        if (this.cursors.left.isDown || this.wasd.left.isDown) {
-          this.player.setVelocityX(-speed);
-          moving = true;
-        }
-        if (this.cursors.right.isDown || this.wasd.right.isDown) {
-          this.player.setVelocityX(speed);
-          moving = true;
-        }
-        if (this.cursors.up.isDown || this.wasd.up.isDown) {
-          this.player.setVelocityY(-speed);
-          moving = true;
-        }
-        if (this.cursors.down.isDown || this.wasd.down.isDown) {
-          this.player.setVelocityY(speed);
-          moving = true;
-        }
-
-        // Animación ligera de "saltito" cuando se mueve
-        if (moving) {
-          this.player.y += Math.sin(this.time.now / 100) * 0.5;
-        }
-
-        // Animación de monedas girando
-        this.coins.getChildren().forEach((coin) => {
-          coin.rotation += 0.05;
-        });
-      }
-
-      collectCoin(player, coin) {
-        coin.disableBody(true, true);
-        this.score++;
-        this.scoreText.setText(`Monedas: ${this.score}/${requiredCoins}`);
-
-        if (this.score >= requiredCoins) {
-          this.cameras.main.flash(500, 255, 215, 0); // dorado
-          this.time.delayedCall(800, () => {
-            if (typeof onFinish === "function") onFinish();
-          });
-        }
-      }
+  const initializeGame = () => {
+    // Crear una cuadrícula de 5x5 con algunos elementos ocultos
+    const gridSize = 25;
+    const hiddenItemsCount = 8;
+    const newItems = [];
+    
+    // Llenar con lugares vacíos
+    for (let i = 0; i < gridSize; i++) {
+      newItems.push({ type: 'empty', found: false });
     }
+    
+    // Colocar elementos aleatorios
+    const usedPositions = new Set();
+    for (let i = 0; i < hiddenItemsCount; i++) {
+      let position;
+      do {
+        position = Math.floor(Math.random() * gridSize);
+      } while (usedPositions.has(position));
+      
+      usedPositions.add(position);
+      newItems[position] = { 
+        ...footballItems[i], 
+        type: 'item', 
+        found: false 
+      };
+    }
+    
+    setItems(newItems);
+  };
 
-    const config = {
-      type: Phaser.AUTO,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      parent: "lupi-game-container",
-      physics: { 
-        default: "arcade", 
-        arcade: { 
-          gravity: { y: 0 }, 
-          debug: false 
-        } 
-      },
-      scene: MiniScene,
-      scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: '100%',
-        height: '100%'
-      }
-    };
-
-    gameRef.current = new Phaser.Game(config);
-
-    // Ajustar el tamaño cuando cambia la ventana
-    const handleResize = () => {
-      if (gameRef.current) {
-        gameRef.current.scale.resize(window.innerWidth, window.innerHeight);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (gameRef.current) {
-        try { 
-          gameRef.current.destroy(true); 
-        } catch (e) { 
-          console.warn("Error al destruir juego Phaser:", e); 
+  const handleItemClick = (index) => {
+    if (gameStatus !== 'playing') return;
+    
+    const newItems = [...items];
+    if (newItems[index].type === 'item' && !newItems[index].found) {
+      newItems[index].found = true;
+      setItems(newItems);
+      
+      const points = newItems[index].points;
+      setScore(prev => {
+        const newScore = prev + points;
+        
+        // Verificar si ganó
+        const allFound = newItems.filter(item => item.type === 'item')
+                                .every(item => item.found);
+        if (allFound) {
+          setGameStatus('won');
         }
-        gameRef.current = null;
-      }
+        
+        return newScore;
+      });
+    }
+  };
+
+  const getGameMessage = () => {
+    switch (gameStatus) {
+      case 'won':
+        return `¡Ganaste! Encontraste todos los objetos. Puntos: ${score}`;
+      case 'lost':
+        return `¡Tiempo agotado! Puntos: ${score}`;
+      default:
+        return `Encuentra todos los objetos de fútbol. Tiempo: ${timeLeft}s`;
+    }
+  };
+
+  const handleFinish = () => {
+    // Calcular recompensa basada en el puntaje
+    const reward = {
+      coins: Math.floor(score / 3),
+      items: footballItems.filter((_, index) => index < Math.floor(score / 20))
     };
-  }, [onFinish, requiredCoins]);
+    
+    onFinish(reward);
+  };
 
   return (
-    <div className="game-modal-overlay">
-      <div className="mini-game-container">
-        <div className="game-instructions">
-          <h3>¡Recolecta todas las monedas!</h3>
-          <p>Usa las flechas o WASD para moverte</p>
+    <div className="football-game-container">
+      <div className="game-header">
+        <h2>Búsqueda de Objetos de Fútbol</h2>
+        <div className="game-stats">
+          <div className="stat">Tiempo: {timeLeft}s</div>
+          <div className="stat">Puntos: {score}</div>
         </div>
-        <div id="lupi-game-container"></div>
-        <div className="game-controls">
-          <button onClick={onCancel} className="cancel-button">
-            Salir del juego
+      </div>
+      
+      <div className="game-message">{getGameMessage()}</div>
+      
+      <div className="game-grid">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            className={`grid-cell ${item.found ? 'found' : ''} ${item.type}`}
+            onClick={() => handleItemClick(index)}
+          >
+            {item.found && item.type === 'item' ? (
+              <div className="item-found">
+                <span className="item-icon">{item.icon}</span>
+                <span className="item-points">+{item.points}</span>
+              </div>
+            ) : (
+              <div className="item-hidden">?</div>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      <div className="game-controls">
+        {gameStatus !== 'playing' ? (
+          <button className="finish-button" onClick={handleFinish}>
+            Reclamar Recompensa
           </button>
+        ) : null}
+        
+        <button className="cancel-button" onClick={onCancel}>
+          Salir del Juego
+        </button>
+      </div>
+      
+      <div className="items-to-find">
+        <h3>Objetos por encontrar:</h3>
+        <div className="items-list">
+          {footballItems.map(item => (
+            <div key={item.id} className="item-info">
+              <span className="item-icon">{item.icon}</span>
+              <span className="item-name">{item.name}</span>
+              <span className="item-points">{item.points} pts</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
