@@ -144,6 +144,20 @@ const DashboardView = ({
       <MessageDisplay message={message} />
 
       <div className="dashboard-content">
+        {/* Partículas globales */}
+  <div className="particles">
+    {[...Array(40)].map((_, i) => (
+      <div
+        key={i}
+        className="particle"
+        style={{
+          left: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * 3}s`,
+          animationDuration: `${3 + Math.random() * 4}s`
+        }}
+      />
+    ))}
+  </div>
         {/* Izquierda - Ficha del jugador */}
         <div className="player-card">
           <div className="card-header">
