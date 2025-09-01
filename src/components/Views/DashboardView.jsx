@@ -7,8 +7,8 @@ import LoadingScreen from '../UI/LoadingScreen.jsx';
 import { useState, useEffect } from 'react';
 import { avatarService } from '../../services/avatarService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
-import LupiMiniGame from '../MiniGame/LupiMiniGame.jsx'; // Asegurate de importar tu minijuego
-import RewardChest from '../UI/RewardChest.jsx';
+import LupiMiniGame from '../game/LupiMiniGame.jsx'; // Asegurate de importar tu minijuego
+import RewardChest from '../game/RewardChest.jsx';
 
 const DashboardView = ({
   playerData, lupiCoins, equippedItems,
