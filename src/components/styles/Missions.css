@@ -475,6 +475,10 @@
   border-bottom: 1px solid rgba(0, 170, 255, 0.2);
 }
 
+.detail-section p {
+  color: var(--neon-cyan);
+}
+
 .sport-requirements {
   display: flex;
   gap: 20px;
