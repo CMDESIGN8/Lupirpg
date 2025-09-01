@@ -1,188 +1,120 @@
-/* Estilos para el cofre de recompensas */
+/* Cofre principal */
 .reward-chest {
   position: relative;
   text-align: center;
-  padding: 30px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 20px;
+  padding: 40px 30px;
+  background: radial-gradient(circle at top, #1a1a2e, #0f0f1f 80%);
+  border-radius: 24px;
   border: 2px solid #0ff;
-  box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
-  max-width: 500px;
+  box-shadow: 0 0 60px rgba(0, 255, 255, 0.4),
+              0 0 120px rgba(0, 255, 200, 0.2);
+  max-width: 520px;
   width: 90%;
-  animation: chestAppear 0.5s ease-out;
+  animation: chestAppear 0.6s ease-out;
+  overflow: hidden;
 }
 
-@keyframes chestAppear {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+/* Partículas mágicas */
+.reward-chest::before,
+.reward-chest::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  animation: spin 12s linear infinite;
+  pointer-events: none;
+}
+.reward-chest::after {
+  animation-duration: 20s;
+  opacity: 0.4;
 }
 
-.chest-animation {
-  position: relative;
-  margin: 20px auto;
-  width: 100px;
-  height: 100px;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
+/* Cofre */
 .chest-icon {
-  font-size: 60px;
-  animation: bounce 2s infinite;
+  font-size: 70px;
+  animation: bounce 2s infinite, shine 3s infinite;
+  text-shadow: 0 0 20px #FFD700, 0 0 40px #FF8C00;
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-20px); }
-  60% { transform: translateY(-10px); }
+@keyframes shine {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.5); }
 }
 
-.chest-glows {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120px;
-  height: 120px;
-}
-
-.glow-1, .glow-2, .glow-3 {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, transparent 70%);
-}
-
-.glow-1 {
-  width: 100px;
-  height: 100px;
-  animation: pulseGlow 2s infinite;
-}
-
-.glow-2 {
-  width: 80px;
-  height: 80px;
-  animation: pulseGlow 2s infinite 0.3s;
-}
-
-.glow-3 {
-  width: 60px;
-  height: 60px;
-  animation: pulseGlow 2s infinite 0.6s;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
-}
-
-.reward-chest h2 {
-  color: #FFD700;
-  margin-bottom: 10px;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-}
-
-.reward-chest p {
-  color: #e2e8f0;
-  margin-bottom: 20px;
-}
-
-.reward-items-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 25px;
-}
-
+/* Ítems */
 .reward-item {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 18px;
   border: 1px solid rgba(0, 255, 255, 0.3);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   animation: itemAppear 0.5s ease-out forwards;
+  transition: transform 0.2s, box-shadow 0.3s;
 }
 
-@keyframes itemAppear {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+.reward-item:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  border-color: #0ff;
 }
 
-.item-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(0, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0ff;
-  flex-shrink: 0;
-}
-
-.item-details {
-  text-align: left;
-  flex-grow: 1;
-}
-
+/* Nombre y bonus más impactantes */
 .item-name {
   font-weight: bold;
-  color: #0ff;
+  color: #FFD700;
   margin-bottom: 4px;
-}
-
-.item-type {
-  font-size: 0.85rem;
-  color: #cbd5e0;
-  text-transform: capitalize;
-  margin-bottom: 4px;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
 }
 
 .item-bonus {
   color: #00ff88;
   font-weight: bold;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  text-shadow: 0 0 6px rgba(0, 255, 136, 0.7);
 }
 
+/* Botón recoger */
 .reward-collect-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: 10px;
+  padding: 14px 28px;
   border: none;
-  border-radius: 8px;
-  background: linear-gradient(145deg, #0ff 0%, #00a3a3 100%);
+  border-radius: 12px;
+  background: linear-gradient(270deg, #00ffe7, #00a3a3, #00ffe7);
+  background-size: 200% 200%;
   color: #0f172a;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 1rem;
+  transition: transform 0.2s;
+  font-size: 1.1rem;
   margin: 0 auto;
+  animation: gradientMove 3s ease infinite, pulseBtn 2s infinite;
 }
 
 .reward-collect-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 255, 255, 0.6);
 }
 
-.reward-close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: transparent;
-  border: none;
-  color: #0ff;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.reward-close-btn:hover {
-  background: rgba(0, 255, 255, 0.2);
+@keyframes pulseBtn {
+  0%, 100% { box-shadow: 0 0 10px rgba(0,255,255,0.3); }
+  50% { box-shadow: 0 0 25px rgba(0,255,255,0.6); }
 }
