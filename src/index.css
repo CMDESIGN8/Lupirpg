@@ -1189,7 +1189,7 @@
   border-radius: 50%;
   box-shadow: 0 0 8px var(--lupi-secondary);
   animation: rise 6s linear infinite;
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
 @keyframes rise {
