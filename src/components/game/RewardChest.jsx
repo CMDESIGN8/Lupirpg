@@ -16,7 +16,8 @@ const RewardChest = ({ items, onClose }) => {
 
   return (
     <div className="reward-chest">
-      <div className="particles">
+      <div className="chest-animation">
+        <div className="particles">
   {[...Array(15)].map((_, i) => (
     <div
       key={i}
@@ -27,11 +28,7 @@ const RewardChest = ({ items, onClose }) => {
       }}
     />
   ))}
-      <button className="reward-close-btn" onClick={handleClose}>
-        <X size={20} />
-      </button>
-      
-      <div className="chest-animation">
+</div>
         <div className="chest-icon">🎁</div>
         <div className="chest-glows">
           <div className="glow-1"></div>
@@ -64,7 +61,6 @@ const RewardChest = ({ items, onClose }) => {
         <Award size={18} />
         Recoger recompensa
       </button>
-    </div>
     </div>
   );
 };
