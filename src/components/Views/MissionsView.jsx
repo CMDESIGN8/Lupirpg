@@ -296,13 +296,6 @@ const MissionsView = ({
             </ThemedButton>
           </div>
         </div>
-<ThemedButton
-              onClick={() => setView('dashboard')}
-              icon={<ChevronDown size={20} />}
-              className="back-button"
-            >
-              Volver al Dashboard
-            </ThemedButton>
         {/* Panel derecho: Vista detallada de misión */}
         <div className="mission-detail-panel">
           <div className="detail-panel-header">
@@ -330,7 +323,13 @@ const MissionsView = ({
     </div>
   );
 };
-
+<ThemedButton
+              onClick={() => setView('dashboard')}
+              icon={<ChevronDown size={20} />}
+              className="back-button"
+            >
+              Volver al Dashboard
+            </ThemedButton>
 // MissionCard component
 const MissionCard = ({ mission, onSelect, isSelected, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
   const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
