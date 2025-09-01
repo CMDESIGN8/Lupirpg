@@ -363,3 +363,18 @@
 .inventory-item:hover .item-image {
   transform: scale(1.1) rotate(-3deg);
 }
+
+.drop-btn {
+  background-color: #e74c3c;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.drop-btn:hover {
+  background-color: #c0392b;
+}

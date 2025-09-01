@@ -132,6 +132,29 @@ const App = () => {
     };
   }, [view, playerData]);
 
+  const handleDropItem = async (playerItemId) => {
+  setLoading(true);
+  try {
+    // Eliminar el ítem de la tabla player_items
+    const { error } = await supabaseClient
+      .from('player_items')
+      .delete()
+      .eq('id', playerItemId);
+
+    if (error) throw error;
+
+    // Actualizar inventario en frontend
+    const updatedInventory = inventory.filter(item => item.id !== playerItemId);
+    setInventory(updatedInventory);
+
+    showMessage("Has tirado el objeto.");
+  } catch (err) {
+    showMessage(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
   const checkProfile = async (userId) => {
     setLoading(true);
     try {
@@ -1026,7 +1049,7 @@ const handleCompleteMission = async (mission) => {
         marketItems, handleBuyItem, handleSellItem, itemToSell,
         messages, messagesEndRef, handleSendMessage, newMessage, setNewMessage,
         clubs, currentClub, clubMembers, handleViewClubDetails, handleJoinClub, handleLeaveClub,
-        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient, session,
+        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient, session,handleDropItem,
     };
 
     switch (view) {

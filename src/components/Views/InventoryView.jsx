@@ -61,6 +61,13 @@ const InventoryView = ({ inventory, handleEquipItem, handleUnequipItem, setItemT
                   <DollarSign size={16} />
                   Vender
                 </button>
+                <button 
+  onClick={() => handleDropItem(item.id)} 
+  disabled={loading} 
+  className="drop-btn"
+>
+  Tirar item
+</button>
               </div>
             </div>
           ))
