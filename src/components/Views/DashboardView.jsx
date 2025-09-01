@@ -378,16 +378,18 @@ const DashboardView = ({
 )}
 
       {/* Cofre de recompensas */}
-      {reward && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <RewardChest 
-              items={reward} 
-              onClose={() => setReward(null)}
-            />
-          </div>
-        </div>
-      )}
+      {reward && Array.isArray(reward) && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <RewardChest 
+        items={reward} 
+        onClose={() => {
+          setReward(null);
+        }}
+      />
+    </div>
+  </div>
+)}
 
       {/* Loading durante el juego */}
       {gameLoading && (

@@ -1,4 +1,4 @@
-// Cambia todas las importaciones de .js a .jsx
+// app.jsx
 import AuthView from './components/Views/AuthView.jsx';
 import CreateCharacterView from './components/Views/CreateCharacterView.jsx';
 import DashboardView from './components/Views/DashboardView.jsx';
@@ -51,54 +51,6 @@ const App = () => {
   const [clubMembers, setClubMembers] = useState([]);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDescription, setNewClubDescription] = useState('');
-  const [activeGame, setActiveGame] = useState(false);
-  const [reward, setReward] = useState(null);
-
-   // 1) función que abre el minijuego (esta la pasás a Dashboardview)
-  const openFindItemGame = () => {
-    setActiveGame(true);
-  };
-
-  // 2) función que se ejecuta cuando el jugador gana el minijuego
-  const handleGameFinish = async () => {
-    // cerrar el juego visualmente (se cierra igual en finally)
-    setLoading(true);
-    try {
-      const { data: allItems, error: itemsError } = await supabaseClient
-        .from("items")
-        .select("*");
-
-      if (itemsError) throw itemsError;
-      if (!allItems || allItems.length === 0) {
-        showMessage("No hay objetos disponibles para encontrar.");
-        return;
-      }
-
-      const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-
-      const { data, error } = await supabaseClient
-        .from("player_items")
-        .insert([{ player_id: session.user.id, item_id: randomItem.id }])
-        .select("*, items(*)")
-        .single();
-
-      if (error) throw error;
-
-      // actualizar inventario local
-      setInventory(prev => [...prev, data]);
-
-      // mostrar cofre con el item (puedes pasar el item simple o el objeto retornado)
-      setReward(randomItem);
-
-      showMessage(`¡Has encontrado: ${randomItem.name}!`);
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message || "Error al abrir el cofre.");
-    } finally {
-      setLoading(false);
-      setActiveGame(false);
-    }
-  };
 
   const showMessage = (text) => {
     setMessage(text);
@@ -1068,19 +1020,26 @@ const handleCompleteMission = async (mission) => {
         setPosition, handleSkillChange, username, sport, position, skills,
         availablePoints, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp,
         handleFindItem, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems,
-        leaderboardData, inventory, handleEquipItem, handleUnequipItem, setItemToSell,
+        leaderboardData, inventory, setInventory, handleEquipItem, handleUnequipItem, setItemToSell,
         setSellPrice, missionsData, handleCompleteMission, handleTransferCoins, 
         recipientAddress, setRecipientAddress, transferAmount, setTransferAmount,
         marketItems, handleBuyItem, handleSellItem, itemToSell,
         messages, messagesEndRef, handleSendMessage, newMessage, setNewMessage,
         clubs, currentClub, clubMembers, handleViewClubDetails, handleJoinClub, handleLeaveClub,
-        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient,
+        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient, session,
     };
 
     switch (view) {
       case 'auth': return <AuthView {...props} />;
       case 'create_character': return <CreateCharacterView {...props} />;
-      case 'dashboard': return <DashboardView {...props} />;
+      case 'dashboard': return <DashboardView 
+  {...props} 
+  setInventory={setInventory}
+  showMessage={showMessage}
+  supabaseClient={supabaseClient}
+  session={session}
+  // Añade estas props si no están incluidas en el spread {...props}
+/>;
       case 'leaderboard': return <LeaderboardView {...props} />;
       case 'inventory': return <InventoryView {...props} />;
       case 'missions': return <MissionsView {...props} />;

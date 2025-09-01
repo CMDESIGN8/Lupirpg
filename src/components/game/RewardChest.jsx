@@ -1,15 +1,16 @@
 // components/game/RewardChest.jsx
+import React from 'react';
 import { X, Gift, Award, Zap, Coins, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import '../styles/cofre.css';
-import React from 'react';
-
 
 const RewardChest = ({ items, onClose }) => {
-  // Función de seguridad en caso de que onClose no esté definido
+  // Función de seguridad
   const handleClose = () => {
     if (typeof onClose === 'function') {
       onClose();
+    } else {
+      console.error('onClose is not a function');
     }
   };
 
