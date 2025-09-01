@@ -51,7 +51,6 @@ const App = () => {
   const [clubMembers, setClubMembers] = useState([]);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDescription, setNewClubDescription] = useState('');
-   const [loading, setLoading] = useState(false);
   const [activeGame, setActiveGame] = useState(false);
   const [reward, setReward] = useState(null);
 
