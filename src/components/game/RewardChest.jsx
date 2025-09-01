@@ -27,7 +27,6 @@ const RewardChest = ({ items, onClose }) => {
       }}
     />
   ))}
-</div>
       <button className="reward-close-btn" onClick={handleClose}>
         <X size={20} />
       </button>
@@ -65,6 +64,7 @@ const RewardChest = ({ items, onClose }) => {
         <Award size={18} />
         Recoger recompensa
       </button>
+    </div>
     </div>
   );
 };
