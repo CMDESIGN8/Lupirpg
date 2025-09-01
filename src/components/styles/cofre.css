@@ -151,11 +151,11 @@
   border-radius: 50%;
   box-shadow: 0 0 8px var(--lupi-secondary);
   animation: rise linear infinite;
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
 @keyframes rise {
   0% { transform: translateY(0) scale(0.6); opacity: 1; }
-  70% { opacity: 0.8; }
+  70% { opacity: 0.; }
   100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
 }
