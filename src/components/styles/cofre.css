@@ -27,17 +27,14 @@
 }
 
 /* Partículas que suben */
-.reward-chest {
-  overflow: hidden;   /* evita que las partículas se salgan del borde */
-}
-
-.particles {
+.reward-chest .particles {
   position: absolute;
-  inset: 0; /* ocupa todo el contenedor */
+  inset: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
-.particle {
+.reward-chest .particle {
   position: absolute;
   bottom: -20px;
   width: 6px;
@@ -45,14 +42,14 @@
   background: var(--lupi-secondary);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--lupi-secondary);
-  animation: rise linear infinite;
+  animation: rise 3s linear infinite;
   opacity: 0.8;
 }
 
 @keyframes rise {
   0% { transform: translateY(0) scale(0.6); opacity: 1; }
   70% { opacity: 0.8; }
-  100% { transform: translateY(-100%) scale(1.2); opacity: 0; }
+  100% { transform: translateY(-120px) scale(1); opacity: 0; }
 }
 
 /* Cofre animación */
