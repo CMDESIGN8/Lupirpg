@@ -3,7 +3,7 @@ import MessageDisplay from '../UI/MessageDisplay';
 import '../styles/InventoryView.css';
 import itemAssets from '../../utils/itemAssets';
 
-const InventoryView = ({ inventory, handleEquipItem, handleUnequipItem, setItemToSell, setSellPrice, setView, loading, message }) => (
+const InventoryView = ({ inventory, handleEquipItem, handleUnequipItem, setItemToSell, setSellPrice, setView, loading, message,handleDropItem  }) => (
   <div className="inventory-container">
     <div className="inventory-box">
       <div className="inventory-header">
