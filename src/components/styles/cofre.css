@@ -1,5 +1,5 @@
 /* Estilos para el cofre de recompensas */
-.reward-chest-container {
+.reward-chest {
   position: relative;
   text-align: center;
   padding: 30px;
@@ -17,56 +17,31 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-.chest {
+.chest-animation {
   position: relative;
-  width: 150px;
-  height: 120px;
-  margin: 0 auto 30px;
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease-in-out;
-}
-
-.chest.open {
-  transform: translateY(-20px);
-}
-
-.chest-lid, .chest-body {
-  position: absolute;
-  background: linear-gradient(45deg, #ffd700, #daa520);
-  border: 3px solid #b8860b;
-}
-
-.chest-lid {
-  width: 160px;
-  height: 40px;
-  top: 0;
-  left: -5px;
-  border-radius: 10px 10px 5px 5px;
-  transform-origin: bottom center;
-  transition: transform 1s ease-in-out;
-  z-index: 2;
-}
-
-.chest.open .chest-lid {
-  transform: rotateX(-110deg);
-}
-
-.chest-body {
-  width: 150px;
+  margin: 20px auto;
+  width: 100px;
   height: 100px;
-  bottom: 0;
-  border-radius: 5px 5px 10px 10px;
-  z-index: 1;
 }
 
-.chest-glow {
+.chest-icon {
+  font-size: 60px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-20px); }
+  60% { transform: translateY(-10px); }
+}
+
+.chest-glows {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
-  z-index: 0;
+  width: 120px;
+  height: 120px;
 }
 
 .glow-1, .glow-2, .glow-3 {
@@ -79,20 +54,20 @@
 }
 
 .glow-1 {
-  width: 180px;
-  height: 180px;
+  width: 100px;
+  height: 100px;
   animation: pulseGlow 2s infinite;
 }
 
 .glow-2 {
-  width: 140px;
-  height: 140px;
+  width: 80px;
+  height: 80px;
   animation: pulseGlow 2s infinite 0.3s;
 }
 
 .glow-3 {
-  width: 100px;
-  height: 100px;
+  width: 60px;
+  height: 60px;
   animation: pulseGlow 2s infinite 0.6s;
 }
 
@@ -101,24 +76,13 @@
   50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
 }
 
-.reward-content {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.5s ease-in-out;
-}
-
-.reward-content.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.reward-content h2 {
+.reward-chest h2 {
   color: #FFD700;
   margin-bottom: 10px;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-.reward-content p {
+.reward-chest p {
   color: #e2e8f0;
   margin-bottom: 20px;
 }
@@ -139,7 +103,6 @@
   align-items: center;
   gap: 12px;
   animation: itemAppear 0.5s ease-out forwards;
-  opacity: 0;
 }
 
 @keyframes itemAppear {
@@ -222,30 +185,4 @@
 
 .reward-close-btn:hover {
   background: rgba(0, 255, 255, 0.2);
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .reward-items-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .reward-chest-container {
-    padding: 20px;
-  }
-  
-  .chest {
-    width: 120px;
-    height: 100px;
-  }
-  
-  .chest-lid {
-    width: 130px;
-    height: 30px;
-  }
-  
-  .chest-body {
-    width: 120px;
-    height: 80px;
-  }
 }

@@ -7,6 +7,8 @@ import AvatarSelector from '../AvatarSelector/AvatarSelector';
 import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 
+
+
 const DashboardView = ({ 
   playerData, 
   lupiCoins, 
