@@ -1,21 +1,30 @@
-import { 
-  Zap, ShoppingCart, CornerUpRight, Compass, CheckCircle, 
-  Shield, Users, MessageCircle, LogOut, ChevronUp , Copy
-} from 'lucide-react';
+import { Zap, ShoppingCart, CornerUpRight, Compass, CheckCircle, Shield, Users, MessageCircle, LogOut, ChevronUp, Copy } from 'lucide-react';
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
 import { useState, useEffect } from 'react';
 import { avatarService } from '../../services/avatarService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
-import LupiMiniGame from '../game/LupiMiniGame.jsx'; // Asegurate de importar tu minijuego
+import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 
-const DashboardView = ({
-  playerData, lupiCoins, equippedItems,
-  handleUpgradeSkill, handleGainXp,
-  setView, fetchMissions, fetchClubs,
-  fetchLeaderboard, fetchMarketItems,
-  loading, handleLogout, message
+const DashboardView = ({ 
+  playerData, 
+  lupiCoins, 
+  equippedItems, 
+  handleUpgradeSkill, 
+  handleGainXp, 
+  setView, 
+  fetchMissions, 
+  fetchClubs, 
+  fetchLeaderboard, 
+  fetchMarketItems, 
+  loading, 
+  handleLogout, 
+  message,
+  supabaseClient,
+  session,
+  setInventory,
+  showMessage
 }) => {
   if (!playerData) return <LoadingScreen />;
 
@@ -24,7 +33,8 @@ const DashboardView = ({
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [activeGame, setActiveGame] = useState(false);
   const [reward, setReward] = useState(null);
-
+  const [gameLoading, setGameLoading] = useState(false);
+  
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
 
@@ -51,14 +61,67 @@ const DashboardView = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Función que abre el minijuego
   const handleFindItem = () => {
-    // Abrimos el minijuego al buscar objeto
     setActiveGame(true);
   };
 
-  const handleGameFinish = (itemReward) => {
-    setReward(itemReward);
-    setActiveGame(false);
+  // Función que se ejecuta cuando el jugador gana el minijuego
+  const handleGameFinish = async () => {
+    setGameLoading(true);
+    try {
+      const { data: allItems, error: itemsError } = await supabaseClient
+        .from("items")
+        .select("*");
+
+      if (itemsError) throw itemsError;
+      if (!allItems || allItems.length === 0) {
+        showMessage("No hay objetos disponibles para encontrar.");
+        return;
+      }
+
+      // Seleccionar 5 objetos aleatorios
+      const randomItems = [];
+      const itemsCopy = [...allItems];
+      
+      for (let i = 0; i < 5 && itemsCopy.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * itemsCopy.length);
+        randomItems.push(itemsCopy[randomIndex]);
+        itemsCopy.splice(randomIndex, 1);
+      }
+
+      // Guardar los objetos en el inventario del jugador
+      const insertPromises = randomItems.map(item => 
+        supabaseClient
+          .from("player_items")
+          .insert([{ player_id: session.user.id, item_id: item.id }])
+          .select("*, items(*)")
+          .single()
+      );
+
+      const results = await Promise.all(insertPromises);
+      
+      // Verificar errores
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        throw new Error(`Error al guardar ${errors.length} objetos`);
+      }
+
+      // Actualizar inventario local
+      const newItems = results.map(result => result.data);
+      setInventory(prev => [...prev, ...newItems]);
+
+      // Mostrar cofre con los items
+      setReward(randomItems);
+
+      showMessage(`¡Has encontrado ${randomItems.length} objetos!`);
+    } catch (err) {
+      console.error(err);
+      showMessage(err.message || "Error al abrir el cofre.");
+    } finally {
+      setGameLoading(false);
+      setActiveGame(false);
+    }
   };
 
   return (
@@ -80,57 +143,59 @@ const DashboardView = ({
             <h2>FICHA TÉCNICA</h2>
             <div className="header-line"></div>
           </div>
+          
           <div className="player-info">
             <div className="info-row">
               <span className="info-label">Jugador:</span>
               <span className="info-value neon-text">{playerData.username}</span>
             </div>
-
+            
             <div className="avatar-section">
               <div className="avatar-container" onClick={handleAvatarClick}>
                 <img 
                   src={equippedAvatar?.avatars?.image_url || '/default-avatar.png'} 
-                  alt={`Avatar de ${playerData.username}`}
-                  className="player-avatar"
+                  alt={`Avatar de ${playerData.username}`} 
+                  className="player-avatar" 
                 />
                 <div className="avatar-overlay">
                   <p className="avatar-name">{equippedAvatar?.avatars?.name || 'Lupi'}</p>
                 </div>
               </div>
+              
               {showAvatarSelector && (
-                <AvatarSelector
-                  playerId={playerData.id}
-                  currentAvatar={equippedAvatar}
-                  onClose={() => setShowAvatarSelector(false)}
-                  onAvatarChange={loadEquippedAvatar}
+                <AvatarSelector 
+                  playerId={playerData.id} 
+                  currentAvatar={equippedAvatar} 
+                  onClose={() => setShowAvatarSelector(false)} 
+                  onAvatarChange={loadEquippedAvatar} 
                 />
               )}
             </div>
-
+            
             <div className="info-row">
               <span className="resource-icon">💰</span>
               <span className="resource-value">{lupiCoins}</span>
               <span className="resource-icon">🌟 LVL</span>
               <span className="resource-value">{playerData.level}</span>
             </div>
-
+            
             <div className="info-row">
               <span className="info-label">Posición:</span>
               <span className="info-value">{playerData.position}</span>
             </div>
-
+            
             <div className="info-row">
               <span className="info-label">Deporte:</span>
               <span className="info-value">{playerData.sport}</span>
             </div>
-
+            
             {playerData.clubs && (
               <div className="info-row">
                 <span className="info-label">Club:</span>
                 <span className="info-value highlight-text">{playerData.clubs.name}</span>
               </div>
             )}
-
+            
             <div className="info-row wallet-row">
               <span className="info-label">Wallet:</span>
               <div className="wallet-address" onClick={copyToClipboard}>
@@ -142,7 +207,7 @@ const DashboardView = ({
               </div>
             </div>
           </div>
-
+          
           <div className="xp-section">
             <div className="xp-header">
               <span>EXPERIENCIA</span>
@@ -164,12 +229,13 @@ const DashboardView = ({
               Puntos disponibles: <span className="points-count">{playerData.skill_points}</span>
             </div>
           </div>
+          
           <div className="skills-grid">
             {playerData.skills?.map(skill => {
               const bonusItem = equippedItems[skill.skill_name];
               const bonus = bonusItem ? bonusItem.bonus_value : 0;
               const totalValue = skill.skill_value + bonus;
-
+              
               const skillNamesMap = {
                 "Fuerza": "⚽ Potencia",
                 "Resistencia": "🏃 Resistencia",
@@ -183,22 +249,21 @@ const DashboardView = ({
                 "Estrategia": "🧠 Estrategia",
                 "Inteligencia": "📈 Inteligencia"
               };
-
+              
               const skillDisplayName = skillNamesMap[skill.skill_name] || skill.skill_name;
-
+              
               return (
                 <div key={skill.skill_name} className="skill-item">
                   <div className="skill-info">
                     <span className="skill-name">{skillDisplayName}</span>
                     <span className="skill-value">
-                      {totalValue}
-                      {bonus > 0 && <span className="skill-bonus">+{bonus}</span>}
+                      {totalValue} {bonus > 0 && <span className="skill-bonus">+{bonus}</span>}
                     </span>
                   </div>
                   <button 
                     onClick={() => handleUpgradeSkill(skill.skill_name)} 
                     disabled={loading || playerData.skill_points <= 0} 
-                    className="skill-upgrade-btn"
+                    className="skill-upgrade-btn" 
                     title="Mejorar habilidad"
                   >
                     <ChevronUp size={16} />
@@ -215,16 +280,22 @@ const DashboardView = ({
             <h2>ACCIÓN RÁPIDA</h2>
             <div className="header-line"></div>
           </div>
+          
           <div className="action-buttons">
             <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
               <span className="nav-icon">⚡</span>
               <span>Entrenar</span>
             </button>
+            
             <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
               <span className="nav-icon">🔍</span>
               <span>Buscar Objeto</span>
             </button>
-            <button className="action-btn secondary" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
+            
+            <button className="action-btn secondary" onClick={() => { 
+              fetchMissions(); 
+              setView('missions'); 
+            }} disabled={loading}>
               <span className="nav-icon">⚽</span>
               <span>Misiones</span>
             </button>
@@ -235,34 +306,53 @@ const DashboardView = ({
       {/* Panel de navegación inferior */}
       <div className="nav-panel">
         <div className="nav-grid">
-          <button className="nav-btn" onClick={() => { fetchMarketItems(); setView('market'); }} disabled={loading}>
+          <button className="nav-btn" onClick={() => { 
+            fetchMarketItems(); 
+            setView('market'); 
+          }} disabled={loading}>
             <span className="nav-icon">🛒</span>
             <span>Mercado</span>
           </button>
+          
           <button className="nav-btn" onClick={() => setView('transfer')} disabled={loading}>
             <span className="nav-icon">➡️</span>
             <span>Transferir</span>
           </button>
-          <button className="nav-btn" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
+          
+          <button className="nav-btn" onClick={() => { 
+            fetchMissions(); 
+            setView('missions'); 
+          }} disabled={loading}>
             <span className="nav-icon">⚽</span>
             <span>Misiones</span>
           </button>
-          <button className="nav-btn" onClick={() => { fetchClubs(); setView('clubs'); }} disabled={loading}>
+          
+          <button className="nav-btn" onClick={() => { 
+            fetchClubs(); 
+            setView('clubs'); 
+          }} disabled={loading}>
             <span className="nav-icon">🏟️</span>
             <span>Clubes</span>
           </button>
-          <button className="nav-btn" onClick={() => { fetchLeaderboard(); setView('leaderboard'); }} disabled={loading}>
+          
+          <button className="nav-btn" onClick={() => { 
+            fetchLeaderboard(); 
+            setView('leaderboard'); 
+          }} disabled={loading}>
             <span className="nav-icon">📊</span>
             <span>Ranking</span>
           </button>
+          
           <button className="nav-btn" onClick={() => setView('inventory')} disabled={loading}>
             <span className="nav-icon">🎒</span>
             <span>Inventario</span>
           </button>
+          
           <button className="nav-btn" onClick={() => setView('chat')} disabled={loading}>
             <span className="nav-icon">💬</span>
             <span>Chat</span>
           </button>
+          
           <button className="nav-btn logout" onClick={handleLogout}>
             <span className="nav-icon">📲</span>
             <span>Salir</span>
@@ -272,28 +362,38 @@ const DashboardView = ({
 
       {/* Minijuego */}
       {activeGame && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <button className="modal-close" onClick={() => setActiveGame(false)}>×</button>
-      <LupiMiniGame
-        requiredCoins={5}
-        onFinish={handleGameFinish}
-        onCancel={() => setActiveGame(false)}
-      />
-    </div>
-  </div>
-)}
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setActiveGame(false)}>×</button>
+            <LupiMiniGame 
+              requiredCoins={5} 
+              onFinish={handleGameFinish} 
+              onCancel={() => setActiveGame(false)} 
+            />
+          </div>
+        </div>
+      )}
 
+      {/* Cofre de recompensas */}
       {reward && (
-  <div className="modal-overlay">
-    <div className="reward-chest">
-      <h2>¡Has ganado un objeto!</h2>
-      <p>{reward.name}</p>
-      <button className="reward-close-btn" onClick={() => setReward(null)}>Cerrar</button>
-    </div>
-  </div>
-)}
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <RewardChest 
+              items={reward} 
+              onClose={() => setReward(null)}
+            />
+          </div>
+        </div>
+      )}
 
+      {/* Loading durante el juego */}
+      {gameLoading && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <LoadingScreen message="Guardando tus objetos..." />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
