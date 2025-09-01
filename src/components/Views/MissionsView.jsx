@@ -319,17 +319,18 @@ const MissionsView = ({
             )}
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-<ThemedButton
+         <ThemedButton
               onClick={() => setView('dashboard')}
               icon={<ChevronDown size={20} />}
               className="back-button"
             >
               Volver al Dashboard
             </ThemedButton>
+      </div>
+    </div>
+  );
+};
+
 // MissionCard component
 const MissionCard = ({ mission, onSelect, isSelected, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
   const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
@@ -525,8 +526,8 @@ const MissionDetail = ({ mission, handleCompleteMission, missionsData, inventory
          !canComplete ? 'Misión Bloqueada' : 'Completar Misión'}
       </ThemedButton>
     </div>
-    
   );
+ 
 };
 
 export default MissionsView;
