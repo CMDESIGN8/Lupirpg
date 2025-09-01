@@ -16,6 +16,8 @@ import LoadingScreen from './components/UI/LoadingScreen.jsx';
 import React, { useState, useEffect, useRef } from 'react'; // Importación completa
 import { positions, sports, skillNames, initialSkillPoints } from './constants'; // ¡Esta línea es crucial!
 import { supabaseClient } from './services/supabase'; // Importación correcta
+import LupiMiniGame from "./components/game/LupiMiniGame";
+import RewardChest from "./components/game/RewardChest";
 
 const App = () => {
   const [session, setSession] = useState(null);
@@ -49,6 +51,55 @@ const App = () => {
   const [clubMembers, setClubMembers] = useState([]);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDescription, setNewClubDescription] = useState('');
+   const [loading, setLoading] = useState(false);
+  const [activeGame, setActiveGame] = useState(false);
+  const [reward, setReward] = useState(null);
+
+   // 1) función que abre el minijuego (esta la pasás a Dashboardview)
+  const openFindItemGame = () => {
+    setActiveGame(true);
+  };
+
+  // 2) función que se ejecuta cuando el jugador gana el minijuego
+  const handleGameFinish = async () => {
+    // cerrar el juego visualmente (se cierra igual en finally)
+    setLoading(true);
+    try {
+      const { data: allItems, error: itemsError } = await supabaseClient
+        .from("items")
+        .select("*");
+
+      if (itemsError) throw itemsError;
+      if (!allItems || allItems.length === 0) {
+        showMessage("No hay objetos disponibles para encontrar.");
+        return;
+      }
+
+      const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+
+      const { data, error } = await supabaseClient
+        .from("player_items")
+        .insert([{ player_id: session.user.id, item_id: randomItem.id }])
+        .select("*, items(*)")
+        .single();
+
+      if (error) throw error;
+
+      // actualizar inventario local
+      setInventory(prev => [...prev, data]);
+
+      // mostrar cofre con el item (puedes pasar el item simple o el objeto retornado)
+      setReward(randomItem);
+
+      showMessage(`¡Has encontrado: ${randomItem.name}!`);
+    } catch (err) {
+      console.error(err);
+      showMessage(err.message || "Error al abrir el cofre.");
+    } finally {
+      setLoading(false);
+      setActiveGame(false);
+    }
+  };
 
   const showMessage = (text) => {
     setMessage(text);

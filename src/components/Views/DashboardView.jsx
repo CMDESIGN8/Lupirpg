@@ -10,7 +10,7 @@ import { avatarService } from '../../services/avatarService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
 
 
-const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message }) => {
+const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkill, handleGainXp, handleFindItem, setView, fetchMissions, fetchClubs, fetchLeaderboard, fetchMarketItems, loading, handleLogout, message, onFindItem, loading }) => {
   if (!playerData) return <LoadingScreen />;
 
   const [copied, setCopied] = useState(false);
@@ -206,10 +206,14 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
               <span>Entrenar</span>
             </button>
             
-            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
-              <span className="nav-icon">🔍</span>
-              <span>Buscar Objeto</span>
-            </button>
+            <button
+        className="action-btn secondary"
+        onClick={onFindItem}
+        disabled={loading}
+      >
+        <span className="nav-icon">🔍</span>
+        <span>Buscar Objeto</span>
+      </button>
 
              <button className="action-btn secondary" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
             <span className="nav-icon">⚽</span>
