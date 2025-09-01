@@ -39,7 +39,7 @@
   bottom: -20px;
   width: 6px;
   height: 6px;
-  background: radial-gradient(circle, rgba(4, 210, 247, 0.6) 0%, transparent 0%);
+  background: radial-gradient(circle, rgba(247, 231, 4, 0.6) 0%, transparent 0%);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--lupi-secondary);
   animation: rise 3s linear infinite;
