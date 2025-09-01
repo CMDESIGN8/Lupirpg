@@ -476,12 +476,13 @@
 }
 
 .detail-section p {
-  color: var(--neon-cyan);
+  color: var(--lupi-text-secondary);
 }
 
 .sport-requirements {
   display: flex;
   gap: 20px;
+  color: var(--lupi-text-secondary);
 }
 
 .requirements-list {
