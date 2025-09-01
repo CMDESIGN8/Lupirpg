@@ -1,7 +1,10 @@
 // src/views/MissionsView.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Missions.css';
-import { CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, Heart, Shield, Brain, Users, Castle } from 'lucide-react';
+import { 
+  CheckCircle, ChevronDown, Target, Calendar, Award, Coins, Zap, 
+  Heart, Shield, Brain, Users, Castle, BookOpen, Filter, X, Search 
+} from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import ProgressBar from '../UI/ProgressBar';
@@ -75,9 +78,23 @@ const MissionsView = ({
   inventory = []
 }) => {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [selectedMission, setSelectedMission] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Seleccionar primera misión al cargar o cambiar categoría
+  useEffect(() => {
+    if (filteredMissions.length > 0 && !selectedMission) {
+      setSelectedMission(filteredMissions[0]);
+    }
+  }, [filteredMissions, selectedMission]);
 
   const shouldShowMission = (mission) => {
-    return true; // Mostrar todas por ahora
+    if (searchTerm) {
+      return mission.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+             mission.description.toLowerCase().includes(searchTerm.toLowerCase());
+    }
+    return true;
   };
 
   // Categorías de misiones
@@ -104,7 +121,7 @@ const MissionsView = ({
     })
     .filter(mission => shouldShowMission(mission));
 
-  // Agrupar misiones por tipo (manteniendo la estructura original)
+  // Agrupar misiones por tipo
   const groupedMissions = filteredMissions.reduce((acc, mission) => {
     let category = 'general';
     
@@ -155,109 +172,163 @@ const MissionsView = ({
   };
 
   return (
-    <div className="missions-container">
-      <div className="missions-box">
-        <div className="missions-header">
-          <h2 className="missions-title">
-            <span className="neon-text">SISTEMA DE MISIONES - {playerData?.sport || 'Sin deporte'}</span>
-          </h2>
-
-          <div className="missions-stats">
-            <div className="stat-item">
-              <Award className="stat-icon" size={20} />
-              <span className="stat-value">{playerData?.skill_points || 0}</span>
-              <span className="stat-label">Puntos de Habilidad</span>
-            </div>
-            <div className="stat-item">
-              <Coins className="stat-icon" size={20} />
-              <span className="stat-value">{playerData?.lupi_coins || 0}</span>
-              <span className="stat-label">LupiCoins</span>
-            </div>
-            <div className="stat-item">
-              <Calendar className="stat-icon" size={20} />
-              <span className="stat-value">{playerData?.daily_missions_completed || 0}/7</span>
-              <span className="stat-label">Misiones Diarias</span>
-            </div>
+    <div className="missions-rpg-container">
+      <div className="missions-rpg-layout">
+        {/* Panel izquierdo: Vista detallada de misión */}
+        <div className="mission-detail-panel">
+          <div className="detail-panel-header">
+            <h2>DETALLES DE MISIÓN</h2>
           </div>
-        </div>
-
-        <div className="missions-info">
-          <p>Completa 7 misiones diarias para desbloquear una semanal y 4 semanales para una mensual</p>
-          <p className="sport-info">Mostrando misiones para: <strong>{playerData?.sport || 'Todos'} - {playerData?.position || 'Todas'}</strong></p>
-        </div>
-
-        {/* Filtros de categoría */}
-        <div className="missions-categories">
-          <h3>Filtrar por categoría:</h3>
-          <div className="categories-list">
-            {missionCategories.map(category => (
-              <button
-                key={category.id}
-                className={`category-btn ${activeCategory === category.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category.id)}
-              >
-                {category.icon}
-                <span>{category.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <MessageDisplay message={message} />
-
-        {loading ? (
-          <p className="loading-text">Cargando misiones...</p>
-        ) : (
-          <div className="missions-content">
-            {categoryOrder.map(category => (
-              groupedMissions[category] && groupedMissions[category].length > 0 && (
-                <div key={category} className="mission-category">
-                  <h3 className="category-title">
-                    {getCategoryIcon(category)}
-                    {getCategoryTitle(category)} ({groupedMissions[category].length})
-                  </h3>
-
-                  <div className="missions-list">
-                    {groupedMissions[category].map(mission => (
-                      <MissionCard
-                        key={mission.id}
-                        mission={mission}
-                        handleCompleteMission={handleCompleteMission}
-                        loading={loading}
-                        missionsData={missionsData}
-                        inventory={inventory}
-                        playerData={playerData}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            ))}
-
-            {filteredMissions.length === 0 && !loading && (
-              <div className="no-missions">
-                <p>No hay misiones disponibles en esta categoría.</p>
+          <div className="mission-detail-content">
+            {selectedMission ? (
+              <MissionDetail 
+                mission={selectedMission} 
+                handleCompleteMission={handleCompleteMission}
+                missionsData={missionsData}
+                inventory={inventory}
+                playerData={playerData}
+                loading={loading}
+              />
+            ) : (
+              <div className="no-mission-selected">
+                <BookOpen size={48} />
+                <p>Selecciona una misión para ver sus detalles</p>
               </div>
             )}
+          </div>
+        </div>
 
-            <div className="missions-footer">
-              <ThemedButton
-                onClick={() => setView('dashboard')}
-                icon={<ChevronDown size={20} />}
-                className="back-button"
-              >
-                Volver al Dashboard
-              </ThemedButton>
+        {/* Panel derecho: Lista de misiones */}
+        <div className="missions-list-panel">
+          <div className="missions-header">
+            <h2 className="missions-title">
+              <span className="neon-text">SISTEMA DE MISIONES - {playerData?.sport || 'Sin deporte'}</span>
+            </h2>
+
+            <div className="missions-stats">
+              <div className="stat-item">
+                <Award className="stat-icon" size={20} />
+                <span className="stat-value">{playerData?.skill_points || 0}</span>
+                <span className="stat-label">Puntos de Habilidad</span>
+              </div>
+              <div className="stat-item">
+                <Coins className="stat-icon" size={20} />
+                <span className="stat-value">{playerData?.lupi_coins || 0}</span>
+                <span className="stat-label">LupiCoins</span>
+              </div>
+              <div className="stat-item">
+                <Calendar className="stat-icon" size={20} />
+                <span className="stat-value">{playerData?.daily_missions_completed || 0}/7</span>
+                <span className="stat-label">Misiones Diarias</span>
+              </div>
             </div>
           </div>
-        )}
+
+          <div className="missions-info">
+            <p>Completa 7 misiones diarias para desbloquear una semanal y 4 semanales para una mensual</p>
+            <p className="sport-info">Mostrando misiones para: <strong>{playerData?.sport || 'Todos'} - {playerData?.position || 'Todas'}</strong></p>
+          </div>
+
+          {/* Barra de búsqueda y filtros */}
+          <div className="missions-search-filter">
+            <div className="search-bar">
+              <Search size={18} />
+              <input 
+                type="text" 
+                placeholder="Buscar misiones..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <X size={18} onClick={() => setSearchTerm('')} className="clear-search" />
+              )}
+            </div>
+            <button 
+              className={`filter-toggle ${showFilters ? 'active' : ''}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter size={18} />
+              Filtros
+            </button>
+          </div>
+
+          {/* Filtros de categoría (expandibles) */}
+          {showFilters && (
+            <div className="missions-categories-expanded">
+              <h3>Filtrar por categoría:</h3>
+              <div className="categories-grid">
+                {missionCategories.map(category => (
+                  <button
+                    key={category.id}
+                    className={`category-btn ${activeCategory === category.id ? 'active' : ''}`}
+                    onClick={() => setActiveCategory(category.id)}
+                  >
+                    {category.icon}
+                    <span>{category.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <MessageDisplay message={message} />
+
+          {loading ? (
+            <p className="loading-text">Cargando misiones...</p>
+          ) : (
+            <div className="missions-content">
+              {categoryOrder.map(category => (
+                groupedMissions[category] && groupedMissions[category].length > 0 && (
+                  <div key={category} className="mission-category">
+                    <h3 className="category-title">
+                      {getCategoryIcon(category)}
+                      {getCategoryTitle(category)} ({groupedMissions[category].length})
+                    </h3>
+
+                    <div className="missions-list">
+                      {groupedMissions[category].map(mission => (
+                        <MissionCard
+                          key={mission.id}
+                          mission={mission}
+                          onSelect={() => setSelectedMission(mission)}
+                          isSelected={selectedMission?.id === mission.id}
+                          handleCompleteMission={handleCompleteMission}
+                          loading={loading}
+                          missionsData={missionsData}
+                          inventory={inventory}
+                          playerData={playerData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))}
+
+              {filteredMissions.length === 0 && !loading && (
+                <div className="no-missions">
+                  <p>No hay misiones disponibles en esta categoría.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="missions-footer">
+            <ThemedButton
+              onClick={() => setView('dashboard')}
+              icon={<ChevronDown size={20} />}
+              className="back-button"
+            >
+              Volver al Dashboard
+            </ThemedButton>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-// MissionCard (fuera de MissionsView pero en el mismo archivo)
-const MissionCard = ({ mission, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
+// MissionCard component
+const MissionCard = ({ mission, onSelect, isSelected, handleCompleteMission, loading, missionsData = [], inventory = [], playerData = {} }) => {
   const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
 
   const getMissionIcon = (type) => {
@@ -282,7 +353,10 @@ const MissionCard = ({ mission, handleCompleteMission, loading, missionsData = [
   };
 
   return (
-    <div className={`mission-card ${!canComplete && !mission.is_completed ? 'locked' : ''}`}>
+    <div 
+      className={`mission-card ${!canComplete && !mission.is_completed ? 'locked' : ''} ${isSelected ? 'selected' : ''}`}
+      onClick={onSelect}
+    >
       <div className="mission-header">
         <div className="mission-title-container">
           {getMissionIcon(mission.type)}
@@ -299,24 +373,6 @@ const MissionCard = ({ mission, handleCompleteMission, loading, missionsData = [
       </div>
 
       <p className="mission-description">{mission.description}</p>
-
-      {mission.sport && (
-        <div className="mission-sport-info">
-          <span>Deporte: {mission.sport}</span>
-          {mission.position && <span>Posición: {mission.position}</span>}
-        </div>
-      )}
-
-      {!canComplete && !mission.is_completed && requirements.length > 0 && (
-        <div className="mission-requirements">
-          <h4>Requisitos para desbloquear:</h4>
-          <ul>
-            {requirements.map((req, index) => (
-              <li key={index} className="requirement-item">• {req}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {mission.progress !== undefined && mission.goal_value > 1 && (
         <div className="mission-progress">
@@ -343,15 +399,128 @@ const MissionCard = ({ mission, handleCompleteMission, loading, missionsData = [
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+// MissionDetail component
+const MissionDetail = ({ mission, handleCompleteMission, missionsData, inventory, playerData, loading }) => {
+  const { canComplete, requirements } = canCompleteMission(mission, missionsData, playerData, inventory);
+
+  const getMissionIcon = (type) => {
+    switch (type) {
+      case 'strength': return <Zap size={24} className="mission-icon" />;
+      case 'skill': return <Target size={24} className="mission-icon" />;
+      case 'intelligence': return <Brain size={24} className="mission-icon" />;
+      case 'social': return <Users size={24} className="mission-icon" />;
+      case 'club': return <Castle size={24} className="mission-icon" />;
+      case 'endurance': return <Heart size={24} className="mission-icon" />;
+      default: return <Award size={24} className="mission-icon" />;
+    }
+  };
+
+  const getMissionBadge = (resetInterval) => {
+    switch (resetInterval) {
+      case 'daily': return 'Diaria';
+      case 'weekly': return 'Semanal';
+      case 'monthly': return 'Mensual';
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="mission-detail">
+      <div className="detail-header">
+        <div className="detail-title-container">
+          {getMissionIcon(mission.type)}
+          <h2>{mission.name}</h2>
+        </div>
+        {mission.reset_interval && (
+          <span className={`mission-badge ${mission.reset_interval}`}>
+            {getMissionBadge(mission.reset_interval)}
+          </span>
+        )}
+        {mission.is_completed && (
+          <span className="mission-badge completed">✓ Completada</span>
+        )}
+      </div>
+
+      <div className="detail-section">
+        <h3>Descripción</h3>
+        <p>{mission.description}</p>
+      </div>
+
+      {mission.sport && (
+        <div className="detail-section">
+          <h3>Requerimientos de Deporte</h3>
+          <div className="sport-requirements">
+            <span><strong>Deporte:</strong> {mission.sport}</span>
+            {mission.position && <span><strong>Posición:</strong> {mission.position}</span>}
+          </div>
+        </div>
+      )}
+
+      {mission.progress !== undefined && mission.goal_value > 1 && (
+        <div className="detail-section">
+          <h3>Progreso</h3>
+          <div className="mission-progress">
+            <div className="progress-text">
+              <span>Progreso actual</span>
+              <span>{mission.progress}/{mission.goal_value}</span>
+            </div>
+            <ProgressBar
+              value={mission.progress}
+              max={mission.goal_value}
+              height="20px"
+            />
+          </div>
+        </div>
+      )}
+
+      {!canComplete && !mission.is_completed && requirements.length > 0 && (
+        <div className="detail-section">
+          <h3>Requisitos para desbloquear</h3>
+          <div className="requirements-list">
+            {requirements.map((req, index) => (
+              <div key={index} className="requirement-item">• {req}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="detail-section">
+        <h3>Recompensas</h3>
+        <div className="rewards-detail">
+          <div className="reward-item">
+            <span className="reward-icon">XP</span>
+            <span className="reward-value">{mission.xp_reward}</span>
+            <span className="reward-label">Experiencia</span>
+          </div>
+          {mission.skill_points_reward > 0 && (
+            <div className="reward-item">
+              <Award size={20} className="reward-icon" />
+              <span className="reward-value">+{mission.skill_points_reward}</span>
+              <span className="reward-label">Puntos de Habilidad</span>
+            </div>
+          )}
+          {mission.lupicoins_reward > 0 && (
+            <div className="reward-item">
+              <Coins size={20} className="reward-icon" />
+              <span className="reward-value">+{mission.lupicoins_reward}</span>
+              <span className="reward-label">LupiCoins</span>
+            </div>
+          )}
+        </div>
+      </div>
 
       <ThemedButton
         onClick={() => handleCompleteMission(mission)}
         disabled={mission.is_completed || loading || !canComplete}
         icon={mission.is_completed ? <CheckCircle size={20} /> : null}
-        className={`mission-button ${mission.is_completed ? 'completed' : ''} ${!canComplete ? 'locked' : ''}`}
+        className={`mission-complete-button ${mission.is_completed ? 'completed' : ''} ${!canComplete ? 'locked' : ''}`}
       >
-        {mission.is_completed ? 'Completada' :
-         !canComplete ? 'Bloqueada' : 'Completar Misión'}
+        {mission.is_completed ? 'Misión Completada' :
+         !canComplete ? 'Misión Bloqueada' : 'Completar Misión'}
       </ThemedButton>
     </div>
   );
