@@ -143,15 +143,15 @@
 }
 
 .particle {
-  position: absolute;
+   position: absolute;
   bottom: -20px;
   width: 6px;
   height: 6px;
-  background: var(--lupi-secondary);
+  background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 10%);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--lupi-secondary);
-  animation: rise linear infinite;
-  opacity: 0.5;
+  animation: rise 6s linear infinite;
+  opacity: 0.8;
 }
 
 @keyframes rise {
