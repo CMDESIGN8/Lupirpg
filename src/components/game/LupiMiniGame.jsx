@@ -15,7 +15,6 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
       }
 
       preload() {
-        // Crear texturas programáticamente
         this.createSkyTexture();
         this.createPlayerTexture();
         this.createCoinTexture();
@@ -23,9 +22,8 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
 
       createSkyTexture() {
         const g = this.make.graphics({ x: 0, y: 0, add: false });
-        // Fondo degradado azul cielo
-        const colorTop = 0x87CEFA; // azul claro
-        const colorBottom = 0x4682B4; // azul más oscuro
+        const colorTop = 0x87CEFA;
+        const colorBottom = 0x4682B4;
         const height = 600;
         for (let i = 0; i < height; i++) {
           const t = i / height;
@@ -47,10 +45,8 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
 
       createPlayerTexture() {
         const g = this.make.graphics({ x: 0, y: 0, add: false });
-        // Cuerpo principal
-        g.fillStyle(0xFF6F61, 1); // color coral
+        g.fillStyle(0xFF6F61, 1);
         g.fillRoundedRect(0, 0, 32, 48, 8);
-        // Ojos
         g.fillStyle(0xffffff, 1);
         g.fillCircle(8, 12, 4);
         g.fillCircle(24, 12, 4);
@@ -63,10 +59,8 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
 
       createCoinTexture() {
         const g = this.make.graphics({ x: 0, y: 0, add: false });
-        // Moneda dorada con brillo
         g.fillStyle(0xFFD700, 1);
         g.fillCircle(16, 16, 16);
-        // Brillo
         g.fillStyle(0xFFFFE0, 0.6);
         g.fillCircle(12, 12, 8);
         g.generateTexture("coin", 32, 32);
@@ -74,29 +68,33 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
       }
 
       create() {
-        // Fondo
-        this.add.image(400, 300, "sky");
+        // Ajustar escala a pantalla completa y centrado
+        this.cameras.main.setBackgroundColor("#87CEFA");
+        const { width, height } = this.scale;
+        this.add.image(width / 2, height / 2, "sky").setDisplaySize(width, height);
 
         // Jugador
-        this.player = this.physics.add.sprite(400, 300, "player").setScale(1.2);
+        this.player = this.physics.add.sprite(width / 2, height / 2, "player").setScale(1.5);
         this.player.setCollideWorldBounds(true);
+        this.player.setBounce(0.3); // rebote suave
 
         // Grupo de monedas
         this.coins = this.physics.add.group();
         for (let i = 0; i < requiredCoins; i++) {
-          const x = Phaser.Math.Between(50, 750);
-          const y = Phaser.Math.Between(50, 550);
-          this.coins.create(x, y, "coin");
+          const x = Phaser.Math.Between(50, width - 50);
+          const y = Phaser.Math.Between(50, height - 50);
+          const coin = this.coins.create(x, y, "coin");
+          coin.setScale(1.2);
         }
 
         // Texto de puntuación
         this.score = 0;
-        this.scoreText = this.add.text(16, 16, `Monedas: ${this.score}/${requiredCoins}`, {
-          fontSize: "22px",
+        this.scoreText = this.add.text(20, 20, `Monedas: ${this.score}/${requiredCoins}`, {
+          fontSize: "28px",
           fill: "#ffffff",
           stroke: "#000000",
-          strokeThickness: 5
-        });
+          strokeThickness: 6
+        }).setScrollFactor(0);
 
         // Colisiones
         this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this);
@@ -114,17 +112,35 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
       update() {
         this.player.setVelocity(0);
 
-        // Flechas
-        if (this.cursors.left.isDown) this.player.setVelocityX(-300);
-        if (this.cursors.right.isDown) this.player.setVelocityX(300);
-        if (this.cursors.up.isDown) this.player.setVelocityY(-300);
-        if (this.cursors.down.isDown) this.player.setVelocityY(300);
+        // Movimiento
+        let moving = false;
+        const speed = 300;
+        if (this.cursors.left.isDown || this.wasd.left.isDown) {
+          this.player.setVelocityX(-speed);
+          moving = true;
+        }
+        if (this.cursors.right.isDown || this.wasd.right.isDown) {
+          this.player.setVelocityX(speed);
+          moving = true;
+        }
+        if (this.cursors.up.isDown || this.wasd.up.isDown) {
+          this.player.setVelocityY(-speed);
+          moving = true;
+        }
+        if (this.cursors.down.isDown || this.wasd.down.isDown) {
+          this.player.setVelocityY(speed);
+          moving = true;
+        }
 
-        // WASD
-        if (this.wasd.left.isDown) this.player.setVelocityX(-300);
-        if (this.wasd.right.isDown) this.player.setVelocityX(300);
-        if (this.wasd.up.isDown) this.player.setVelocityY(-300);
-        if (this.wasd.down.isDown) this.player.setVelocityY(300);
+        // Animación ligera de "saltito" cuando se mueve
+        if (moving) {
+          this.player.y += Math.sin(this.time.now / 100) * 0.5;
+        }
+
+        // Animación de monedas girando
+        this.coins.getChildren().forEach((coin) => {
+          coin.rotation += 0.05;
+        });
       }
 
       collectCoin(player, coin) {
@@ -133,7 +149,7 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
         this.scoreText.setText(`Monedas: ${this.score}/${requiredCoins}`);
 
         if (this.score >= requiredCoins) {
-          this.cameras.main.flash(500, 255, 215, 0); // flash dorado
+          this.cameras.main.flash(500, 255, 215, 0); // dorado
           this.time.delayedCall(800, () => {
             if (typeof onFinish === "function") onFinish();
           });
@@ -143,11 +159,15 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
 
     const config = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
+      width: window.innerWidth,
+      height: window.innerHeight,
       parent: "lupi-game-container",
       physics: { default: "arcade", arcade: { gravity: { y: 0 }, debug: false } },
-      scene: MiniScene
+      scene: MiniScene,
+      scale: {
+        mode: Phaser.Scale.RESIZE, // escala automáticamente al tamaño de ventana
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      }
     };
 
     gameRef.current = new Phaser.Game(config);
@@ -167,7 +187,7 @@ const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
         <h3>¡Recolecta todas las monedas!</h3>
         <p>Usa las flechas o WASD para moverte</p>
       </div>
-      <div id="lupi-game-container" className="game-canvas" />
+      <div id="lupi-game-container" className="game-canvas" style={{ width: '100vw', height: '100vh' }} />
       <div className="game-controls">
         <button onClick={onCancel} className="cancel-button">Salir del juego</button>
       </div>
