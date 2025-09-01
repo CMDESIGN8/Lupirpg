@@ -371,3 +371,285 @@
     gap: 5px;
   }
 }
+
+/* Estilos adicionales para el diseño RPG */
+.missions-rpg-container {
+  padding: 20px;
+  background: linear-gradient(135deg, var(--neon-bg-darker) 0%, var(--neon-bg-dark) 100%);
+  min-height: 100vh;
+}
+
+.missions-rpg-layout {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 100px);
+}
+
+.mission-detail-panel {
+  flex: 4;
+  background: rgba(10, 25, 47, 0.9);
+  border: 1px solid var(--neon-blue);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
+  overflow-y: auto;
+}
+
+.missions-list-panel {
+  flex: 6;
+  background: rgba(10, 25, 47, 0.9);
+  border: 1px solid var(--neon-blue);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-panel-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 170, 255, 0.3);
+}
+
+.detail-panel-header h2 {
+  color: var(--neon-cyan);
+  margin: 0;
+  text-align: center;
+}
+
+.no-mission-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--lupi-text-secondary);
+}
+
+.no-mission-selected p {
+  margin-top: 15px;
+  font-size: 1.1rem;
+}
+
+.mission-detail {
+  padding: 10px;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.detail-title-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.detail-title-container h2 {
+  margin: 0;
+  color: white;
+}
+
+.detail-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: rgba(19, 16, 58, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+.detail-section h3 {
+  color: var(--neon-cyan);
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+.sport-requirements {
+  display: flex;
+  gap: 20px;
+}
+
+.requirements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.requirement-item {
+  color: #ff8888;
+  padding: 8px;
+  background: rgba(88, 0, 0, 0.2);
+  border-radius: 4px;
+  border-left: 3px solid #ff4444;
+}
+
+.rewards-detail {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.reward-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background: rgba(0, 30, 60, 0.4);
+  border-radius: 8px;
+  min-width: 100px;
+}
+
+.reward-icon {
+  font-size: 1.5rem;
+  color: var(--neon-cyan);
+  margin-bottom: 8px;
+}
+
+.reward-value {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 5px;
+}
+
+.reward-label {
+  font-size: 0.9rem;
+  color: var(--lupi-text-secondary);
+}
+
+.mission-complete-button {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.1rem;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Barra de búsqueda y filtros */
+.missions-search-filter {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: rgba(0, 30, 60, 0.4);
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  color: white;
+  outline: none;
+}
+
+.search-bar input::placeholder {
+  color: var(--lupi-text-secondary);
+}
+
+.clear-search {
+  cursor: pointer;
+  color: var(--lupi-text-secondary);
+}
+
+.clear-search:hover {
+  color: white;
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: rgba(0, 30, 60, 0.4);
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  border-radius: 8px;
+  color: var(--lupi-text-secondary);
+  cursor: pointer;
+}
+
+.filter-toggle.active,
+.filter-toggle:hover {
+  background: rgba(0, 60, 120, 0.6);
+  border-color: var(--neon-blue);
+  color: white;
+}
+
+.missions-categories-expanded {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(0, 30, 60, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+.missions-categories-expanded h3 {
+  color: var(--neon-cyan);
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+/* Mission card selected state */
+.mission-card.selected {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .missions-rpg-layout {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .mission-detail-panel,
+  .missions-list-panel {
+    flex: none;
+  }
+  
+  .mission-detail-panel {
+    order: 2;
+  }
+  
+  .missions-list-panel {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .sport-requirements {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .rewards-detail {
+    justify-content: center;
+  }
+  
+  .categories-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
