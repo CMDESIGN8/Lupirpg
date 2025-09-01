@@ -214,6 +214,24 @@ const DashboardView = ({ playerData, lupiCoins, equippedItems, handleUpgradeSkil
         <span className="nav-icon">🔍</span>
         <span>Buscar Objeto</span>
       </button>
+      {/* modal del minijuego */}
+      {activeGame && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80">
+          <div className="bg-transparent rounded-lg">
+            <LupiMiniGame
+              requiredCoins={5}
+              onFinish={handleGameFinish}
+              onCancel={() => setActiveGame(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* cofre con la recompensa */}
+      {reward && (
+        <RewardChest reward={reward} onClose={() => setReward(null)} />
+      )}
+    </div>
 
              <button className="action-btn secondary" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
             <span className="nav-icon">⚽</span>
