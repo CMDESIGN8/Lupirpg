@@ -513,3 +513,93 @@
     inset 0 0 25px rgba(0, 170, 255, 0.4);
   border-color: var(--neon-cyan);
 }
+
+/* Fondo oscuro para modales */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Contenedor del minijuego */
+.modal-content {
+  background-color: #0f172a; /* fondo azul oscuro estilo dashboard */
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Botón de cerrar modal */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #0ff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Cofre de recompensa */
+.reward-chest {
+  background: linear-gradient(145deg, #0ff 0%, #00f 100%);
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 0 20px #0ff;
+  color: #fff;
+  max-width: 400px;
+  width: 90%;
+  animation: chestPop 0.5s ease-out forwards;
+}
+
+.reward-chest h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+.reward-chest p {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+/* Animación cofres */
+@keyframes chestPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Botón cerrar cofre */
+.reward-close-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #0ff;
+  color: #0f172a;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reward-close-btn:hover {
+  background-color: #00e5e5;
+}

@@ -272,21 +272,27 @@ const DashboardView = ({
 
       {/* Minijuego */}
       {activeGame && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80">
-          <div className="bg-transparent rounded-lg">
-            <LupiMiniGame
-              requiredCoins={5}
-              onFinish={handleGameFinish}
-              onCancel={() => setActiveGame(false)}
-            />
-          </div>
-        </div>
-      )}
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <button className="modal-close" onClick={() => setActiveGame(false)}>×</button>
+      <LupiMiniGame
+        requiredCoins={5}
+        onFinish={handleGameFinish}
+        onCancel={() => setActiveGame(false)}
+      />
+    </div>
+  </div>
+)}
 
-      {/* Cofre de recompensa */}
       {reward && (
-        <RewardChest reward={reward} onClose={() => setReward(null)} />
-      )}
+  <div className="modal-overlay">
+    <div className="reward-chest">
+      <h2>¡Has ganado un objeto!</h2>
+      <p>{reward.name}</p>
+      <button className="reward-close-btn" onClick={() => setReward(null)}>Cerrar</button>
+    </div>
+  </div>
+)}
 
     </div>
   );
