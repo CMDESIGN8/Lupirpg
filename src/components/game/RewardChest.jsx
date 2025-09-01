@@ -18,7 +18,10 @@ const RewardChest = ({ items, onClose }) => {
     
     <div className="reward-overlay">
   {/* Partículas globales */}
-  <div className="particles">
+  {/* Cofre centrado */}
+  <div className="reward-chest">
+    <div className="chest-animation">
+      <div className="particles">
     {[...Array(40)].map((_, i) => (
       <div
         key={i}
@@ -31,10 +34,6 @@ const RewardChest = ({ items, onClose }) => {
       />
     ))}
   </div>
-
-  {/* Cofre centrado */}
-  <div className="reward-chest">
-    <div className="chest-animation">
       <div className="chest-icon">🎁</div>
       <div className="chest-glows">
         <div className="glow-1"></div>

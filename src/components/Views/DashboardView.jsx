@@ -144,9 +144,7 @@ const DashboardView = ({
       <MessageDisplay message={message} />
 
       <div className="dashboard-content">
-        {/* Izquierda - Ficha del jugador */}
-        <div className="player-card">
-          {/* Partículas globales */}
+        {/* Partículas globales */}
   <div className="particles">
     {[...Array(40)].map((_, i) => (
       <div
@@ -160,6 +158,8 @@ const DashboardView = ({
       />
     ))}
   </div>
+        {/* Izquierda - Ficha del jugador */}
+        <div className="player-card">
           <div className="card-header">
             <h2>FICHA TÉCNICA</h2>
             <div className="header-line"></div>
