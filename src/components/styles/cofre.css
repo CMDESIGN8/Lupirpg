@@ -1,0 +1,251 @@
+/* Estilos para el cofre de recompensas */
+.reward-chest-container {
+  position: relative;
+  text-align: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+  max-width: 500px;
+  width: 90%;
+  animation: chestAppear 0.5s ease-out;
+}
+
+@keyframes chestAppear {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.chest {
+  position: relative;
+  width: 150px;
+  height: 120px;
+  margin: 0 auto 30px;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease-in-out;
+}
+
+.chest.open {
+  transform: translateY(-20px);
+}
+
+.chest-lid, .chest-body {
+  position: absolute;
+  background: linear-gradient(45deg, #ffd700, #daa520);
+  border: 3px solid #b8860b;
+}
+
+.chest-lid {
+  width: 160px;
+  height: 40px;
+  top: 0;
+  left: -5px;
+  border-radius: 10px 10px 5px 5px;
+  transform-origin: bottom center;
+  transition: transform 1s ease-in-out;
+  z-index: 2;
+}
+
+.chest.open .chest-lid {
+  transform: rotateX(-110deg);
+}
+
+.chest-body {
+  width: 150px;
+  height: 100px;
+  bottom: 0;
+  border-radius: 5px 5px 10px 10px;
+  z-index: 1;
+}
+
+.chest-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  z-index: 0;
+}
+
+.glow-1, .glow-2, .glow-3 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, transparent 70%);
+}
+
+.glow-1 {
+  width: 180px;
+  height: 180px;
+  animation: pulseGlow 2s infinite;
+}
+
+.glow-2 {
+  width: 140px;
+  height: 140px;
+  animation: pulseGlow 2s infinite 0.3s;
+}
+
+.glow-3 {
+  width: 100px;
+  height: 100px;
+  animation: pulseGlow 2s infinite 0.6s;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.reward-content {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease-in-out;
+}
+
+.reward-content.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reward-content h2 {
+  color: #FFD700;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.reward-content p {
+  color: #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.reward-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.reward-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: itemAppear 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes itemAppear {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0ff;
+  flex-shrink: 0;
+}
+
+.item-details {
+  text-align: left;
+  flex-grow: 1;
+}
+
+.item-name {
+  font-weight: bold;
+  color: #0ff;
+  margin-bottom: 4px;
+}
+
+.item-type {
+  font-size: 0.85rem;
+  color: #cbd5e0;
+  text-transform: capitalize;
+  margin-bottom: 4px;
+}
+
+.item-bonus {
+  color: #00ff88;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.reward-collect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #0ff 0%, #00a3a3 100%);
+  color: #0f172a;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+  margin: 0 auto;
+}
+
+.reward-collect-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
+}
+
+.reward-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: #0ff;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reward-close-btn:hover {
+  background: rgba(0, 255, 255, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .reward-items-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .reward-chest-container {
+    padding: 20px;
+  }
+  
+  .chest {
+    width: 120px;
+    height: 100px;
+  }
+  
+  .chest-lid {
+    width: 130px;
+    height: 30px;
+  }
+  
+  .chest-body {
+    width: 120px;
+    height: 80px;
+  }
+}

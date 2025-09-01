@@ -67,65 +67,67 @@ const DashboardView = ({
   };
 
   // Función que se ejecuta cuando el jugador gana el minijuego
-  const handleGameFinish = async (gameReward) => {
-    setGameLoading(true);
-    try {
-      const { data: allItems, error: itemsError } = await supabaseClient
-        .from("items")
-        .select("*");
+ const handleGameFinish = async (gameReward) => {
+  setGameLoading(true);
+  try {
+    const { data: allItems, error: itemsError } = await supabaseClient
+      .from("items")
+      .select("*");
 
-      if (itemsError) throw itemsError;
-      if (!allItems || allItems.length === 0) {
-        showMessage("No hay objetos disponibles para encontrar.");
-        return;
-      }
-
-      // Seleccionar objetos aleatorios basados en la recompensa del juego
-      const randomItems = [];
-      const itemsCopy = [...allItems];
-      
-      // Usar la recompensa del juego para determinar cuántos objetos dar
-      const itemsToGet = gameReward?.items?.length || 3;
-      
-      for (let i = 0; i < itemsToGet && itemsCopy.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * itemsCopy.length);
-        randomItems.push(itemsCopy[randomIndex]);
-        itemsCopy.splice(randomIndex, 1);
-      }
-
-      // Guardar los objetos en el inventario del jugador
-      const insertPromises = randomItems.map(item => 
-        supabaseClient
-          .from("player_items")
-          .insert([{ player_id: session.user.id, item_id: item.id }])
-          .select("*, items(*)")
-          .single()
-      );
-
-      const results = await Promise.all(insertPromises);
-      
-      // Verificar errores
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        throw new Error(`Error al guardar ${errors.length} objetos`);
-      }
-
-      // Actualizar inventario local
-      const newItems = results.map(result => result.data);
-      setInventory(prev => [...prev, ...newItems]);
-
-      // Mostrar cofre con los items
-      setReward(randomItems);
-
-      showMessage(`¡Has encontrado ${randomItems.length} objetos!`);
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message || "Error al abrir el cofre.");
-    } finally {
-      setGameLoading(false);
-      setActiveGame(false);
+    if (itemsError) throw itemsError;
+    if (!allItems || allItems.length === 0) {
+      showMessage("No hay objetos disponibles para encontrar.");
+      return;
     }
-  };
+
+    // Seleccionar objetos aleatorios basados en la recompensa del juego
+    const randomItems = [];
+    const itemsCopy = [...allItems];
+    
+    // Usar la recompensa del juego para determinar cuántos objetos dar
+    const itemsToGet = gameReward?.items?.length || 3;
+    
+    for (let i = 0; i < itemsToGet && itemsCopy.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * itemsCopy.length);
+      randomItems.push(itemsCopy[randomIndex]);
+      itemsCopy.splice(randomIndex, 1);
+    }
+
+    // Guardar los objetos en el inventario del jugador
+    const insertPromises = randomItems.map(item => 
+      supabaseClient
+        .from("player_items")
+        .insert([{ player_id: session.user.id, item_id: item.id }])
+        .select("*, items(*)")
+        .single()
+    );
+
+    const results = await Promise.all(insertPromises);
+    
+    // Verificar errores
+    const errors = results.filter(result => result.error);
+    if (errors.length > 0) {
+      throw new Error(`Error al guardar ${errors.length} objetos`);
+    }
+
+    // Actualizar inventario local
+    const newItems = results.map(result => result.data);
+    setInventory(prev => [...prev, ...newItems]);
+
+    // Mostrar cofre con los items después de un breve delay para la animación
+    setTimeout(() => {
+      setReward(randomItems);
+      showMessage(`¡Has encontrado ${randomItems.length} objetos!`);
+    }, 500);
+    
+  } catch (err) {
+    console.error(err);
+    showMessage(err.message || "Error al abrir el cofre.");
+  } finally {
+    setGameLoading(false);
+    setActiveGame(false);
+  }
+};
 
   return (
     <div className="game-dashboard">
