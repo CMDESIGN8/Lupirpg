@@ -325,3 +325,88 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Modal overlay para el juego */
+.game-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+/* Contenedor principal del juego */
+.mini-game-container {
+  background: linear-gradient(135deg, #0a192f 0%, #162b4d 100%);
+  border: 2px solid #0ff;
+  border-radius: 16px;
+  padding: 25px;
+  color: white;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Botón de cerrar */
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: #0ff;
+  font-size: 24px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.modal-close:hover {
+  background: rgba(0, 255, 255, 0.2);
+}
+
+/* Encabezado del juego */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  position: relative;
+}
+
+.game-header h2 {
+  color: #FFD700;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  font-size: 1.8rem;
+}
+
+.game-stats {
+  display: flex;
+  gap: 15px;
+}
+
+.stat {
+  background: rgba(0, 255, 255, 0.1);
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #0ff;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Resto de estilos (mantén los que ya tienes para grid-cell, game-controls, etc.) */

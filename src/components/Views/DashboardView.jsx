@@ -365,11 +365,13 @@ const DashboardView = ({
 
       {/* Minijuego - MODAL CORREGIDO */}
       {activeGame && (
-        <LupiMiniGame 
-          onFinish={handleGameFinish} 
-          onCancel={() => setActiveGame(false)} 
-        />
-      )}
+  <div className="game-modal-overlay">
+    <LupiMiniGame 
+      onFinish={handleGameFinish} 
+      onCancel={() => setActiveGame(false)} 
+    />
+  </div>
+)}
 
       {/* Cofre de recompensas */}
       {reward && (

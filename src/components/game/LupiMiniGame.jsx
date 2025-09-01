@@ -113,13 +113,14 @@ const LupiMiniGame = ({ onFinish, onCancel }) => {
   };
 
   return (
-    <div className="football-game-container">
+    <div className="mini-game-container">
       <div className="game-header">
         <h2>Búsqueda de Objetos de Fútbol</h2>
         <div className="game-stats">
           <div className="stat">Tiempo: {timeLeft}s</div>
           <div className="stat">Puntos: {score}</div>
         </div>
+        <button className="modal-close" onClick={onCancel}>×</button>
       </div>
       
       <div className="game-message">{getGameMessage()}</div>
