@@ -1,6 +1,7 @@
 // src/components/game/LupiMiniGame.jsx
 import React, { useEffect, useRef } from "react";
 import Phaser from "phaser";
+import '../styles/lupigame.css';
 
 const LupiMiniGame = ({ requiredCoins = 5, onFinish, onCancel }) => {
   const gameRef = useRef(null);
