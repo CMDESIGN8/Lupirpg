@@ -16,6 +16,18 @@ const RewardChest = ({ items, onClose }) => {
 
   return (
     <div className="reward-chest">
+      <div className="particles">
+  {[...Array(15)].map((_, i) => (
+    <div
+      key={i}
+      className="particle"
+      style={{
+        left: `${Math.random() * 100}%`,
+        animationDelay: `${Math.random() * 3}s`
+      }}
+    />
+  ))}
+</div>
       <button className="reward-close-btn" onClick={handleClose}>
         <X size={20} />
       </button>
