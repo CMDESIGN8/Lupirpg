@@ -7,31 +7,20 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [userNames, setUserNames] = useState({});
-  const [cheerSound, setCheerSound] = useState(null);
+  const [selectedSport, setSelectedSport] = useState('fútbol');
   const canvasRef = useRef(null);
 
-  // Colores para equipos de fútbol
-  const teamColors = [
-    '#FF0000', // Rojo (Manchester United)
-    '#0000FF', // Azul (Chelsea)
-    '#00FF00', // Verde (Celtic)
-    '#FFFF00', // Amarillo (Borussia Dortmund)
-    '#FFFFFF', // Blanco (Real Madrid)
-    '#000000'  // Negro (Juventus)
+  // Deportes disponibles
+  const sports = [
+    { id: 'fútbol', name: '⚽ Fútbol', color: '#2E8B57' },
+    { id: 'baloncesto', name: '🏀 Baloncesto', color: '#FF6B35' },
+    { id: 'tenis', name: '🎾 Tenis', color: '#00A8E8' },
+    { id: 'voleibol', name: '🏐 Voleibol', color: '#F9A826' },
+    { id: 'rugby', name: '🏉 Rugby', color: '#6A0572' },
+    { id: 'béisbol', name: '⚾ Béisbol', color: '#8B4513' },
+    { id: 'hockey', name: '🏒 Hockey', color: '#FF0000' },
+    { id: 'atletismo', name: '🏃 Atletismo', color: '#4ECDC4' }
   ];
-
-  // Efectos de sonido
-  useEffect(() => {
-    // Cargar sonido de ambiente de estadio (opcional)
-    const cheer = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-crowd-cheer-477.mp3');
-    setCheerSound(cheer);
-    
-    return () => {
-      if (cheerSound) {
-        cheerSound.pause();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!currentUser?.id) {
@@ -75,149 +64,106 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       }
     };
 
-    const cleanupPromise = initializeRoom();
-    
-    return () => {
-      cleanupPromise.then(cleanup => {
-        if (cleanup) cleanup();
-      }).catch(console.error);
-    };
+    initializeRoom();
   }, [currentUser]);
 
-  // Dibujar el estadio
+  // Cargar nombres de usuarios
+  useEffect(() => {
+    const loadUserNames = async () => {
+      if (messages.length === 0) return;
+
+      const userIds = [...new Set(messages.map(msg => msg.user_id).filter(Boolean))];
+      if (userIds.length === 0) return;
+
+      try {
+        const { data: roomUsers, error: roomError } = await supabaseClient
+          .from('room_users')
+          .select('user_id, name')
+          .in('user_id', userIds);
+
+        if (!roomError && roomUsers) {
+          const namesMap = {};
+          roomUsers.forEach(user => {
+            namesMap[user.user_id] = user.name;
+          });
+          setUserNames(prev => ({ ...prev, ...namesMap }));
+        }
+      } catch (error) {
+        console.error('Error loading user names:', error);
+      }
+    };
+
+    loadUserNames();
+  }, [messages]);
+
+  // Dibujar el lobby según el deporte seleccionado
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    drawStadium(ctx);
-  }, [users]);
+    drawSportField(ctx, selectedSport);
+  }, [users, selectedSport]);
 
-  const drawStadium = (ctx) => {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-    
-    // Limpiar canvas
-    ctx.clearRect(0, 0, width, height);
-    
-    // Césped del campo
-    ctx.fillStyle = '#2E8B57'; // Verde césped
-    ctx.fillRect(0, 0, width, height);
-    
-    // Líneas del campo
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    
-    // Círculo central
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2, 50, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Línea central
-    ctx.beginPath();
-    ctx.moveTo(width / 2, 0);
-    ctx.lineTo(width / 2, height);
-    ctx.stroke();
-    
-    // Área grande izquierda
-    ctx.strokeRect(0, height / 4, 100, height / 2);
-    
-    // Área grande derecha
-    ctx.strokeRect(width - 100, height / 4, 100, height / 2);
-    
-    // Área pequeña izquierda
-    ctx.strokeRect(0, height / 3, 40, height / 3);
-    
-    // Área pequeña derecha
-    ctx.strokeRect(width - 40, height / 3, 40, height / 3);
-    
-    // Punto de penalty izquierdo
-    ctx.beginPath();
-    ctx.arc(75, height / 2, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill();
-    
-    // Punto de penalty derecho
-    ctx.beginPath();
-    ctx.arc(width - 75, height / 2, 3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Dibujar gradas
-    ctx.fillStyle = '#8B4513'; // Color madera de gradas
-    ctx.fillRect(0, 0, width, 30); // Gradas superior
-    ctx.fillRect(0, height - 30, width, 30); // Gradas inferior
-    
-    // Dibujar jugadores (avatares) como futbolistas
-    users.forEach(user => {
-      drawFootballPlayer(ctx, user);
-    });
-  };
-
-  const drawFootballPlayer = (ctx, user) => {
-    const { x, y, color, name } = user;
-    
-    // Cuerpo del jugador (camiseta)
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, 20, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Shorts
-    ctx.fillStyle = '#000080'; // Azul marino
-    ctx.fillRect(x - 15, y + 10, 30, 15);
-    
-    // Piernas
-    ctx.fillStyle = '#FFD700'; // Dorado (espinilleras)
-    ctx.fillRect(x - 5, y + 25, 10, 20);
-    
-    // Número en la camiseta
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('10', x, y + 5);
-    
-    // Nombre del jugador
-    ctx.fillStyle = '#323C78';
-    ctx.font = '12px Arial';
-    ctx.fillText(name, x, y + 55);
-  };
-
-  // Función para enviar mensaje con temática futbolística
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !currentUser?.id) return;
-
+  // FUNCIÓN: Cargar usuarios
+  const loadUsers = async () => {
     try {
-      const { error } = await supabaseClient
-        .from('room_messages')
-        .insert({
-          user_id: currentUser.id,
-          content: newMessage.trim()
-        });
+      const { data, error } = await supabaseClient
+        .from('room_users')
+        .select('*')
+        .order('name', { ascending: true });
 
       if (error) {
-        console.error('Error sending message:', error);
+        console.error('Error loading users:', error);
         return;
       }
+      
+      if (data) {
+        setUsers(data.map(user => ({
+          ...user,
+          x: user.x || Math.round(Math.random() * 600 + 100),
+          y: user.y || Math.round(Math.random() * 300 + 150)
+        })));
 
-      // Reproducir sonido de animación al enviar mensaje
-      if (cheerSound) {
-        cheerSound.currentTime = 0;
-        cheerSound.play().catch(e => console.log('Audio play failed:', e));
+        const namesMap = {};
+        data.forEach(user => {
+          namesMap[user.user_id] = user.name;
+        });
+        setUserNames(prev => ({ ...prev, ...namesMap }));
       }
-
-      setNewMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error loading users:', error);
     }
   };
 
-  // Resto de funciones se mantienen similares pero con temática futbolística
+  // FUNCIÓN: Cargar mensajes
+  const loadMessages = async () => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('room_messages')
+        .select('id, user_id, content, created_at')
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+      
+      if (data) {
+        setMessages(data);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  // FUNCIÓN: Unirse al lobby
   const joinRoom = async () => {
     if (!currentUser?.id) return;
 
     try {
-      const color = teamColors[Math.floor(Math.random() * teamColors.length)];
+      const sport = sports[Math.floor(Math.random() * sports.length)];
       const x = Math.round(Math.random() * 600 + 100);
       const y = Math.round(Math.random() * 300 + 150);
 
@@ -225,8 +171,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         .from('room_users')
         .insert({
           user_id: currentUser.id,
-          name: currentUser.username || 'Jugador',
-          color: color,
+          name: currentUser.username || 'Deportista',
+          color: sport.color,
+          sport: sport.id,
           x: x,
           y: y,
           joined_at: new Date().toISOString()
@@ -237,8 +184,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           const { error: updateError } = await supabaseClient
             .from('room_users')
             .update({
-              name: currentUser.username || 'Jugador',
-              color: color,
+              name: currentUser.username || 'Deportista',
+              color: sport.color,
+              sport: sport.id,
               x: x,
               y: y,
               joined_at: new Date().toISOString()
@@ -258,17 +206,242 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // ... (resto de funciones loadMessages, loadUsers, etc. se mantienen igual)
+  // FUNCIÓN: Dibujar campo según deporte
+  const drawSportField = (ctx, sport) => {
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    switch(sport) {
+      case 'fútbol':
+        // Campo de fútbol
+        ctx.fillStyle = '#2E8B57';
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 50, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(width / 2, 0);
+        ctx.lineTo(width / 2, height);
+        ctx.stroke();
+        ctx.strokeRect(0, height / 4, 100, height / 2);
+        ctx.strokeRect(width - 100, height / 4, 100, height / 2);
+        break;
+        
+      case 'baloncesto':
+        // Cancha de baloncesto
+        ctx.fillStyle = '#FF6B35';
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 50, width - 100, height - 100);
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 60, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+        
+      case 'tenis':
+        // Cancha de tenis
+        ctx.fillStyle = '#00A8E8';
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 50, width - 100, height - 100);
+        ctx.beginPath();
+        ctx.moveTo(width / 2, 50);
+        ctx.lineTo(width / 2, height - 50);
+        ctx.stroke();
+        break;
+        
+      default:
+        // Campo genérico
+        ctx.fillStyle = '#4ECDC4';
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 50, width - 100, height - 100);
+    }
+    
+    // Dibujar deportistas
+    users.forEach(user => {
+      drawAthlete(ctx, user);
+    });
+  };
+
+  // FUNCIÓN: Dibujar deportista
+  const drawAthlete = (ctx, user) => {
+    const { x, y, color, name, sport } = user;
+    
+    // Cuerpo del deportista
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Icono del deporte
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    
+    switch(sport) {
+      case 'fútbol': ctx.fillText('⚽', x, y); break;
+      case 'baloncesto': ctx.fillText('🏀', x, y); break;
+      case 'tenis': ctx.fillText('🎾', x, y); break;
+      case 'voleibol': ctx.fillText('🏐', x, y); break;
+      case 'rugby': ctx.fillText('🏉', x, y); break;
+      case 'béisbol': ctx.fillText('⚾', x, y); break;
+      case 'hockey': ctx.fillText('🏒', x, y); break;
+      case 'atletismo': ctx.fillText('🏃', x, y); break;
+      default: ctx.fillText('👤', x, y);
+    }
+    
+    // Nombre del deportista
+    ctx.fillStyle = '#323C78';
+    ctx.font = '12px Arial';
+    ctx.fillText(name, x, y + 40);
+  };
+
+  // FUNCIÓN: Enviar mensaje
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !currentUser?.id) return;
+
+    try {
+      const { error } = await supabaseClient
+        .from('room_messages')
+        .insert({
+          user_id: currentUser.id,
+          content: newMessage.trim()
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  // FUNCIÓN: Mover avatar (CORREGIDA)
+  const moveAvatar = async (x, y) => {
+    if (!currentUser?.id) return;
+
+    try {
+      const roundedX = Math.round(x);
+      const roundedY = Math.round(y);
+      
+      const { error } = await supabaseClient
+        .from('room_users')
+        .update({ 
+          x: roundedX, 
+          y: roundedY 
+        })
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error moving avatar:', error);
+      }
+    } catch (error) {
+      console.error('Error moving avatar:', error);
+    }
+  };
+
+  // FUNCIÓN: Manejar cambios en usuarios
+  const handleUserChange = (payload) => {
+    if (payload.eventType === 'INSERT') {
+      setUsers(prev => [...prev, {
+        ...payload.new,
+        x: payload.new.x || Math.round(Math.random() * 600 + 100),
+        y: payload.new.y || Math.round(Math.random() * 300 + 150)
+      }]);
+    } else if (payload.eventType === 'DELETE') {
+      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
+    } else if (payload.eventType === 'UPDATE') {
+      setUsers(prev => prev.map(user => 
+        user.id === payload.new.id ? {...user, ...payload.new} : user
+      ));
+    }
+  };
+
+  // FUNCIÓN: Manejar nuevos mensajes
+  const handleNewMessage = (payload) => {
+    setMessages(prev => [...prev, payload.new]);
+  };
+
+  // FUNCIÓN: Salir del lobby
+  const leaveRoom = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      const { error } = await supabaseClient
+        .from('room_users')
+        .delete()
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error leaving room:', error);
+      }
+    } catch (error) {
+      console.error('Error leaving room:', error);
+    }
+  };
+
+  // Obtener nombre para mostrar
+  const getUserDisplayName = (userId) => {
+    if (!userId) return 'Deportista';
+    return userNames[userId] || `Deportista${userId.slice(-4)}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="sports-lobby-modal">
+        <div className="sports-lobby-content">
+          <div className="sports-lobby-header">
+            <h2>🏟️ Lobby Multideporte Lupi</h2>
+            <button className="close-btn" onClick={onClose}>⨉</button>
+          </div>
+          <div className="loading-container">
+            <p>Entrando al lobby deportivo...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="stadium-modal">
-      <div className="stadium-content">
-        <div className="stadium-header">
-          <h2>🏟️ Estadio Lupi FC</h2>
+    <div className="sports-lobby-modal">
+      <div className="sports-lobby-content">
+        <div className="sports-lobby-header">
+          <h2>🏟️ Lobby Multideporte Lupi</h2>
           <button className="close-btn" onClick={onClose}>⨉</button>
         </div>
         
-        <div className="stadium-container">
+        <div className="sports-selector">
+          <h3>Selecciona un deporte:</h3>
+          <div className="sports-buttons">
+            {sports.map(sport => (
+              <button
+                key={sport.id}
+                className={`sport-btn ${selectedSport === sport.id ? 'active' : ''}`}
+                onClick={() => setSelectedSport(sport.id)}
+                style={{ borderColor: sport.color }}
+              >
+                {sport.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="lobby-container">
           <div className="field-container">
             <canvas 
               ref={canvasRef} 
@@ -280,7 +453,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 const y = e.clientY - rect.top;
                 moveAvatar(x, y);
               }}
-              className="soccer-field"
+              className="sport-field"
             />
           </div>
           
@@ -302,11 +475,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="¡Grita tu estrategia!"
+                placeholder="¡Comparte tu estrategia!"
                 disabled={!currentUser}
               />
               <button type="submit" disabled={!currentUser}>
-                ⚽ Enviar
+                🎯 Enviar
               </button>
             </form>
           </div>

@@ -1,11 +1,11 @@
 /* src/styles/CommonRoom.css */
-.stadium-modal {
+.sports-lobby-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,165 +13,218 @@
   font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
 }
 
-.stadium-content {
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 15px;
-  padding: 20px;
+.sports-lobby-content {
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 20px;
+  padding: 25px;
   width: 95%;
-  max-width: 1300px;
+  max-width: 1400px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.7);
   border: 3px solid #ffd700;
 }
 
-.stadium-header {
+.sports-lobby-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #ffd700;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid #ffd700;
 }
 
-.stadium-header h2 {
+.sports-lobby-header h2 {
   color: #ffd700;
   margin: 0;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-  font-size: 24px;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+  font-size: 28px;
+  font-weight: bold;
 }
 
-.close-btn {
-  background: #ff4757;
+.sports-selector {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.sports-selector h3 {
+  color: #ffffff;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.sports-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.sport-btn {
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
-  border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
+  border: 2px solid;
+  border-radius: 25px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 18px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
-.close-btn:hover {
-  background: #ff6b81;
-  transform: scale(1.1);
+.sport-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
 }
 
-.stadium-container {
+.sport-btn.active {
+  background: rgba(255, 215, 0, 0.2);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.lobby-container {
   display: flex;
-  gap: 20px;
-  height: 70vh;
+  gap: 25px;
+  height: 65vh;
 }
 
 .field-container {
   flex: 3;
-  background: linear-gradient(135deg, #2E8B57, #228B22);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 100, 0, 0.7);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
   position: relative;
 }
 
-.soccer-field {
+.sport-field {
   display: block;
   cursor: pointer;
-  background: #2E8B57;
-  border-radius: 8px;
+  border-radius: 12px;
+  width: 100%;
+  height: 100%;
 }
 
 .locker-room-chat {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a2a6c, #000080);
-  border-radius: 10px;
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 128, 0.7);
-  border: 2px solid #ffd700;
+  box-shadow: 0 0 20px rgba(52, 152, 219, 0.6);
+  border: 2px solid #3498db;
 }
 
+/* Resto de estilos se mantienen similares pero adaptados */
 .chat-title {
-  background: #b21f1f;
-  color: #ffd700;
-  padding: 12px;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #ffffff;
+  padding: 15px;
   text-align: center;
   font-weight: bold;
-  font-size: 18px;
-  text-shadow: 1px 1px 2px #000;
-  border-bottom: 2px solid #ffd700;
+  font-size: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  border-bottom: 3px solid #ffd700;
 }
 
 .messages {
   flex: 1;
-  padding: 15px;
+  padding: 20px;
   overflow-y: auto;
-  max-height: calc(70vh - 150px);
+  max-height: calc(65vh - 150px);
   background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 .message {
-  margin-bottom: 12px;
+  margin-bottom: 15px;
   text-align: left;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid #ffd700;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  border-left: 4px solid #3498db;
+  transition: transform 0.2s ease;
+}
+
+.message:hover {
+  transform: translateX(5px);
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.1));
 }
 
 .player-name {
   font-weight: bold;
   color: #ffd700;
-  margin-right: 5px;
-  text-shadow: 1px 1px 1px #000;
+  margin-right: 8px;
+  text-shadow: 1px 1px 2px #000;
+  font-size: 14px;
 }
 
 .message-content {
   color: #ffffff;
+  font-size: 14px;
 }
 
 .message-form {
   display: flex;
-  padding: 15px;
-  border-top: 2px solid #ffd700;
-  background: rgba(178, 31, 31, 0.3);
+  padding: 20px;
+  border-top: 3px solid #3498db;
+  background: rgba(231, 76, 60, 0.2);
+  gap: 12px;
 }
 
 .message-form input {
   flex: 1;
-  padding: 12px;
-  border: 2px solid #ffd700;
-  border-radius: 6px;
-  margin-right: 10px;
+  padding: 15px;
+  border: 2px solid #3498db;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
   font-size: 14px;
+  color: #2c3e50;
 }
 
 .message-form input:focus {
   outline: none;
-  box-shadow: 0 0 5px #ffd700;
+  box-shadow: 0 0 10px #3498db;
+  border-color: #ffd700;
 }
 
 .message-form button {
-  padding: 12px 18px;
-  background: linear-gradient(135deg, #b21f1f, #8B0000);
-  color: #ffd700;
+  padding: 15px 25px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
   border: 2px solid #ffd700;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
   font-size: 16px;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .message-form button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8B0000, #b21f1f);
+  background: linear-gradient(135deg, #2980b9, #3498db);
   transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
 }
 
-.message-form button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.close-btn {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: 2px solid #ffd700;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
 }
 
 .loading-container {
@@ -180,44 +233,38 @@
   align-items: center;
   height: 200px;
   color: #ffd700;
-  font-size: 20px;
-  text-shadow: 1px 1px 2px #000;
+  font-size: 24px;
+  text-shadow: 2px 2px 4px #000;
+  font-weight: bold;
 }
 
-/* Animaciones */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+/* Animaciones y efectos */
+@keyframes stadiumPulse {
+  0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+  50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.9); }
+  100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
 }
 
-.stadium-content {
-  animation: pulse 2s infinite;
-}
-
-.message {
-  transition: transform 0.2s;
-}
-
-.message:hover {
-  transform: translateX(5px);
+.sports-lobby-content {
+  animation: stadiumPulse 3s infinite;
 }
 
 /* Scrollbar personalizado */
 .messages::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .messages::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
 .messages::-webkit-scrollbar-thumb {
-  background: #ffd700;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border-radius: 5px;
+  border: 2px solid #ffd700;
 }
 
 .messages::-webkit-scrollbar-thumb:hover {
-  background: #b21f1f;
+  background: linear-gradient(135deg, #2980b9, #3498db);
 }
