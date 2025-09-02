@@ -5,6 +5,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const canvasRef = useRef(null);
 
   // Colores para los avatares
@@ -14,35 +15,61 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
   // Cargar usuarios y mensajes al iniciar
   useEffect(() => {
-    loadUsers();
-    loadMessages();
-    
-    // Suscribirse a cambios en tiempo real
-    const userSubscription = supabaseClient
-      .channel('room_users')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'room_users' }, 
-        handleUserChange
-      )
-      .subscribe();
+    // Verificar que currentUser existe antes de proceder
+    if (!currentUser || !currentUser.id) {
+      console.error('Current user is not available');
+      setIsLoading(false);
+      return;
+    }
 
-    const messageSubscription = supabaseClient
-      .channel('room_messages')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'room_messages' }, 
-        handleNewMessage
-      )
-      .subscribe();
+    const initializeRoom = async () => {
+      setIsLoading(true);
+      try {
+        await loadUsers();
+        await loadMessages();
+        
+        // Suscribirse a cambios en tiempo real
+        const userSubscription = supabaseClient
+          .channel('room_users')
+          .on('postgres_changes', 
+            { event: '*', schema: 'public', table: 'room_users' }, 
+            handleUserChange
+          )
+          .subscribe();
 
-    // Unirse a la sala automáticamente
-    joinRoom();
+        const messageSubscription = supabaseClient
+          .channel('room_messages')
+          .on('postgres_changes', 
+            { event: 'INSERT', schema: 'public', table: 'room_messages' }, 
+            handleNewMessage
+          )
+          .subscribe();
 
-    return () => {
-      userSubscription.unsubscribe();
-      messageSubscription.unsubscribe();
-      leaveRoom();
+        // Unirse a la sala automáticamente
+        await joinRoom();
+
+        // Guardar las suscripciones para limpiar después
+        return () => {
+          userSubscription.unsubscribe();
+          messageSubscription.unsubscribe();
+          leaveRoom();
+        };
+      } catch (error) {
+        console.error('Error initializing room:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, []);
+
+    const cleanupPromise = initializeRoom();
+    
+    return () => {
+      // Limpiar suscripciones cuando el componente se desmonta
+      cleanupPromise.then(cleanup => {
+        if (cleanup) cleanup();
+      }).catch(console.error);
+    };
+  }, [currentUser]); // Añadir currentUser como dependencia
 
   // Dibujar la sala
   useEffect(() => {
@@ -53,10 +80,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     drawRoom(ctx);
   }, [users]);
 
-  // Función para enviar mensajes
+  // Función para enviar mensajes (CON VALIDACIÓN)
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !currentUser?.id) return;
 
     try {
       const { error } = await supabaseClient
@@ -71,7 +98,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         return;
       }
 
-      setNewMessage(''); // Limpiar el input después de enviar
+      setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -161,7 +188,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.fillText(name, x, y + 45);
   };
 
-  // Cargar usuarios desde Supabase (CORREGIDO)
+  // Cargar usuarios desde Supabase
   const loadUsers = async () => {
     try {
       const { data, error } = await supabaseClient
@@ -186,12 +213,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Cargar mensajes desde Supabase (CORREGIDO)
+  // Cargar mensajes desde Supabase
   const loadMessages = async () => {
     try {
       const { data, error } = await supabaseClient
         .from('room_messages')
-        .select('*, users:user_id(name)') // Cambiado a 'users' en lugar de 'user'
+        .select('*, users:user_id(name)')
         .order('created_at', { ascending: true })
         .limit(50);
 
@@ -208,8 +235,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Unirse a la sala (CORREGIDO - números enteros)
+  // Unirse a la sala (CON VALIDACIÓN)
   const joinRoom = async () => {
+    if (!currentUser?.id) {
+      console.error('Cannot join room: currentUser.id is undefined');
+      return;
+    }
+
     try {
       const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
       
@@ -241,8 +273,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Salir de la sala
+  // Salir de la sala (CON VALIDACIÓN)
   const leaveRoom = async () => {
+    if (!currentUser?.id) {
+      console.error('Cannot leave room: currentUser.id is undefined');
+      return;
+    }
+
     try {
       const { error } = await supabaseClient
         .from('room_users')
@@ -257,8 +294,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Mover avatar (CORREGIDO - números enteros)
+  // Mover avatar (CON VALIDACIÓN)
   const moveAvatar = async (x, y) => {
+    if (!currentUser?.id) {
+      console.error('Cannot move avatar: currentUser.id is undefined');
+      return;
+    }
+
     try {
       // Redondear a números enteros
       const roundedX = Math.round(x);
@@ -279,6 +321,23 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       console.error('Error moving avatar:', error);
     }
   };
+
+  // Mostrar loading si currentUser no está disponible
+  if (isLoading || !currentUser) {
+    return (
+      <div className="common-room-modal">
+        <div className="common-room-content">
+          <div className="common-room-header">
+            <h2>Sala Común de Lupi</h2>
+            <button className="close-btn" onClick={onClose}>X</button>
+          </div>
+          <div className="loading-container">
+            <p>Cargando sala...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="common-room-modal">
@@ -319,8 +378,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Escribe un mensaje..."
+                disabled={!currentUser}
               />
-              <button type="submit">Enviar</button>
+              <button type="submit" disabled={!currentUser}>
+                Enviar
+              </button>
             </form>
           </div>
         </div>
