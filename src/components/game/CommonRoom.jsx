@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './CommonRoom.css';
+import '../styles/CommonRoom.css';
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
