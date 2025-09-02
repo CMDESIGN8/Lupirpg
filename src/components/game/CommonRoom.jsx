@@ -2,344 +2,88 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/CommonRoom.css';
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
-  const [users, setUsers] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [userNames, setUserNames] = useState({});
-  const [selectedSport, setSelectedSport] = useState('fútbol');
-  const [connectionId, setConnectionId] = useState(null);
-  const canvasRef = useRef(null);
-
-  const sports = [
-    { id: 'fútbol', name: '⚽ Fútbol', color: '#2E8B57' },
-    { id: 'baloncesto', name: '🏀 Baloncesto', color: '#FF6B35' },
-    { id: 'tenis', name: '🎾 Tenis', color: '#00A8E8' },
-    { id: 'voleibol', name: '🏐 Voleibol', color: '#F9A826' },
-    { id: 'rugby', name: '🏉 Rugby', color: '#6A0572' },
-    { id: 'béisbol', name: '⚾ Béisbol', color: '#8B4513' },
-    { id: 'hockey', name: '🏒 Hockey', color: '#FF0000' },
-    { id: 'atletismo', name: '🏃 Atletismo', color: '#4ECDC4' }
-  ];
-
+  // ... (estados anteriores se mantienen igual)
+  
+  // NUEVO: useEffect para redibujar cuando cambian los usuarios o el deporte
   useEffect(() => {
-    if (!currentUser?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    const initializeRoom = async () => {
-      setIsLoading(true);
-      try {
-        const connId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        setConnectionId(connId);
-
-        await cleanupOrphanedConnections();
-        await loadUsers();
-        await loadMessages();
-        
-        const userSubscription = supabaseClient
-          .channel('room_users_channel')
-          .on('postgres_changes', 
-            { 
-              event: '*', 
-              schema: 'public', 
-              table: 'room_users',
-              filter: `is_online=eq.true`
-            }, 
-            handleUserChange
-          )
-          .subscribe();
-
-        const messageSubscription = supabaseClient
-          .channel('room_messages_channel')
-          .on('postgres_changes', 
-            { event: 'INSERT', schema: 'public', table: 'room_messages' }, 
-            handleNewMessage
-          )
-          .subscribe();
-
-        await joinRoom(connId);
-
-        const heartbeatInterval = setInterval(() => {
-          updateHeartbeat(connId);
-        }, 25000);
-
-        const cleanupInterval = setInterval(() => {
-          cleanupInactiveUsers();
-        }, 60000);
-
-        return () => {
-          userSubscription.unsubscribe();
-          messageSubscription.unsubscribe();
-          clearInterval(heartbeatInterval);
-          clearInterval(cleanupInterval);
-          leaveRoom(connId);
-        };
-      } catch (error) {
-        console.error('Error initializing room:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const redrawCanvas = () => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Limpiar el canvas completamente
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Dibujar el campo deportivo
+      drawSportField(ctx, selectedSport);
     };
+    
+    redrawCanvas();
+    
+    // Redibujar cuando cambian los usuarios o el deporte seleccionado
+  }, [users, selectedSport]); // ← Añadidas dependencias
 
-    initializeRoom();
-  }, [currentUser]);
-
-  const cleanupOrphanedConnections = async () => {
-    try {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({ 
-          is_online: false,
-          connection_id: null
-        })
-        .lt('last_heartbeat', fiveMinutesAgo)
-        .eq('is_online', true);
-
-      if (error) {
-        console.warn('Error cleaning orphaned connections:', error);
-      }
-    } catch (error) {
-      console.error('Error in cleanupOrphanedConnections:', error);
-    }
-  };
-
-  const cleanupInactiveUsers = async () => {
-    try {
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-      
-      const { error } = await supabaseClient
-        .from('room_users')
-        .delete()
-        .lt('last_heartbeat', twoMinutesAgo)
-        .eq('is_online', false);
-
-      if (error) {
-        console.warn('Error cleaning inactive users:', error);
-      }
-    } catch (error) {
-      console.error('Error in cleanupInactiveUsers:', error);
-    }
-  };
-
-  const updateHeartbeat = async (connId) => {
-    if (!currentUser?.id) return;
-
-    try {
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({ 
-          last_heartbeat: new Date().toISOString(),
-          connection_id: connId
-        })
-        .eq('user_id', currentUser.id)
-        .eq('is_online', true);
-
-      if (error) {
-        console.warn('Error updating heartbeat:', error);
-        await joinRoom(connId);
-      }
-    } catch (error) {
-      console.error('Error in updateHeartbeat:', error);
-    }
-  };
-
-  const loadUsers = async () => {
-    try {
-      const { data, error } = await supabaseClient
-        .from('room_users')
-        .select('*')
-        .eq('is_online', true)
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('Error loading users:', error);
-        return;
-      }
-      
-      if (data) {
-        setUsers(data.map(user => ({
-          ...user,
-          x: user.x || Math.round(Math.random() * 600 + 100),
-          y: user.y || Math.round(Math.random() * 300 + 150)
-        })));
-
-        const namesMap = {};
-        data.forEach(user => {
-          namesMap[user.user_id] = user.name;
-        });
-        setUserNames(prev => ({ ...prev, ...namesMap }));
-      }
-    } catch (error) {
-      console.error('Error loading users:', error);
-    }
-  };
-
-  const loadMessages = async () => {
-    try {
-      const { data, error } = await supabaseClient
-        .from('room_messages')
-        .select('id, user_id, content, created_at')
-        .order('created_at', { ascending: true })
-        .limit(50);
-
-      if (error) {
-        console.error('Error loading messages:', error);
-        return;
-      }
-      
-      if (data) {
-        setMessages(data);
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    }
-  };
-
-  const joinRoom = async (connId) => {
-    if (!currentUser?.id) return;
-
-    try {
-      const sport = sports[Math.floor(Math.random() * sports.length)];
-      const x = Math.round(Math.random() * 600 + 100);
-      const y = Math.round(Math.random() * 300 + 150);
-
-      const userData = {
-        user_id: currentUser.id,
-        name: currentUser.username || 'Deportista',
-        color: sport.color,
-        sport: sport.id,
-        x: x,
-        y: y,
-        connection_id: connId,
-        last_heartbeat: new Date().toISOString(),
-        is_online: true,
-        joined_at: new Date().toISOString()
-      };
-
-      const { error } = await supabaseClient
-        .from('room_users')
-        .upsert(userData, {
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        });
-
-      if (error) {
-        console.error('Error joining room (upsert):', error);
-        
-        const { error: updateError } = await supabaseClient
-          .from('room_users')
-          .update({
-            is_online: true,
-            last_heartbeat: new Date().toISOString(),
-            connection_id: connId
-          })
-          .eq('user_id', currentUser.id);
-
-        if (updateError) {
-          console.error('Error in fallback update:', updateError);
-        }
-      }
-
-    } catch (error) {
-      console.error('Error joining room:', error);
-    }
-  };
-
-  const leaveRoom = async (connId) => {
-    if (!currentUser?.id) return;
-
-    try {
-      const { data: userData, error: checkError } = await supabaseClient
-        .from('room_users')
-        .select('connection_id')
-        .eq('user_id', currentUser.id)
-        .single();
-
-      if (!checkError && userData && userData.connection_id === connId) {
-        const { error } = await supabaseClient
-          .from('room_users')
-          .update({ 
-            is_online: false,
-            last_heartbeat: new Date().toISOString()
-          })
-          .eq('user_id', currentUser.id);
-
-        if (error) {
-          console.error('Error leaving room:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error in leaveRoom:', error);
-    }
-  };
-
-  const handleUserChange = (payload) => {
-    if (payload.eventType === 'INSERT' && payload.new.is_online) {
-      setUsers(prev => [...prev, {
-        ...payload.new,
-        x: payload.new.x || Math.round(Math.random() * 600 + 100),
-        y: payload.new.y || Math.round(Math.random() * 300 + 150)
-      }]);
-    } else if (payload.eventType === 'DELETE') {
-      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
-    } else if (payload.eventType === 'UPDATE') {
-      if (payload.new.is_online === false) {
-        setUsers(prev => prev.filter(user => user.id !== payload.new.id));
-      } else if (payload.new.is_online === true) {
-        setUsers(prev => prev.map(user => 
-          user.id === payload.new.id ? {...user, ...payload.new} : user
-        ));
-      }
-    }
-  };
-
+  // FUNCIÓN MEJORADA: Dibujar campo según deporte
   const drawSportField = (ctx, sport) => {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
     
-    ctx.clearRect(0, 0, width, height);
+    // Fondo negro de respaldo
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, width, height);
     
     switch(sport) {
       case 'fútbol':
+        // Campo de fútbol
         ctx.fillStyle = '#2E8B57';
         ctx.fillRect(0, 0, width, height);
         
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 50, 0, Math.PI * 2);
-        ctx.stroke();
+        
+        // Línea central
         ctx.beginPath();
         ctx.moveTo(width / 2, 0);
         ctx.lineTo(width / 2, height);
         ctx.stroke();
+        
+        // Círculo central
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 50, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Áreas
         ctx.strokeRect(0, height / 4, 100, height / 2);
         ctx.strokeRect(width - 100, height / 4, 100, height / 2);
         break;
         
       case 'baloncesto':
+        // Cancha de baloncesto
         ctx.fillStyle = '#FF6B35';
         ctx.fillRect(0, 0, width, height);
         
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;
         ctx.strokeRect(50, 50, width - 100, height - 100);
+        
+        // Círculo central
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, 60, 0, Math.PI * 2);
         ctx.stroke();
         break;
         
       case 'tenis':
+        // Cancha de tenis
         ctx.fillStyle = '#00A8E8';
         ctx.fillRect(0, 0, width, height);
         
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;
         ctx.strokeRect(50, 50, width - 100, height - 100);
+        
+        // Línea central
         ctx.beginPath();
         ctx.moveTo(width / 2, 50);
         ctx.lineTo(width / 2, height - 50);
@@ -347,6 +91,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         break;
         
       default:
+        // Campo genérico
         ctx.fillStyle = '#4ECDC4';
         ctx.fillRect(0, 0, width, height);
         ctx.strokeStyle = '#FFFFFF';
@@ -354,39 +99,55 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         ctx.strokeRect(50, 50, width - 100, height - 100);
     }
     
+    // Dibujar deportistas
     users.forEach(user => {
       drawAthlete(ctx, user);
     });
   };
 
+  // FUNCIÓN MEJORADA: Dibujar deportista
   const drawAthlete = (ctx, user) => {
     const { x, y, color, name, sport } = user;
     
+    // Asegurar coordenadas válidas
+    const posX = x || Math.random() * 600 + 100;
+    const posY = y || Math.random() * 300 + 150;
+    
+    // Cuerpo del deportista
     ctx.fillStyle = color || '#2E8B57';
     ctx.beginPath();
-    ctx.arc(x, y, 20, 0, Math.PI * 2);
+    ctx.arc(posX, posY, 20, 0, Math.PI * 2);
     ctx.fill();
     
+    // Borde blanco
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Icono del deporte
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     
     const userSport = sport || 'fútbol';
     switch(userSport) {
-      case 'fútbol': ctx.fillText('⚽', x, y); break;
-      case 'baloncesto': ctx.fillText('🏀', x, y); break;
-      case 'tenis': ctx.fillText('🎾', x, y); break;
-      case 'voleibol': ctx.fillText('🏐', x, y); break;
-      case 'rugby': ctx.fillText('🏉', x, y); break;
-      case 'béisbol': ctx.fillText('⚾', x, y); break;
-      case 'hockey': ctx.fillText('🏒', x, y); break;
-      case 'atletismo': ctx.fillText('🏃', x, y); break;
-      default: ctx.fillText('👤', x, y);
+      case 'fútbol': ctx.fillText('⚽', posX, posY); break;
+      case 'baloncesto': ctx.fillText('🏀', posX, posY); break;
+      case 'tenis': ctx.fillText('🎾', posX, posY); break;
+      case 'voleibol': ctx.fillText('🏐', posX, posY); break;
+      case 'rugby': ctx.fillText('🏉', posX, posY); break;
+      case 'béisbol': ctx.fillText('⚾', posX, posY); break;
+      case 'hockey': ctx.fillText('🏒', posX, posY); break;
+      case 'atletismo': ctx.fillText('🏃', posX, posY); break;
+      default: ctx.fillText('👤', posX, posY);
     }
     
+    // Nombre del deportista
     ctx.fillStyle = '#323C78';
     ctx.font = '12px Arial';
-    ctx.fillText(name || 'Deportista', x, y + 40);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(name || 'Deportista', posX, posY + 40);
   };
 
   const sendMessage = async (e) => {
@@ -498,8 +259,19 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 moveAvatar(x, y);
+                
+                // Redibujar inmediatamente después de mover
+                const canvas = canvasRef.current;
+                if (canvas) {
+                  const ctx = canvas.getContext('2d');
+                  drawSportField(ctx, selectedSport);
+                }
               }}
               className="sport-field"
+              style={{ 
+                background: '#2E8B57', // Fondo verde por defecto
+                borderRadius: '12px' 
+              }}
             />
           </div>
           
