@@ -8,16 +8,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [isLoading, setIsLoading] = useState(true);
   const canvasRef = useRef(null);
 
-  // Colores para los avatares
   const avatarColors = [
     '#FF6464', '#64FF64', '#6464FF', '#FFFF64', '#FF64FF', '#64FFFF'
   ];
 
-  // Cargar usuarios y mensajes al iniciar
   useEffect(() => {
-    // Verificar que currentUser existe antes de proceder
-    if (!currentUser || !currentUser.id) {
-      console.error('Current user is not available');
+    if (!currentUser?.id) {
       setIsLoading(false);
       return;
     }
@@ -28,7 +24,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         await loadUsers();
         await loadMessages();
         
-        // Suscribirse a cambios en tiempo real
         const userSubscription = supabaseClient
           .channel('room_users')
           .on('postgres_changes', 
@@ -45,10 +40,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           )
           .subscribe();
 
-        // Unirse a la sala automáticamente
         await joinRoom();
 
-        // Guardar las suscripciones para limpiar después
         return () => {
           userSubscription.unsubscribe();
           messageSubscription.unsubscribe();
@@ -64,14 +57,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const cleanupPromise = initializeRoom();
     
     return () => {
-      // Limpiar suscripciones cuando el componente se desmonta
       cleanupPromise.then(cleanup => {
         if (cleanup) cleanup();
       }).catch(console.error);
     };
-  }, [currentUser]); // Añadir currentUser como dependencia
+  }, [currentUser]);
 
-  // Dibujar la sala
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -80,7 +71,99 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     drawRoom(ctx);
   }, [users]);
 
-  // Función para enviar mensajes (CON VALIDACIÓN)
+  // FUNCIÓN CORREGIDA: Cargar mensajes
+  const loadMessages = async () => {
+    try {
+      // Consulta corregida - seleccionar directamente sin join complicado
+      const { data, error } = await supabaseClient
+        .from('room_messages')
+        .select(`
+          id,
+          user_id,
+          content,
+          created_at,
+          user:user_id(username)
+        `)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        // Fallback: cargar solo los datos básicos
+        const { data: simpleData, error: simpleError } = await supabaseClient
+          .from('room_messages')
+          .select('id, user_id, content, created_at')
+          .order('created_at', { ascending: true })
+          .limit(50);
+        
+        if (simpleError) {
+          console.error('Error loading simple messages:', simpleError);
+          return;
+        }
+        
+        if (simpleData) {
+          setMessages(simpleData);
+        }
+        return;
+      }
+      
+      if (data) {
+        setMessages(data);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  // FUNCIÓN CORREGIDA: Unirse a la sala
+  const joinRoom = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+      const x = Math.round(Math.random() * 600 + 100);
+      const y = Math.round(Math.random() * 300 + 150);
+
+      // ENFOQUE CORREGIDO: Primero intentar insertar, si falla por duplicado, actualizar
+      const { error: insertError } = await supabaseClient
+        .from('room_users')
+        .insert({
+          user_id: currentUser.id,
+          name: currentUser.username || 'Usuario',
+          color: color,
+          x: x,
+          y: y,
+          joined_at: new Date().toISOString()
+        });
+
+      if (insertError) {
+        // Si es error de duplicado, actualizar en lugar de insertar
+        if (insertError.code === '23505') {
+          const { error: updateError } = await supabaseClient
+            .from('room_users')
+            .update({
+              name: currentUser.username || 'Usuario',
+              color: color,
+              x: x,
+              y: y,
+              joined_at: new Date().toISOString()
+            })
+            .eq('user_id', currentUser.id);
+
+          if (updateError) {
+            console.error('Error updating user in room:', updateError);
+          }
+        } else {
+          console.error('Error joining room:', insertError);
+        }
+      }
+
+    } catch (error) {
+      console.error('Error joining room:', error);
+    }
+  };
+
+  // Función para enviar mensajes (ACTUALIZADA)
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser?.id) return;
@@ -104,7 +187,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Función para manejar cambios en usuarios
+  // Resto de funciones se mantienen igual...
   const handleUserChange = (payload) => {
     if (payload.eventType === 'INSERT') {
       setUsers(prev => [...prev, {
@@ -121,24 +204,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Función para manejar nuevos mensajes
   const handleNewMessage = (payload) => {
     setMessages(prev => [...prev, payload.new]);
   };
 
-  // Función para dibujar la sala
   const drawRoom = (ctx) => {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
     
-    // Limpiar canvas
     ctx.clearRect(0, 0, width, height);
-    
-    // Dibujar fondo
     ctx.fillStyle = '#E6F0FF';
     ctx.fillRect(0, 0, width, height);
     
-    // Dibujar área de la sala
     ctx.fillStyle = '#C8D8EB';
     ctx.beginPath();
     ctx.roundRect(50, 100, width - 100, height - 200, 15);
@@ -147,17 +224,14 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 3;
     ctx.stroke();
     
-    // Dibujar usuarios
     users.forEach(user => {
       drawAvatar(ctx, user);
     });
   };
 
-  // Función para dibujar avatar
   const drawAvatar = (ctx, user) => {
     const { x, y, color, name } = user;
     
-    // Cuerpo del avatar
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(x, y, 25, 0, Math.PI * 2);
@@ -166,7 +240,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Ojos
     ctx.fillStyle = '#000000';
     ctx.beginPath();
     ctx.arc(x - 8, y - 5, 5, 0, Math.PI * 2);
@@ -175,20 +248,17 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.arc(x + 8, y - 5, 5, 0, Math.PI * 2);
     ctx.fill();
     
-    // Sonrisa
     ctx.strokeStyle = '#000000';
     ctx.beginPath();
     ctx.arc(x, y + 5, 10, 0.2, Math.PI - 0.2, false);
     ctx.stroke();
     
-    // Nombre
     ctx.fillStyle = '#323C78';
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(name, x, y + 45);
   };
 
-  // Cargar usuarios desde Supabase
   const loadUsers = async () => {
     try {
       const { data, error } = await supabaseClient
@@ -213,72 +283,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Cargar mensajes desde Supabase
-  const loadMessages = async () => {
-    try {
-      const { data, error } = await supabaseClient
-        .from('room_messages')
-        .select('*, users:user_id(name)')
-        .order('created_at', { ascending: true })
-        .limit(50);
-
-      if (error) {
-        console.error('Error loading messages:', error);
-        return;
-      }
-      
-      if (data) {
-        setMessages(data);
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    }
-  };
-
-  // Unirse a la sala (CON VALIDACIÓN)
-  const joinRoom = async () => {
-    if (!currentUser?.id) {
-      console.error('Cannot join room: currentUser.id is undefined');
-      return;
-    }
-
-    try {
-      const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
-      
-      // Usar números enteros (redondeados)
-      const x = Math.round(Math.random() * 600 + 100);
-      const y = Math.round(Math.random() * 300 + 150);
-
-      // Usar upsert que maneja mejor los conflictos
-      const { error } = await supabaseClient
-        .from('room_users')
-        .upsert({
-          user_id: currentUser.id,
-          name: currentUser.username || 'Usuario',
-          color: color,
-          x: x,
-          y: y,
-          joined_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (error) {
-        console.error('Error joining room:', error);
-        return;
-      }
-
-    } catch (error) {
-      console.error('Error joining room:', error);
-    }
-  };
-
-  // Salir de la sala (CON VALIDACIÓN)
   const leaveRoom = async () => {
-    if (!currentUser?.id) {
-      console.error('Cannot leave room: currentUser.id is undefined');
-      return;
-    }
+    if (!currentUser?.id) return;
 
     try {
       const { error } = await supabaseClient
@@ -294,15 +300,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Mover avatar (CON VALIDACIÓN)
   const moveAvatar = async (x, y) => {
-    if (!currentUser?.id) {
-      console.error('Cannot move avatar: currentUser.id is undefined');
-      return;
-    }
+    if (!currentUser?.id) return;
 
     try {
-      // Redondear a números enteros
       const roundedX = Math.round(x);
       const roundedY = Math.round(y);
       
@@ -322,8 +323,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Mostrar loading si currentUser no está disponible
-  if (isLoading || !currentUser) {
+  if (isLoading) {
     return (
       <div className="common-room-modal">
         <div className="common-room-content">
@@ -366,7 +366,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             <div className="messages">
               {messages.map(msg => (
                 <div key={msg.id} className="message">
-                  <span className="user-name">{msg.users?.name || 'Usuario'}:</span>
+                  <span className="user-name">
+                    {msg.user?.username || `Usuario${msg.user_id?.slice(-4)}` || 'Usuario'}:
+                  </span>
                   <span className="message-content">{msg.content}</span>
                 </div>
               ))}
