@@ -9,3 +9,6 @@ export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: false
   }
 })
+// Exportar
+export { supabase };
+export default supabase;

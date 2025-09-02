@@ -1,6 +1,6 @@
 // src/components/CommonRoom.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../services/supabase'; // Asegúrate de tener configurado Supabase
+import supabase from '../../services/supabase'; // Importación corregida
 import '../styles/CommonRoom.css';
 const CommonRoom = ({ currentUser, onClose }) => {
   const [users, setUsers] = useState([]);
