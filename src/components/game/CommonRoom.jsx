@@ -6,6 +6,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [userNames, setUserNames] = useState({});
   const canvasRef = useRef(null);
 
   const avatarColors = [
@@ -63,6 +64,57 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     };
   }, [currentUser]);
 
+  // Cargar nombres de usuarios para mostrar en los mensajes
+  useEffect(() => {
+    const loadUserNames = async () => {
+      if (messages.length === 0) return;
+
+      // Obtener IDs únicos de usuarios de los mensajes
+      const userIds = [...new Set(messages.map(msg => msg.user_id).filter(Boolean))];
+      
+      if (userIds.length === 0) return;
+
+      try {
+        // Buscar nombres en room_users primero (usuarios en sala)
+        const { data: roomUsers, error: roomError } = await supabaseClient
+          .from('room_users')
+          .select('user_id, name')
+          .in('user_id', userIds);
+
+        if (!roomError && roomUsers) {
+          const namesMap = {};
+          roomUsers.forEach(user => {
+            namesMap[user.user_id] = user.name;
+          });
+          setUserNames(prev => ({ ...prev, ...namesMap }));
+        }
+
+        // Para usuarios que no están en room_users, intentar obtener de auth.users
+        const missingUserIds = userIds.filter(id => !userNames[id] && (!roomUsers || !roomUsers.find(u => u.user_id === id)));
+        
+        if (missingUserIds.length > 0) {
+          // Nota: Esto requiere permisos adecuados en auth.users
+          const { data: authUsers, error: authError } = await supabaseClient
+            .from('room_users') // Usamos room_users como proxy
+            .select('user_id, name')
+            .in('user_id', missingUserIds);
+
+          if (!authError && authUsers) {
+            const additionalNames = {};
+            authUsers.forEach(user => {
+              additionalNames[user.user_id] = user.name;
+            });
+            setUserNames(prev => ({ ...prev, ...additionalNames }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user names:', error);
+      }
+    };
+
+    loadUserNames();
+  }, [messages]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -71,39 +123,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     drawRoom(ctx);
   }, [users]);
 
-  // FUNCIÓN CORREGIDA: Cargar mensajes
+  // FUNCIÓN SIMPLIFICADA: Cargar mensajes sin joins complejos
   const loadMessages = async () => {
     try {
-      // Consulta corregida - seleccionar directamente sin join complicado
+      // Consulta simple sin joins que fallan
       const { data, error } = await supabaseClient
         .from('room_messages')
-        .select(`
-          id,
-          user_id,
-          content,
-          created_at,
-          user:user_id(username)
-        `)
+        .select('id, user_id, content, created_at')
         .order('created_at', { ascending: true })
         .limit(50);
 
       if (error) {
         console.error('Error loading messages:', error);
-        // Fallback: cargar solo los datos básicos
-        const { data: simpleData, error: simpleError } = await supabaseClient
-          .from('room_messages')
-          .select('id, user_id, content, created_at')
-          .order('created_at', { ascending: true })
-          .limit(50);
-        
-        if (simpleError) {
-          console.error('Error loading simple messages:', simpleError);
-          return;
-        }
-        
-        if (simpleData) {
-          setMessages(simpleData);
-        }
         return;
       }
       
@@ -115,7 +146,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // FUNCIÓN CORREGIDA: Unirse a la sala
+  // Obtener nombre para mostrar de un usuario
+  const getUserDisplayName = (userId) => {
+    if (!userId) return 'Usuario';
+    return userNames[userId] || `Usuario${userId.slice(-4)}`;
+  };
+
+  // Resto de funciones se mantienen igual...
   const joinRoom = async () => {
     if (!currentUser?.id) return;
 
@@ -124,7 +161,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       const x = Math.round(Math.random() * 600 + 100);
       const y = Math.round(Math.random() * 300 + 150);
 
-      // ENFOQUE CORREGIDO: Primero intentar insertar, si falla por duplicado, actualizar
+      // ENFOQUE CORREGIDO
       const { error: insertError } = await supabaseClient
         .from('room_users')
         .insert({
@@ -137,7 +174,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         });
 
       if (insertError) {
-        // Si es error de duplicado, actualizar en lugar de insertar
         if (insertError.code === '23505') {
           const { error: updateError } = await supabaseClient
             .from('room_users')
@@ -163,7 +199,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Función para enviar mensajes (ACTUALIZADA)
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser?.id) return;
@@ -187,7 +222,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Resto de funciones se mantienen igual...
   const handleUserChange = (payload) => {
     if (payload.eventType === 'INSERT') {
       setUsers(prev => [...prev, {
@@ -277,6 +311,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           x: user.x || Math.round(Math.random() * 600 + 100),
           y: user.y || Math.round(Math.random() * 300 + 150)
         })));
+
+        // Guardar nombres para usar en mensajes
+        const namesMap = {};
+        data.forEach(user => {
+          namesMap[user.user_id] = user.name;
+        });
+        setUserNames(prev => ({ ...prev, ...namesMap }));
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -367,7 +408,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
               {messages.map(msg => (
                 <div key={msg.id} className="message">
                   <span className="user-name">
-                    {msg.user?.username || `Usuario${msg.user_id?.slice(-4)}` || 'Usuario'}:
+                    {getUserDisplayName(msg.user_id)}:
                   </span>
                   <span className="message-content">{msg.content}</span>
                 </div>
