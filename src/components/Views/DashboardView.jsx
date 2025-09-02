@@ -414,7 +414,8 @@ const DashboardView = ({
 {showCommonRoom && (
   <CommonRoom 
     currentUser={playerData} 
-    onClose={() => setShowCommonRoom(false)} 
+    onClose={() => setShowCommonRoom(false)}
+    supabaseClient={supabaseClient} // Pasa el cliente de Supabase
   />
 )}
       {/* Loading durante el juego */}

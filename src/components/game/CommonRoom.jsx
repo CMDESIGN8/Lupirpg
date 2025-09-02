@@ -1,8 +1,8 @@
-// src/components/CommonRoom.jsx
+// src/components/game/CommonRoom.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import supabase from '../../services/supabase'; // Importación corregida
 import '../styles/CommonRoom.css';
-const CommonRoom = ({ currentUser, onClose }) => {
+
+const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -19,7 +19,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
     loadMessages();
     
     // Suscribirse a cambios en tiempo real
-    const userSubscription = supabase
+    const userSubscription = supabaseClient
       .channel('room_users')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'room_users' }, 
@@ -27,7 +27,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
       )
       .subscribe();
 
-    const messageSubscription = supabase
+    const messageSubscription = supabaseClient
       .channel('room_messages')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'room_messages' }, 
@@ -118,7 +118,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
 
   // Cargar usuarios desde Supabase
   const loadUsers = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('room_users')
       .select('*');
     
@@ -133,7 +133,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
 
   // Cargar mensajes desde Supabase
   const loadMessages = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('room_messages')
       .select('*, user:user_id(name)')
       .order('created_at', { ascending: true })
@@ -171,7 +171,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('room_messages')
       .insert({
         user_id: currentUser.id,
@@ -187,7 +187,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
   const joinRoom = async () => {
     const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
     
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('room_users')
       .upsert({
         user_id: currentUser.id,
@@ -206,7 +206,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
 
   // Salir de la sala
   const leaveRoom = async () => {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('room_users')
       .delete()
       .eq('user_id', currentUser.id);
@@ -218,7 +218,7 @@ const CommonRoom = ({ currentUser, onClose }) => {
 
   // Mover avatar
   const moveAvatar = async (x, y) => {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('room_users')
       .update({ x, y })
       .eq('user_id', currentUser.id);
