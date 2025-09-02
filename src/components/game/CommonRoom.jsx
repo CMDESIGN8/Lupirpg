@@ -116,7 +116,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       const { error } = await supabaseClient.from('room_users').upsert(userRoomData);
       if (error) console.error('Error joining room:', error);
     } catch (error) {
-      console.error('Critical error joining room:', error);
+  console.error('Error joining room:', error); // Esto imprime el objeto
+  // Añade esta línea para ver el mensaje específico:
+  if (error) console.error('Supabase error message:', error.message); 
     }
   };
 
