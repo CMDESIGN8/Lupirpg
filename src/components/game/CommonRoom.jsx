@@ -53,7 +53,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     drawRoom(ctx);
   }, [users]);
 
-  // AÑADIR: Función sendMessage que faltaba
+  // Función para enviar mensajes
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -77,13 +77,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // AÑADIR: Función para manejar cambios en usuarios
+  // Función para manejar cambios en usuarios
   const handleUserChange = (payload) => {
     if (payload.eventType === 'INSERT') {
       setUsers(prev => [...prev, {
         ...payload.new,
-        x: payload.new.x || Math.random() * 600 + 100,
-        y: payload.new.y || Math.random() * 300 + 150
+        x: payload.new.x || Math.round(Math.random() * 600 + 100),
+        y: payload.new.y || Math.round(Math.random() * 300 + 150)
       }]);
     } else if (payload.eventType === 'DELETE') {
       setUsers(prev => prev.filter(user => user.id !== payload.old.id));
@@ -94,12 +94,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // AÑADIR: Función para manejar nuevos mensajes
+  // Función para manejar nuevos mensajes
   const handleNewMessage = (payload) => {
     setMessages(prev => [...prev, payload.new]);
   };
 
-  // AÑADIR: Función para dibujar la sala
+  // Función para dibujar la sala
   const drawRoom = (ctx) => {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
@@ -126,7 +126,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     });
   };
 
-  // AÑADIR: Función para dibujar avatar
+  // Función para dibujar avatar
   const drawAvatar = (ctx, user) => {
     const { x, y, color, name } = user;
     
@@ -161,90 +161,87 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.fillText(name, x, y + 45);
   };
 
-  // CORREGIDO: Cargar usuarios desde Supabase
+  // Cargar usuarios desde Supabase (CORREGIDO)
   const loadUsers = async () => {
-    const { data, error } = await supabaseClient
-      .from('room_users')
-      .select('*');
-    
-    if (error) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('room_users')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error loading users:', error);
+        return;
+      }
+      
+      if (data) {
+        setUsers(data.map(user => ({
+          ...user,
+          x: user.x || Math.round(Math.random() * 600 + 100),
+          y: user.y || Math.round(Math.random() * 300 + 150)
+        })));
+      }
+    } catch (error) {
       console.error('Error loading users:', error);
-      return;
-    }
-    
-    if (data) {
-      setUsers(data.map(user => ({
-        ...user,
-        x: user.x || Math.random() * 600 + 100,
-        y: user.y || Math.random() * 300 + 150
-      })));
     }
   };
 
-  // CORREGIDO: Cargar mensajes desde Supabase
+  // Cargar mensajes desde Supabase (CORREGIDO)
   const loadMessages = async () => {
-    const { data, error } = await supabaseClient
-      .from('room_messages')
-      .select('*, user:user_id(name)')
-      .order('created_at', { ascending: true })
-      .limit(50);
-    
-    if (error) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('room_messages')
+        .select('*, users:user_id(name)') // Cambiado a 'users' en lugar de 'user'
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+      
+      if (data) {
+        setMessages(data);
+      }
+    } catch (error) {
       console.error('Error loading messages:', error);
-      return;
-    }
-    
-    if (data) {
-      setMessages(data);
     }
   };
 
-  // CORREGIDO: Unirse a la sala
+  // Unirse a la sala (CORREGIDO - números enteros)
   const joinRoom = async () => {
     try {
       const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
       
-      // Primero verifica si el usuario ya existe
-      const { data: existingUser } = await supabaseClient
+      // Usar números enteros (redondeados)
+      const x = Math.round(Math.random() * 600 + 100);
+      const y = Math.round(Math.random() * 300 + 150);
+
+      // Usar upsert que maneja mejor los conflictos
+      const { error } = await supabaseClient
         .from('room_users')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .single();
+        .upsert({
+          user_id: currentUser.id,
+          name: currentUser.username || 'Usuario',
+          color: color,
+          x: x,
+          y: y,
+          joined_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
 
-      if (existingUser) {
-        // Si ya existe, actualiza
-        const { error } = await supabaseClient
-          .from('room_users')
-          .update({
-            name: currentUser.username || 'Usuario',
-            color: color,
-            x: Math.random() * 600 + 100,
-            y: Math.random() * 300 + 150
-          })
-          .eq('user_id', currentUser.id);
-
-        if (error) throw error;
-      } else {
-        // Si no existe, inserta
-        const { error } = await supabaseClient
-          .from('room_users')
-          .insert({
-            user_id: currentUser.id,
-            name: currentUser.username || 'Usuario',
-            color: color,
-            x: Math.random() * 600 + 100,
-            y: Math.random() * 300 + 150
-          });
-
-        if (error) throw error;
+      if (error) {
+        console.error('Error joining room:', error);
+        return;
       }
+
     } catch (error) {
       console.error('Error joining room:', error);
-      console.error('Error details:', error.message);
     }
   };
 
-  // CORREGIDO: Salir de la sala
+  // Salir de la sala
   const leaveRoom = async () => {
     try {
       const { error } = await supabaseClient
@@ -252,21 +249,32 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         .delete()
         .eq('user_id', currentUser.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error leaving room:', error);
+      }
     } catch (error) {
       console.error('Error leaving room:', error);
     }
   };
 
-  // CORREGIDO: Mover avatar
+  // Mover avatar (CORREGIDO - números enteros)
   const moveAvatar = async (x, y) => {
     try {
+      // Redondear a números enteros
+      const roundedX = Math.round(x);
+      const roundedY = Math.round(y);
+      
       const { error } = await supabaseClient
         .from('room_users')
-        .update({ x, y })
+        .update({ 
+          x: roundedX, 
+          y: roundedY 
+        })
         .eq('user_id', currentUser.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error moving avatar:', error);
+      }
     } catch (error) {
       console.error('Error moving avatar:', error);
     }
@@ -299,7 +307,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             <div className="messages">
               {messages.map(msg => (
                 <div key={msg.id} className="message">
-                  <span className="user-name">{msg.user?.name}:</span>
+                  <span className="user-name">{msg.users?.name || 'Usuario'}:</span>
                   <span className="message-content">{msg.content}</span>
                 </div>
               ))}
