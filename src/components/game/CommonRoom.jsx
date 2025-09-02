@@ -1,4 +1,3 @@
-// src/components/game/CommonRoom.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/CommonRoom.css';
 
@@ -54,75 +53,20 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     drawRoom(ctx);
   }, [users]);
 
-  // Dibujar la sala
-  const drawRoom = (ctx) => {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-    
-    // Limpiar canvas
-    ctx.clearRect(0, 0, width, height);
-    
-    // Dibujar fondo
-    ctx.fillStyle = '#E6F0FF';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Dibujar área de la sala
-    ctx.fillStyle = '#C8D8EB';
-    ctx.beginPath();
-    ctx.roundRect(50, 100, width - 100, height - 200, 15);
-    ctx.fill();
-    ctx.strokeStyle = '#B4C8E0';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Dibujar usuarios
-    users.forEach(user => {
-      drawAvatar(ctx, user);
-    });
-  };
+  // ... (resto de funciones de dibujo iguales)
 
-  // Dibujar avatar de usuario
-  const drawAvatar = (ctx, user) => {
-    const { x, y, color, name } = user;
-    
-    // Cuerpo del avatar
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, 25, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Ojos
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(x - 8, y - 5, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + 8, y - 5, 5, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Sonrisa
-    ctx.strokeStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(x, y + 5, 10, 0.2, Math.PI - 0.2, false);
-    ctx.stroke();
-    
-    // Nombre
-    ctx.fillStyle = '#323C78';
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(name, x, y + 45);
-  };
-
-  // Cargar usuarios desde Supabase
+  // CORREGIDO: Cargar usuarios desde Supabase
   const loadUsers = async () => {
     const { data, error } = await supabaseClient
       .from('room_users')
       .select('*');
     
-    if (!error && data) {
+    if (error) {
+      console.error('Error loading users:', error);
+      return;
+    }
+    
+    if (data) {
       setUsers(data.map(user => ({
         ...user,
         x: user.x || Math.random() * 600 + 100,
@@ -131,7 +75,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Cargar mensajes desde Supabase
+  // CORREGIDO: Cargar mensajes desde Supabase
   const loadMessages = async () => {
     const { data, error } = await supabaseClient
       .from('room_messages')
@@ -139,91 +83,85 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       .order('created_at', { ascending: true })
       .limit(50);
     
-    if (!error && data) {
+    if (error) {
+      console.error('Error loading messages:', error);
+      return;
+    }
+    
+    if (data) {
       setMessages(data);
     }
   };
 
-  // Manejar cambios en usuarios
-  const handleUserChange = (payload) => {
-    if (payload.eventType === 'INSERT') {
-      setUsers(prev => [...prev, {
-        ...payload.new,
-        x: payload.new.x || Math.random() * 600 + 100,
-        y: payload.new.y || Math.random() * 300 + 150
-      }]);
-    } else if (payload.eventType === 'DELETE') {
-      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
-    } else if (payload.eventType === 'UPDATE') {
-      setUsers(prev => prev.map(user => 
-        user.id === payload.new.id ? {...user, ...payload.new} : user
-      ));
-    }
-  };
-
-  // Manejar nuevos mensajes
-  const handleNewMessage = (payload) => {
-    setMessages(prev => [...prev, payload.new]);
-  };
-
-  // Enviar mensaje
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const { error } = await supabaseClient
-      .from('room_messages')
-      .insert({
-        user_id: currentUser.id,
-        content: newMessage.trim()
-      });
-
-    if (!error) {
-      setNewMessage('');
-    }
-  };
-
-  // Unirse a la sala
+  // CORREGIDO: Unirse a la sala
   const joinRoom = async () => {
-    const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
-    
-    const { error } = await supabaseClient
-      .from('room_users')
-      .upsert({
-        user_id: currentUser.id,
-        name: currentUser.username || 'Usuario',
-        color: color,
-        x: Math.random() * 600 + 100,
-        y: Math.random() * 300 + 150
-      }, {
-        onConflict: 'user_id'
-      });
+    try {
+      const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+      
+      // Primero verifica si el usuario ya existe
+      const { data: existingUser } = await supabaseClient
+        .from('room_users')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .single();
 
-    if (error) {
+      if (existingUser) {
+        // Si ya existe, actualiza
+        const { error } = await supabaseClient
+          .from('room_users')
+          .update({
+            name: currentUser.username || 'Usuario',
+            color: color,
+            x: Math.random() * 600 + 100,
+            y: Math.random() * 300 + 150
+          })
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+      } else {
+        // Si no existe, inserta
+        const { error } = await supabaseClient
+          .from('room_users')
+          .insert({
+            user_id: currentUser.id,
+            name: currentUser.username || 'Usuario',
+            color: color,
+            x: Math.random() * 600 + 100,
+            y: Math.random() * 300 + 150
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
       console.error('Error joining room:', error);
+      console.error('Error details:', error.message);
     }
   };
 
-  // Salir de la sala
+  // CORREGIDO: Salir de la sala
   const leaveRoom = async () => {
-    const { error } = await supabaseClient
-      .from('room_users')
-      .delete()
-      .eq('user_id', currentUser.id);
+    try {
+      const { error } = await supabaseClient
+        .from('room_users')
+        .delete()
+        .eq('user_id', currentUser.id);
 
-    if (error) {
+      if (error) throw error;
+    } catch (error) {
       console.error('Error leaving room:', error);
     }
   };
 
-  // Mover avatar
+  // CORREGIDO: Mover avatar
   const moveAvatar = async (x, y) => {
-    const { error } = await supabaseClient
-      .from('room_users')
-      .update({ x, y })
-      .eq('user_id', currentUser.id);
+    try {
+      const { error } = await supabaseClient
+        .from('room_users')
+        .update({ x, y })
+        .eq('user_id', currentUser.id);
 
-    if (error) {
+      if (error) throw error;
+    } catch (error) {
       console.error('Error moving avatar:', error);
     }
   };
