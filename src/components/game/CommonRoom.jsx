@@ -31,17 +31,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const initializeRoom = async () => {
       setIsLoading(true);
       try {
-        // Generar ID único para esta conexión
         const connId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         setConnectionId(connId);
 
-        // Limpiar conexiones huérfanas primero
         await cleanupOrphanedConnections();
-        
         await loadUsers();
         await loadMessages();
         
-        // Suscripción a cambios de usuarios
         const userSubscription = supabaseClient
           .channel('room_users_channel')
           .on('postgres_changes', 
@@ -55,7 +51,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           )
           .subscribe();
 
-        // Suscripción a mensajes
         const messageSubscription = supabaseClient
           .channel('room_messages_channel')
           .on('postgres_changes', 
@@ -64,15 +59,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           )
           .subscribe();
 
-        // Unirse a la sala
         await joinRoom(connId);
 
-        // Heartbeat cada 25 segundos
         const heartbeatInterval = setInterval(() => {
           updateHeartbeat(connId);
         }, 25000);
 
-        // Cleanup cada minuto
         const cleanupInterval = setInterval(() => {
           cleanupInactiveUsers();
         }, 60000);
@@ -94,7 +86,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     initializeRoom();
   }, [currentUser]);
 
-  // LIMPIAR CONEXIONES HUÉRFANAS
   const cleanupOrphanedConnections = async () => {
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
@@ -116,7 +107,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // LIMPIAR USUARIOS INACTIVOS
   const cleanupInactiveUsers = async () => {
     try {
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
@@ -135,7 +125,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // ACTUALIZAR HEARTBEAT
   const updateHeartbeat = async (connId) => {
     if (!currentUser?.id) return;
 
@@ -151,7 +140,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
       if (error) {
         console.warn('Error updating heartbeat:', error);
-        // Reconnect if heartbeat fails
         await joinRoom(connId);
       }
     } catch (error) {
@@ -159,7 +147,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // CARGAR USUARIOS (SOLO ONLINE)
   const loadUsers = async () => {
     try {
       const { data, error } = await supabaseClient
@@ -191,7 +178,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // CARGAR MENSAJES
   const loadMessages = async () => {
     try {
       const { data, error } = await supabaseClient
@@ -213,7 +199,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // UNIRSE AL LOBBY (CON MANEJO DE CONFLICTOS MEJORADO)
   const joinRoom = async (connId) => {
     if (!currentUser?.id) return;
 
@@ -235,7 +220,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         joined_at: new Date().toISOString()
       };
 
-      // USAR UPSERT PARA EVITAR CONFLICTOS 409
       const { error } = await supabaseClient
         .from('room_users')
         .upsert(userData, {
@@ -246,7 +230,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       if (error) {
         console.error('Error joining room (upsert):', error);
         
-        // FALLBACK: Intentar update simple
         const { error: updateError } = await supabaseClient
           .from('room_users')
           .update({
@@ -266,12 +249,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // SALIR DEL LOBBY
   const leaveRoom = async (connId) => {
     if (!currentUser?.id) return;
 
     try {
-      // Verificar que esta conexión es la propietaria antes de marcar como offline
       const { data: userData, error: checkError } = await supabaseClient
         .from('room_users')
         .select('connection_id')
@@ -296,7 +277,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // MANEJAR CAMBIOS DE USUARIOS (SOLO ONLINE)
   const handleUserChange = (payload) => {
     if (payload.eventType === 'INSERT' && payload.new.is_online) {
       setUsers(prev => [...prev, {
@@ -317,7 +297,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Dibujar campo según deporte
   const drawSportField = (ctx, sport) => {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
@@ -380,7 +359,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     });
   };
 
-  // Dibujar deportista
   const drawAthlete = (ctx, user) => {
     const { x, y, color, name, sport } = user;
     
@@ -411,7 +389,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.fillText(name || 'Deportista', x, y + 40);
   };
 
-  // Enviar mensaje
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser?.id) return;
@@ -435,7 +412,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Mover avatar
   const moveAvatar = async (x, y) => {
     if (!currentUser?.id) return;
 
@@ -459,13 +435,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-
-  // Manejar nuevos mensajes
   const handleNewMessage = (payload) => {
     setMessages(prev => [...prev, payload.new]);
   };
 
-  // Obtener nombre para mostrar
   const getUserDisplayName = (userId) => {
     if (!userId) return 'Deportista';
     return userNames[userId] || `Deportista${userId.slice(-4)}`;
@@ -487,7 +460,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     );
   }
 
-   return (
+  return (
     <div className="sports-lobby-modal">
       <div className="sports-lobby-content">
         <div className="sports-lobby-header">
