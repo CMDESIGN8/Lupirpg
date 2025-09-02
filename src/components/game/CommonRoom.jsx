@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import '../styles/CommonRoom.css';
+import './CommonRoom.css'; // Asegúrate de que la ruta es correcta
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
@@ -8,10 +8,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [userNames, setUserNames] = useState({});
   const [selectedSport, setSelectedSport] = useState('fútbol');
-  const [connectionId, setConnectionId] = useState(null);
   const canvasRef = useRef(null);
 
-  // Deportes disponibles
   const sports = [
     { id: 'fútbol', name: '⚽ Fútbol', color: '#2E8B57' },
     { id: 'baloncesto', name: '🏀 Baloncesto', color: '#FF6B35' },
@@ -23,6 +21,16 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     { id: 'atletismo', name: '🏃 Atletismo', color: '#4ECDC4' }
   ];
 
+  // Dibujar el campo deportivo
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    drawSportField(ctx, selectedSport);
+  }, [users, selectedSport]);
+
+  // Efecto principal
   useEffect(() => {
     if (!currentUser?.id) {
       setIsLoading(false);
@@ -32,44 +40,50 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const initializeRoom = async () => {
       setIsLoading(true);
       try {
-        // Generar ID único para esta conexión
-        const connId = Date.now().toString();
-        setConnectionId(connId);
-
-        // Limpiar usuarios antiguos primero
-        await cleanupOldUsers();
-        
         await loadUsers();
         await loadMessages();
-        
+        await joinRoom();
+
         const userSubscription = supabaseClient
-          .channel('room_users')
+          .channel('room_users_changes')
           .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'room_users' }, 
-            handleUserChange
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'room_users' 
+            }, 
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                setUsers(prev => [...prev, payload.new]);
+              } else if (payload.eventType === 'DELETE') {
+                setUsers(prev => prev.filter(user => user.user_id !== payload.old.user_id));
+              } else if (payload.eventType === 'UPDATE') {
+                setUsers(prev => prev.map(user => 
+                  user.user_id === payload.new.user_id ? payload.new : user
+                ));
+              }
+            }
           )
           .subscribe();
 
         const messageSubscription = supabaseClient
-          .channel('room_messages')
+          .channel('room_messages_changes')
           .on('postgres_changes', 
-            { event: 'INSERT', schema: 'public', table: 'room_messages' }, 
-            handleNewMessage
+            { 
+              event: 'INSERT', 
+              schema: 'public', 
+              table: 'room_messages' 
+            }, 
+            (payload) => {
+              setMessages(prev => [...prev, payload.new]);
+            }
           )
           .subscribe();
-
-        await joinRoom(connId);
-
-        // Heartbeat para mantener conexión activa
-        const heartbeatInterval = setInterval(() => {
-          updateUserPresence(connId);
-        }, 30000);
 
         return () => {
           userSubscription.unsubscribe();
           messageSubscription.unsubscribe();
-          clearInterval(heartbeatInterval);
-          leaveRoom(connId);
+          leaveRoom();
         };
       } catch (error) {
         console.error('Error initializing room:', error);
@@ -79,52 +93,14 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     };
 
     initializeRoom();
-  }, [currentUser]);
+  }, [currentUser, supabaseClient]);
 
-  // Limpiar usuarios antiguos
-  const cleanupOldUsers = async () => {
-    try {
-      // Primero intentar con columna last_activity si existe
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({ is_online: false })
-        .lt('joined_at', new Date(Date.now() - 10 * 60 * 1000).toISOString());
-
-      if (error) {
-        console.log('Cleanup con last_activity falló, intentando método alternativo');
-      }
-    } catch (error) {
-      console.error('Error in cleanup:', error);
-    }
-  };
-
-  // Actualizar presencia del usuario
-  const updateUserPresence = async (connId) => {
-    if (!currentUser?.id) return;
-
-    try {
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({
-          last_activity: new Date().toISOString()
-        })
-        .eq('user_id', currentUser.id);
-
-      if (error) {
-        console.warn('Error updating presence:', error);
-      }
-    } catch (error) {
-      console.error('Error in presence update:', error);
-    }
-  };
-
-  // Cargar usuarios
   const loadUsers = async () => {
     try {
       const { data, error } = await supabaseClient
         .from('room_users')
         .select('*')
-        .order('name', { ascending: true });
+        .order('joined_at', { ascending: true });
 
       if (error) {
         console.error('Error loading users:', error);
@@ -132,29 +108,23 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       }
       
       if (data) {
-        setUsers(data.map(user => ({
-          ...user,
-          x: user.x || Math.round(Math.random() * 600 + 100),
-          y: user.y || Math.round(Math.random() * 300 + 150)
-        })));
-
+        setUsers(data);
         const namesMap = {};
         data.forEach(user => {
           namesMap[user.user_id] = user.name;
         });
-        setUserNames(prev => ({ ...prev, ...namesMap }));
+        setUserNames(namesMap);
       }
     } catch (error) {
       console.error('Error loading users:', error);
     }
   };
 
-  // Cargar mensajes
   const loadMessages = async () => {
     try {
       const { data, error } = await supabaseClient
         .from('room_messages')
-        .select('id, user_id, content, created_at')
+        .select('*')
         .order('created_at', { ascending: true })
         .limit(50);
 
@@ -171,8 +141,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Unirse al lobby
-  const joinRoom = async (connId) => {
+  const joinRoom = async () => {
     if (!currentUser?.id) return;
 
     try {
@@ -183,73 +152,29 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       const userData = {
         user_id: currentUser.id,
         name: currentUser.username || 'Deportista',
-        color: sport.color,
         x: x,
         y: y,
-        joined_at: new Date().toISOString()
+        joined_at: new Date().toISOString(),
+        sport: sport.id
       };
 
-      // Intentar agregar sport solo si la columna existe
-      try {
-        const { error: checkError } = await supabaseClient
-          .from('room_users')
-          .select('sport')
-          .limit(1);
-
-        if (!checkError) {
-          userData.sport = sport.id;
-        }
-      } catch (e) {
-        console.log('Columna sport no disponible, continuando sin ella');
-      }
-
-      const { error: insertError } = await supabaseClient
+      // UPSERT en lugar de INSERT para evitar el error 409
+      const { error } = await supabaseClient
         .from('room_users')
-        .insert(userData);
+        .upsert(userData, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
 
-      if (insertError) {
-        if (insertError.code === '23505') {
-          const updateData = {
-            name: currentUser.username || 'Deportista',
-            color: sport.color,
-            x: x,
-            y: y,
-            joined_at: new Date().toISOString()
-          };
-
-          try {
-            const { error: checkError } = await supabaseClient
-              .from('room_users')
-              .select('sport')
-              .limit(1);
-            
-            if (!checkError) {
-              updateData.sport = sport.id;
-            }
-          } catch (e) {
-            console.log('Columna sport no disponible para update');
-          }
-
-          const { error: updateError } = await supabaseClient
-            .from('room_users')
-            .update(updateData)
-            .eq('user_id', currentUser.id);
-
-          if (updateError) {
-            console.error('Error updating user in room:', updateError);
-          }
-        } else {
-          console.error('Error joining room:', insertError);
-        }
+      if (error) {
+        console.error('Error joining room:', error);
       }
-
     } catch (error) {
       console.error('Error joining room:', error);
     }
   };
 
-  // Salir del lobby
-  const leaveRoom = async (connId) => {
+  const leaveRoom = async () => {
     if (!currentUser?.id) return;
 
     try {
@@ -266,84 +191,54 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Dibujar campo según deporte
   const drawSportField = (ctx, sport) => {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
     
     ctx.clearRect(0, 0, width, height);
     
+    // Fondo del campo
     switch(sport) {
       case 'fútbol':
         ctx.fillStyle = '#2E8B57';
-        ctx.fillRect(0, 0, width, height);
-        
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 50, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(width / 2, 0);
-        ctx.lineTo(width / 2, height);
-        ctx.stroke();
-        ctx.strokeRect(0, height / 4, 100, height / 2);
-        ctx.strokeRect(width - 100, height / 4, 100, height / 2);
         break;
-        
       case 'baloncesto':
         ctx.fillStyle = '#FF6B35';
-        ctx.fillRect(0, 0, width, height);
-        
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(50, 50, width - 100, height - 100);
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 60, 0, Math.PI * 2);
-        ctx.stroke();
         break;
-        
       case 'tenis':
         ctx.fillStyle = '#00A8E8';
-        ctx.fillRect(0, 0, width, height);
-        
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(50, 50, width - 100, height - 100);
-        ctx.beginPath();
-        ctx.moveTo(width / 2, 50);
-        ctx.lineTo(width / 2, height - 50);
-        ctx.stroke();
         break;
-        
       default:
         ctx.fillStyle = '#4ECDC4';
-        ctx.fillRect(0, 0, width, height);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(50, 50, width - 100, height - 100);
     }
     
+    ctx.fillRect(0, 0, width, height);
+    
+    // Dibujar usuarios
     users.forEach(user => {
       drawAthlete(ctx, user);
     });
   };
 
-  // Dibujar deportista
   const drawAthlete = (ctx, user) => {
-    const { x, y, color, name, sport } = user;
+    const { x, y, sport } = user;
+    const userColor = sports.find(s => s.id === (sport || 'fútbol'))?.color || '#2E8B57';
     
-    ctx.fillStyle = color || '#2E8B57';
+    // Círculo del avatar
+    ctx.fillStyle = userColor;
     ctx.beginPath();
     ctx.arc(x, y, 20, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
     
-    ctx.fillStyle = '#FFFFFF';
+    // Icono del deporte
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     
-    const userSport = sport || 'fútbol';
-    switch(userSport) {
+    switch(sport || 'fútbol') {
       case 'fútbol': ctx.fillText('⚽', x, y); break;
       case 'baloncesto': ctx.fillText('🏀', x, y); break;
       case 'tenis': ctx.fillText('🎾', x, y); break;
@@ -355,12 +250,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       default: ctx.fillText('👤', x, y);
     }
     
-    ctx.fillStyle = '#323C78';
+    // Nombre
+    ctx.fillStyle = '#FFFFFF';
     ctx.font = '12px Arial';
-    ctx.fillText(name || 'Deportista', x, y + 40);
+    ctx.textBaseline = 'top';
+    ctx.fillText(user.name || 'Deportista', x - 30, y + 25);
   };
 
-  // Enviar mensaje
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser?.id) return;
@@ -370,7 +266,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         .from('room_messages')
         .insert({
           user_id: currentUser.id,
-          content: newMessage.trim()
+          content: newMessage.trim(),
+          created_at: new Date().toISOString()
         });
 
       if (error) {
@@ -384,19 +281,15 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Mover avatar
   const moveAvatar = async (x, y) => {
     if (!currentUser?.id) return;
 
     try {
-      const roundedX = Math.round(x);
-      const roundedY = Math.round(y);
-      
       const { error } = await supabaseClient
         .from('room_users')
         .update({ 
-          x: roundedX, 
-          y: roundedY 
+          x: Math.round(x), 
+          y: Math.round(y) 
         })
         .eq('user_id', currentUser.id);
 
@@ -408,39 +301,15 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Manejar cambios en usuarios
-  const handleUserChange = (payload) => {
-    if (payload.eventType === 'INSERT') {
-      setUsers(prev => [...prev, {
-        ...payload.new,
-        x: payload.new.x || Math.round(Math.random() * 600 + 100),
-        y: payload.new.y || Math.round(Math.random() * 300 + 150)
-      }]);
-    } else if (payload.eventType === 'DELETE') {
-      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
-    } else if (payload.eventType === 'UPDATE') {
-      setUsers(prev => prev.map(user => 
-        user.id === payload.new.id ? {...user, ...payload.new} : user
-      ));
-    }
-  };
-
-  // Manejar nuevos mensajes
-  const handleNewMessage = (payload) => {
-    setMessages(prev => [...prev, payload.new]);
-  };
-
-  // Obtener nombre para mostrar
   const getUserDisplayName = (userId) => {
-    if (!userId) return 'Deportista';
-    return userNames[userId] || `Deportista${userId.slice(-4)}`;
+    return userNames[userId] || `Deportista${userId ? userId.slice(-4) : ''}`;
   };
 
   if (isLoading) {
     return (
-      <div className="sports-lobby-modal">
-        <div className="sports-lobby-content">
-          <div className="sports-lobby-header">
+      <div className="stadium-modal">
+        <div className="stadium-content">
+          <div className="stadium-header">
             <h2>🏟️ Lobby Multideporte Lupi</h2>
             <button className="close-btn" onClick={onClose}>⨉</button>
           </div>
@@ -453,25 +322,31 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }
 
   return (
-    <div className="sports-lobby-modal">
-      <div className="sports-lobby-content">
-        <div className="sports-lobby-header">
+    <div className="stadium-modal">
+      <div className="stadium-content">
+        <div className="stadium-header">
           <h2>🏟️ Lobby Multideporte Lupi</h2>
           <button className="close-btn" onClick={onClose}>⨉</button>
-          <div className="online-counter">
+          <div style={{color: '#ffd700', marginLeft: '20px'}}>
             👥 {users.length} conectados
           </div>
         </div>
         
-        <div className="sports-selector">
+        <div style={{marginBottom: '15px', color: '#ffd700'}}>
           <h3>Selecciona un deporte:</h3>
-          <div className="sports-buttons">
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
             {sports.map(sport => (
               <button
                 key={sport.id}
-                className={`sport-btn ${selectedSport === sport.id ? 'active' : ''}`}
                 onClick={() => setSelectedSport(sport.id)}
-                style={{ borderColor: sport.color }}
+                style={{
+                  background: selectedSport === sport.id ? sport.color : 'transparent',
+                  color: selectedSport === sport.id ? 'white' : sport.color,
+                  border: `2px solid ${sport.color}`,
+                  padding: '8px 12px',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
               >
                 {sport.name}
               </button>
@@ -479,7 +354,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           </div>
         </div>
         
-        <div className="lobby-container">
+        <div className="stadium-container">
           <div className="field-container">
             <canvas 
               ref={canvasRef} 
@@ -491,7 +366,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 const y = e.clientY - rect.top;
                 moveAvatar(x, y);
               }}
-              className="sport-field"
+              className="soccer-field"
             />
           </div>
           
@@ -516,7 +391,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 placeholder="¡Comparte tu estrategia!"
                 disabled={!currentUser}
               />
-              <button type="submit" disabled={!currentUser}>
+              <button type="submit" disabled={!currentUser || !newMessage.trim()}>
                 🎯 Enviar
               </button>
             </form>
