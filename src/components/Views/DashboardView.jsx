@@ -39,7 +39,7 @@ const DashboardView = ({
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
-  const [showCommonRoom, setShowCommonRoom] = useState(false);
+  const [showCommonRoom] = useState(false);
 
   useEffect(() => {
     loadEquippedAvatar();
