@@ -11,7 +11,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [connectionId, setConnectionId] = useState(null);
   const canvasRef = useRef(null);
 
-  // Deportes disponibles
   const sports = [
     { id: 'fútbol', name: '⚽ Fútbol', color: '#2E8B57' },
     { id: 'baloncesto', name: '🏀 Baloncesto', color: '#FF6B35' },
@@ -33,42 +32,56 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       setIsLoading(true);
       try {
         // Generar ID único para esta conexión
-        const connId = Date.now().toString();
+        const connId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         setConnectionId(connId);
 
-        // Limpiar usuarios antiguos primero
-        await cleanupOldUsers();
+        // Limpiar conexiones huérfanas primero
+        await cleanupOrphanedConnections();
         
         await loadUsers();
         await loadMessages();
         
+        // Suscripción a cambios de usuarios
         const userSubscription = supabaseClient
-          .channel('room_users')
+          .channel('room_users_channel')
           .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'room_users' }, 
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'room_users',
+              filter: `is_online=eq.true`
+            }, 
             handleUserChange
           )
           .subscribe();
 
+        // Suscripción a mensajes
         const messageSubscription = supabaseClient
-          .channel('room_messages')
+          .channel('room_messages_channel')
           .on('postgres_changes', 
             { event: 'INSERT', schema: 'public', table: 'room_messages' }, 
             handleNewMessage
           )
           .subscribe();
 
+        // Unirse a la sala
         await joinRoom(connId);
 
-        // Heartbeat para mantener conexión activa
+        // Heartbeat cada 25 segundos
         const heartbeatInterval = setInterval(() => {
-          updateUserPresence(connId);
-        }, 30000);
+          updateHeartbeat(connId);
+        }, 25000);
+
+        // Cleanup cada minuto
+        const cleanupInterval = setInterval(() => {
+          cleanupInactiveUsers();
+        }, 60000);
 
         return () => {
           userSubscription.unsubscribe();
           messageSubscription.unsubscribe();
           clearInterval(heartbeatInterval);
+          clearInterval(cleanupInterval);
           leaveRoom(connId);
         };
       } catch (error) {
@@ -81,49 +94,78 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     initializeRoom();
   }, [currentUser]);
 
-  // Limpiar usuarios antiguos
-  const cleanupOldUsers = async () => {
+  // LIMPIAR CONEXIONES HUÉRFANAS
+  const cleanupOrphanedConnections = async () => {
     try {
-      // Primero intentar con columna last_activity si existe
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
       const { error } = await supabaseClient
         .from('room_users')
-        .update({ is_online: false })
-        .lt('joined_at', new Date(Date.now() - 10 * 60 * 1000).toISOString());
+        .update({ 
+          is_online: false,
+          connection_id: null
+        })
+        .lt('last_heartbeat', fiveMinutesAgo)
+        .eq('is_online', true);
 
       if (error) {
-        console.log('Cleanup con last_activity falló, intentando método alternativo');
+        console.warn('Error cleaning orphaned connections:', error);
       }
     } catch (error) {
-      console.error('Error in cleanup:', error);
+      console.error('Error in cleanupOrphanedConnections:', error);
     }
   };
 
-  // Actualizar presencia del usuario
-  const updateUserPresence = async (connId) => {
+  // LIMPIAR USUARIOS INACTIVOS
+  const cleanupInactiveUsers = async () => {
+    try {
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      
+      const { error } = await supabaseClient
+        .from('room_users')
+        .delete()
+        .lt('last_heartbeat', twoMinutesAgo)
+        .eq('is_online', false);
+
+      if (error) {
+        console.warn('Error cleaning inactive users:', error);
+      }
+    } catch (error) {
+      console.error('Error in cleanupInactiveUsers:', error);
+    }
+  };
+
+  // ACTUALIZAR HEARTBEAT
+  const updateHeartbeat = async (connId) => {
     if (!currentUser?.id) return;
 
     try {
       const { error } = await supabaseClient
         .from('room_users')
-        .update({
-          last_activity: new Date().toISOString()
+        .update({ 
+          last_heartbeat: new Date().toISOString(),
+          connection_id: connId
         })
-        .eq('user_id', currentUser.id);
+        .eq('user_id', currentUser.id)
+        .eq('is_online', true);
 
       if (error) {
-        console.warn('Error updating presence:', error);
+        console.warn('Error updating heartbeat:', error);
+        // Reconnect if heartbeat fails
+        await joinRoom(connId);
       }
     } catch (error) {
-      console.error('Error in presence update:', error);
+      console.error('Error in updateHeartbeat:', error);
     }
   };
 
-  // Cargar usuarios
+  // CARGAR USUARIOS (SOLO ONLINE)
   const loadUsers = async () => {
     try {
       const { data, error } = await supabaseClient
         .from('room_users')
         .select('*')
+        .eq('is_online', true)
         .order('name', { ascending: true });
 
       if (error) {
@@ -149,7 +191,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Cargar mensajes
+  // CARGAR MENSAJES
   const loadMessages = async () => {
     try {
       const { data, error } = await supabaseClient
@@ -171,7 +213,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Unirse al lobby
+  // UNIRSE AL LOBBY (CON MANEJO DE CONFLICTOS MEJORADO)
   const joinRoom = async (connId) => {
     if (!currentUser?.id) return;
 
@@ -184,62 +226,38 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         user_id: currentUser.id,
         name: currentUser.username || 'Deportista',
         color: sport.color,
+        sport: sport.id,
         x: x,
         y: y,
+        connection_id: connId,
+        last_heartbeat: new Date().toISOString(),
+        is_online: true,
         joined_at: new Date().toISOString()
       };
 
-      // Intentar agregar sport solo si la columna existe
-      try {
-        const { error: checkError } = await supabaseClient
-          .from('room_users')
-          .select('sport')
-          .limit(1);
-
-        if (!checkError) {
-          userData.sport = sport.id;
-        }
-      } catch (e) {
-        console.log('Columna sport no disponible, continuando sin ella');
-      }
-
-      const { error: insertError } = await supabaseClient
+      // USAR UPSERT PARA EVITAR CONFLICTOS 409
+      const { error } = await supabaseClient
         .from('room_users')
-        .insert(userData);
+        .upsert(userData, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        });
 
-      if (insertError) {
-        if (insertError.code === '23505') {
-          const updateData = {
-            name: currentUser.username || 'Deportista',
-            color: sport.color,
-            x: x,
-            y: y,
-            joined_at: new Date().toISOString()
-          };
+      if (error) {
+        console.error('Error joining room (upsert):', error);
+        
+        // FALLBACK: Intentar update simple
+        const { error: updateError } = await supabaseClient
+          .from('room_users')
+          .update({
+            is_online: true,
+            last_heartbeat: new Date().toISOString(),
+            connection_id: connId
+          })
+          .eq('user_id', currentUser.id);
 
-          try {
-            const { error: checkError } = await supabaseClient
-              .from('room_users')
-              .select('sport')
-              .limit(1);
-            
-            if (!checkError) {
-              updateData.sport = sport.id;
-            }
-          } catch (e) {
-            console.log('Columna sport no disponible para update');
-          }
-
-          const { error: updateError } = await supabaseClient
-            .from('room_users')
-            .update(updateData)
-            .eq('user_id', currentUser.id);
-
-          if (updateError) {
-            console.error('Error updating user in room:', updateError);
-          }
-        } else {
-          console.error('Error joining room:', insertError);
+        if (updateError) {
+          console.error('Error in fallback update:', updateError);
         }
       }
 
@@ -248,21 +266,54 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Salir del lobby
+  // SALIR DEL LOBBY
   const leaveRoom = async (connId) => {
     if (!currentUser?.id) return;
 
     try {
-      const { error } = await supabaseClient
+      // Verificar que esta conexión es la propietaria antes de marcar como offline
+      const { data: userData, error: checkError } = await supabaseClient
         .from('room_users')
-        .delete()
-        .eq('user_id', currentUser.id);
+        .select('connection_id')
+        .eq('user_id', currentUser.id)
+        .single();
 
-      if (error) {
-        console.error('Error leaving room:', error);
+      if (!checkError && userData && userData.connection_id === connId) {
+        const { error } = await supabaseClient
+          .from('room_users')
+          .update({ 
+            is_online: false,
+            last_heartbeat: new Date().toISOString()
+          })
+          .eq('user_id', currentUser.id);
+
+        if (error) {
+          console.error('Error leaving room:', error);
+        }
       }
     } catch (error) {
       console.error('Error in leaveRoom:', error);
+    }
+  };
+
+  // MANEJAR CAMBIOS DE USUARIOS (SOLO ONLINE)
+  const handleUserChange = (payload) => {
+    if (payload.eventType === 'INSERT' && payload.new.is_online) {
+      setUsers(prev => [...prev, {
+        ...payload.new,
+        x: payload.new.x || Math.round(Math.random() * 600 + 100),
+        y: payload.new.y || Math.round(Math.random() * 300 + 150)
+      }]);
+    } else if (payload.eventType === 'DELETE') {
+      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
+    } else if (payload.eventType === 'UPDATE') {
+      if (payload.new.is_online === false) {
+        setUsers(prev => prev.filter(user => user.id !== payload.new.id));
+      } else if (payload.new.is_online === true) {
+        setUsers(prev => prev.map(user => 
+          user.id === payload.new.id ? {...user, ...payload.new} : user
+        ));
+      }
     }
   };
 
@@ -408,22 +459,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Manejar cambios en usuarios
-  const handleUserChange = (payload) => {
-    if (payload.eventType === 'INSERT') {
-      setUsers(prev => [...prev, {
-        ...payload.new,
-        x: payload.new.x || Math.round(Math.random() * 600 + 100),
-        y: payload.new.y || Math.round(Math.random() * 300 + 150)
-      }]);
-    } else if (payload.eventType === 'DELETE') {
-      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
-    } else if (payload.eventType === 'UPDATE') {
-      setUsers(prev => prev.map(user => 
-        user.id === payload.new.id ? {...user, ...payload.new} : user
-      ));
-    }
-  };
 
   // Manejar nuevos mensajes
   const handleNewMessage = (payload) => {
@@ -452,7 +487,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     );
   }
 
-  return (
+   return (
     <div className="sports-lobby-modal">
       <div className="sports-lobby-content">
         <div className="sports-lobby-header">
