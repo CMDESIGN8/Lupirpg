@@ -53,7 +53,113 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     drawRoom(ctx);
   }, [users]);
 
-  // ... (resto de funciones de dibujo iguales)
+  // AÑADIR: Función sendMessage que faltaba
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    try {
+      const { error } = await supabaseClient
+        .from('room_messages')
+        .insert({
+          user_id: currentUser.id,
+          content: newMessage.trim()
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
+      setNewMessage(''); // Limpiar el input después de enviar
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  // AÑADIR: Función para manejar cambios en usuarios
+  const handleUserChange = (payload) => {
+    if (payload.eventType === 'INSERT') {
+      setUsers(prev => [...prev, {
+        ...payload.new,
+        x: payload.new.x || Math.random() * 600 + 100,
+        y: payload.new.y || Math.random() * 300 + 150
+      }]);
+    } else if (payload.eventType === 'DELETE') {
+      setUsers(prev => prev.filter(user => user.id !== payload.old.id));
+    } else if (payload.eventType === 'UPDATE') {
+      setUsers(prev => prev.map(user => 
+        user.id === payload.new.id ? {...user, ...payload.new} : user
+      ));
+    }
+  };
+
+  // AÑADIR: Función para manejar nuevos mensajes
+  const handleNewMessage = (payload) => {
+    setMessages(prev => [...prev, payload.new]);
+  };
+
+  // AÑADIR: Función para dibujar la sala
+  const drawRoom = (ctx) => {
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    
+    // Limpiar canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Dibujar fondo
+    ctx.fillStyle = '#E6F0FF';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Dibujar área de la sala
+    ctx.fillStyle = '#C8D8EB';
+    ctx.beginPath();
+    ctx.roundRect(50, 100, width - 100, height - 200, 15);
+    ctx.fill();
+    ctx.strokeStyle = '#B4C8E0';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Dibujar usuarios
+    users.forEach(user => {
+      drawAvatar(ctx, user);
+    });
+  };
+
+  // AÑADIR: Función para dibujar avatar
+  const drawAvatar = (ctx, user) => {
+    const { x, y, color, name } = user;
+    
+    // Cuerpo del avatar
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Ojos
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - 8, y - 5, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 8, y - 5, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Sonrisa
+    ctx.strokeStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x, y + 5, 10, 0.2, Math.PI - 0.2, false);
+    ctx.stroke();
+    
+    // Nombre
+    ctx.fillStyle = '#323C78';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, x, y + 45);
+  };
 
   // CORREGIDO: Cargar usuarios desde Supabase
   const loadUsers = async () => {
