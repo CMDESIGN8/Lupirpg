@@ -191,10 +191,6 @@
   100% { transform: scale(1); }
 }
 
-.stadium-content {
-  animation: pulse 2s infinite;
-}
-
 .message {
   transition: transform 0.2s;
 }
