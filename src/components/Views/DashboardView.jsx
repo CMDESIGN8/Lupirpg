@@ -39,7 +39,7 @@ const DashboardView = ({
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
-  const [showCommonRoom] = useState(false);
+  const [showCommonRoom, setShowCommonRoom] = useState(false);
 
   useEffect(() => {
     loadEquippedAvatar();
@@ -415,7 +415,7 @@ const DashboardView = ({
   <CommonRoom 
     currentUser={playerData} 
     onClose={() => setShowCommonRoom(false)}
-    supabaseClient={supabaseClient} // Pasa el cliente de Supabase
+    supabaseClient={supabaseClient}
   />
 )}
       {/* Loading durante el juego */}
