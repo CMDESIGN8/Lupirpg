@@ -6,7 +6,7 @@ import { avatarService } from '../../services/avatarService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
 import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
-
+import CommonRoom from '../game/CommonRoom.jsx';
 
 
 const DashboardView = ({ 
@@ -39,6 +39,7 @@ const DashboardView = ({
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
+  const [showCommonRoom, setShowCommonRoom] = useState(false);
 
   useEffect(() => {
     loadEquippedAvatar();
@@ -320,6 +321,12 @@ const DashboardView = ({
               <span className="nav-icon">⚽</span>
               <span>Misiones</span>
             </button>
+
+           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+  <span className="nav-icon">🏠</span>
+  <span>SALA COMUN</span>
+</button>
+
           </div>
         </div>
       </div>
@@ -404,7 +411,12 @@ const DashboardView = ({
     </div>
   </div>
 )}
-
+{showCommonRoom && (
+  <CommonRoom 
+    currentUser={playerData} 
+    onClose={() => setShowCommonRoom(false)} 
+  />
+)}
       {/* Loading durante el juego */}
       {gameLoading && (
         <div className="modal-overlay">

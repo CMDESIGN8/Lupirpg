@@ -1,0 +1,140 @@
+/* src/components/CommonRoom/CommonRoom.css */
+.common-room-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.common-room-content {
+  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  border-radius: 15px;
+  padding: 20px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  border: 2px solid #ffd700;
+}
+
+.common-room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.common-room-header h2 {
+  color: white;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+}
+
+.close-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.close-btn:hover {
+  background: #ff6b81;
+}
+
+.room-container {
+  display: flex;
+  gap: 20px;
+  height: 70vh;
+}
+
+.canvas-container {
+  flex: 2;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.canvas-container canvas {
+  display: block;
+  cursor: pointer;
+  background-color: #E6F0FF;
+  border-radius: 10px;
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  max-height: calc(70vh - 60px);
+}
+
+.message {
+  margin-bottom: 10px;
+  text-align: left;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.user-name {
+  font-weight: bold;
+  color: #ffd700;
+  margin-right: 5px;
+}
+
+.message-content {
+  color: white;
+}
+
+.message-form {
+  display: flex;
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.message-form input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  margin-right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.message-form button {
+  padding: 10px 15px;
+  background-color: #6464FF;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.message-form button:hover {
+  background-color: #5252e0;
+}
