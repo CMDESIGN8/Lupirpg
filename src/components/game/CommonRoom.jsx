@@ -10,7 +10,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const movementKeys = useRef(new Set());
   const animationFrame = useRef(null);
   const canvasRef = useRef(null);
-  const [canvasReady, setCanvasReady] = useState(false);
 
   // Configuración del mapa
   const mapConfig = {
@@ -21,8 +20,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
   // Dibujar el mapa
   const drawMap = useCallback((ctx) => {
-    if (!ctx) return;
-    
     console.log('Dibujando mapa...');
     const { width, height, plaza } = mapConfig;
     
@@ -42,13 +39,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 3;
     ctx.strokeRect(plaza.x, plaza.y, plaza.width, plaza.height);
     
-    // Fuente en el centro
-    ctx.fillStyle = '#3498db';
-    ctx.beginPath();
-    ctx.arc(plaza.x + plaza.width/2, plaza.y + plaza.height/2, 15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    
     // Dibujar usuarios
     users.forEach(user => {
       drawAvatar(ctx, user);
@@ -62,7 +52,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const { x, y } = user;
     
     // Cuerpo (círculo azul)
-    ctx.fillStyle = '#e74c3c';
+    ctx.fillStyle = '#3498db';
     ctx.beginPath();
     ctx.arc(x, y, 15, 0, Math.PI * 2);
     ctx.fill();
@@ -79,33 +69,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.textBaseline = 'top';
     ctx.fillText(user.name || 'Jugador', x, y + 20);
   };
-
-  // Inicializar canvas cuando esté disponible
-  useEffect(() => {
-    if (canvasRef.current && !canvasReady) {
-      console.log('Canvas listo, configurando...');
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      
-      canvas.width = mapConfig.width;
-      canvas.height = mapConfig.height;
-      
-      // Dibujar fondo inicial
-      ctx.fillStyle = '#2E8B57';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      setCanvasReady(true);
-    }
-  }, [canvasReady]);
-
-  // Redibujar cuando cambien los usuarios o el canvas esté listo
-  useEffect(() => {
-    if (canvasReady && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      drawMap(ctx);
-    }
-  }, [users, canvasReady, drawMap]);
 
   // Efecto principal
   useEffect(() => {
@@ -224,6 +187,27 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     animationFrame.current = requestAnimationFrame(move);
   };
 
+  // Dibujar en canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      console.log('Canvas no encontrado');
+      return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.log('Contexto 2D no disponible');
+      return;
+    }
+    
+    console.log('Configurando canvas:', mapConfig.width, mapConfig.height);
+    canvas.width = mapConfig.width;
+    canvas.height = mapConfig.height;
+    
+    drawMap(ctx);
+  }, [users, drawMap]);
+
   if (isLoading) {
     return (
       <div className="city-modal">
@@ -256,15 +240,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             ref={canvasRef}
             className="city-map"
             style={{ 
-              display: 'block',
-              border: '3px solid #3498db',
-              borderRadius: '5px'
+              border: '2px solid blue',
+              background: '#2E8B57' 
             }}
           />
-        </div>
-        
-        <div className="debug-info">
-          <p>Posición: {users[0]?.x}, {users[0]?.y}</p>
         </div>
       </div>
     </div>
