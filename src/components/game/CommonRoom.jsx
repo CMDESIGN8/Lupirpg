@@ -1,9 +1,9 @@
+// src/components/CommonRoom.jsx
 import React, { useState, useEffect, useRef } from "react";
 import "../styles/CommonRoom.css";
 
-// Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
 import playerSprite from "../assets/player.png";
-import mapBackground from "../assets/map.png"; // 👈 tu mapa
+import mapBackground from "../assets/map.png";
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
@@ -16,6 +16,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
+  const keysPressed = {};
 
   // ========================
   // 🔥 Supabase Presence
@@ -44,6 +45,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             y,
             direction: "down",
             frameIndex: 0,
+            lastMessage: null,
           });
         }
       });
@@ -56,6 +58,23 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         { event: "INSERT", schema: "public", table: "room_messages" },
         (payload) => {
           setMessages((prev) => [...prev, payload.new]);
+
+          // Mensaje flotante
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.id === payload.new.user_id
+                ? { ...u, lastMessage: payload.new.content }
+                : u
+            )
+          );
+          // Limpia el mensaje flotante después de 3 seg
+          setTimeout(() => {
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.id === payload.new.user_id ? { ...u, lastMessage: null } : u
+              )
+            );
+          }, 3000);
         }
       )
       .subscribe();
@@ -93,11 +112,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       spriteHeight
     );
 
-    // Nombre
+    // Nombre del jugador
     ctx.fillStyle = "#fff";
-    ctx.font = "18px Arial";
+    ctx.font = "16px Arial";
     ctx.textAlign = "center";
     ctx.fillText(name, x, y - spriteHeight / 2 - 5);
+
+    // Mensaje flotante
+    if (user.lastMessage) {
+      ctx.fillStyle = "#ff0";
+      ctx.font = "14px Arial";
+      ctx.fillText(user.lastMessage, x, y - spriteHeight);
+    }
   };
 
   const drawRoom = (ctx) => {
@@ -106,7 +132,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
     ctx.clearRect(0, 0, width, height);
 
-    // Fondo con mapa
     if (mapImage.complete) {
       ctx.drawImage(mapImage, 0, 0, width, height);
     } else {
@@ -114,7 +139,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       ctx.fillRect(0, 0, width, height);
     }
 
-    // Dibujar usuarios
     users.forEach((user) => drawAvatar(ctx, user));
   };
 
@@ -132,59 +156,72 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [users]);
 
   // ========================
-  // 🕹️ Movimiento
+  // 🕹️ Movimiento fluido
   // ========================
   useEffect(() => {
-    const handleKey = async (e) => {
+    const handleKeyDown = (e) => {
+      keysPressed[e.key] = true;
+    };
+
+    const handleKeyUp = (e) => {
+      keysPressed[e.key] = false;
+    };
+
+    const interval = setInterval(async () => {
       const user = users.find((u) => u.id === currentUser.id);
       if (!user) return;
 
-      let { x, y } = user;
-      let direction = user.direction;
+      let { x, y, direction } = user;
+      let moved = false;
 
-      switch (e.key) {
-        case "ArrowUp":
-          y -= 4;
-          direction = "up";
-          break;
-        case "ArrowDown":
-          y += 4;
-          direction = "down";
-          break;
-        case "ArrowLeft":
-          x -= 4;
-          direction = "left";
-          break;
-        case "ArrowRight":
-          x += 4;
-          direction = "right";
-          break;
-        default:
-          return;
+      if (keysPressed["ArrowUp"]) {
+        y -= 4;
+        direction = "up";
+        moved = true;
+      }
+      if (keysPressed["ArrowDown"]) {
+        y += 4;
+        direction = "down";
+        moved = true;
+      }
+      if (keysPressed["ArrowLeft"]) {
+        x -= 4;
+        direction = "left";
+        moved = true;
+      }
+      if (keysPressed["ArrowRight"]) {
+        x += 4;
+        direction = "right";
+        moved = true;
       }
 
-      // Actualizar animación
-      const updatedUser = {
-        ...user,
-        x,
-        y,
-        direction,
-        frameIndex: (user.frameIndex + 1) % framesPerDirection,
-      };
+      if (moved) {
+        const updatedUser = {
+          ...user,
+          x,
+          y,
+          direction,
+          frameIndex: (user.frameIndex + 1) % framesPerDirection,
+        };
 
-      // Estado local
-      setUsers((prev) =>
-        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-      );
+        setUsers((prev) =>
+          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+        );
 
-      // Estado remoto
-      if (channelRef.current) {
-        await channelRef.current.track(updatedUser);
+        if (channelRef.current) {
+          await channelRef.current.track(updatedUser);
+        }
       }
+    }, 120);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
-
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
   }, [users, currentUser]);
 
   // ========================
