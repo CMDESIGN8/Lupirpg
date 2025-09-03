@@ -7,105 +7,118 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [userNames, setUserNames] = useState({});
-  const [selectedMap, setSelectedMap] = useState('ciudad');
   const [isMoving, setIsMoving] = useState(false);
   const [movementCooldown, setMovementCooldown] = useState(false);
-  const [mapElements, setMapElements] = useState([]);
   
   const movementKeys = useRef(new Set());
   const animationFrame = useRef(null);
-  const lastPosition = useRef({ x: 0, y: 0 });
-  const canvasRef = useRef(null); // Añadido canvasRef
+  const canvasRef = useRef(null);
 
-  // Mapas disponibles
-  const maps = [
-    { id: 'ciudad', name: '🏙️ Ciudad', color: '#4A90E2', width: 1000, height: 600 },
-    { id: 'bosque', name: '🌲 Bosque', color: '#228B22', width: 1200, height: 800 },
-    { id: 'castillo', name: '🏰 Castillo', width: 800, height: 800, color: '#8B4513' },
-    { id: 'mercado', name: '🛒 Mercado', width: 900, height: 500, color: '#FFD700' },
-    { id: 'taberna', name: '🍻 Taberna', width: 700, height: 500, color: '#8B0000' }
-  ];
+  // Configuración del mapa de ciudad
+  const mapConfig = {
+    width: 1000,
+    height: 800,
+    backgroundColor: '#4A90E2',
+    plaza: { x: 400, y: 300, width: 200, height: 200 },
+    buildings: [
+      { x: 100, y: 100, width: 150, height: 120, color: '#95a5a6', name: 'Posada' },
+      { x: 300, y: 100, width: 120, height: 100, color: '#e74c3c', name: 'Tienda' },
+      { x: 600, y: 100, width: 180, height: 140, color: '#8B4513', name: 'Ayuntamiento' },
+      { x: 100, y: 500, width: 130, height: 110, color: '#2c3e50', name: 'Casa' },
+      { x: 700, y: 500, width: 160, height: 130, color: '#7f8c8d', name: 'Mercado' }
+    ],
+    trees: [
+      { x: 250, y: 400 }, { x: 300, y: 450 }, { x: 200, y: 350 },
+      { x: 650, y: 350 }, { x: 700, y: 400 }, { x: 750, y: 300 }
+    ]
+  };
 
-  // Dibujar el mapa y los elementos
-  const drawMap = useCallback((ctx, mapId) => {
-    const map = maps.find(m => m.id === mapId) || maps[0];
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
+  // Dibujar el mapa de ciudad
+  const drawCityMap = useCallback((ctx) => {
+    const { width, height, backgroundColor, plaza, buildings, trees } = mapConfig;
     
+    // Limpiar canvas
     ctx.clearRect(0, 0, width, height);
     
-    // Fondo del mapa
-    ctx.fillStyle = map.color + '40';
+    // Fondo del mapa (césped)
+    ctx.fillStyle = '#2E8B57';
     ctx.fillRect(0, 0, width, height);
     
-    // Dibujar elementos del mapa
-    mapElements.forEach(element => {
-      if (element.map === mapId) {
-        drawMapElement(ctx, element);
+    // Dibujar caminos
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(0, plaza.y + plaza.height/2 - 25, width, 50); // Camino horizontal
+    ctx.fillRect(plaza.x + plaza.width/2 - 25, 0, 50, height); // Camino vertical
+    
+    // Dibujar plaza central
+    ctx.fillStyle = '#D2B48C';
+    ctx.fillRect(plaza.x, plaza.y, plaza.width, plaza.height);
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(plaza.x, plaza.y, plaza.width, plaza.height);
+    
+    // Fuente en la plaza
+    ctx.fillStyle = '#87CEEB';
+    ctx.beginPath();
+    ctx.arc(plaza.x + plaza.width/2, plaza.y + plaza.height/2, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Dibujar edificios
+    buildings.forEach(building => {
+      ctx.fillStyle = building.color;
+      ctx.fillRect(building.x, building.y, building.width, building.height);
+      
+      // Techo
+      ctx.fillStyle = '#8B0000';
+      ctx.beginPath();
+      ctx.moveTo(building.x - 10, building.y);
+      ctx.lineTo(building.x + building.width + 10, building.y);
+      ctx.lineTo(building.x + building.width/2, building.y - 20);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Puerta
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(building.x + building.width/2 - 15, building.y + building.height - 40, 30, 40);
+      
+      // Ventanas
+      ctx.fillStyle = '#ADD8E6';
+      for (let i = 0; i < 2; i++) {
+        for (let j = 0; j < 2; j++) {
+          ctx.fillRect(
+            building.x + 20 + i * (building.width - 50), 
+            building.y + 20 + j * (building.height - 60), 
+            20, 
+            20
+          );
+        }
       }
+    });
+    
+    // Dibujar árboles
+    trees.forEach(tree => {
+      // Copa del árbol
+      ctx.fillStyle = '#228B22';
+      ctx.beginPath();
+      ctx.arc(tree.x, tree.y, 25, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Tronco
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(tree.x - 5, tree.y + 15, 10, 25);
     });
     
     // Dibujar usuarios
     users.forEach(user => {
       drawAvatar(ctx, user);
     });
-  }, [users, mapElements, maps]);
-
-  // Dibujar elementos del mapa
-  const drawMapElement = (ctx, element) => {
-    const { x, y, type, width, height } = element;
-    
-    ctx.fillStyle = element.color || '#FFFFFF';
-    
-    switch(type) {
-      case 'building':
-        ctx.fillRect(x, y, width, height);
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
-        
-        // Ventanas
-        ctx.fillStyle = '#ADD8E6';
-        for (let i = 0; i < Math.floor(width / 30); i++) {
-          for (let j = 0; j < Math.floor(height / 40); j++) {
-            ctx.fillRect(x + 10 + i * 30, y + 10 + j * 40, 15, 20);
-          }
-        }
-        break;
-        
-      case 'tree':
-        ctx.beginPath();
-        ctx.arc(x + 15, y, 25, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(x + 10, y + 20, 10, 30);
-        break;
-        
-      case 'npc':
-        ctx.fillStyle = '#FF6347';
-        ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        ctx.font = '10px Arial';
-        ctx.fillStyle = '#000000';
-        ctx.textAlign = 'center';
-        ctx.fillText(element.name || 'NPC', x, y + 25);
-        break;
-        
-      default:
-        ctx.fillRect(x, y, width, height);
-    }
-  };
+  }, [users]);
 
   // Dibujar avatar del usuario
   const drawAvatar = (ctx, user) => {
     const { x, y, color, direction = 'down' } = user;
     
-    // Cuerpo
+    // Cuerpo (círculo)
     ctx.fillStyle = color || '#3498db';
     ctx.beginPath();
     ctx.arc(x, y, 15, 0, Math.PI * 2);
@@ -116,30 +129,26 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Dirección
-    ctx.fillStyle = '#000000';
+    // Dirección (cabeza)
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    
     switch(direction) {
       case 'up':
-        ctx.beginPath();
-        ctx.arc(x, y - 8, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(x, y - 8, 8, 0, Math.PI * 2);
         break;
       case 'down':
-        ctx.beginPath();
-        ctx.arc(x, y + 8, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(x, y + 8, 8, 0, Math.PI * 2);
         break;
       case 'left':
-        ctx.beginPath();
-        ctx.arc(x - 8, y, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(x - 8, y, 8, 0, Math.PI * 2);
         break;
       case 'right':
-        ctx.beginPath();
-        ctx.arc(x + 8, y, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(x + 8, y, 8, 0, Math.PI * 2);
         break;
     }
+    ctx.fill();
+    ctx.stroke();
     
     // Nombre
     ctx.font = '12px Arial';
@@ -148,8 +157,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2;
-    ctx.strokeText(user.name || 'Aventurero', x, y + 20);
-    ctx.fillText(user.name || 'Aventurero', x, y + 20);
+    ctx.strokeText(user.name || 'Ciudadano', x, y + 25);
+    ctx.fillText(user.name || 'Ciudadano', x, y + 25);
   };
 
   // Cargar usuarios
@@ -213,17 +222,17 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     if (!currentUser?.id) return;
 
     try {
-      const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
-      const x = Math.round(Math.random() * (currentMap.width - 100) + 50);
-      const y = Math.round(Math.random() * (currentMap.height - 100) + 50);
+      // Posición inicial en la plaza central
+      const x = mapConfig.plaza.x + mapConfig.plaza.width/2;
+      const y = mapConfig.plaza.y + mapConfig.plaza.height/2;
 
       const userData = {
         user_id: currentUser.id,
-        name: currentUser.username || 'Aventurero',
+        name: currentUser.username || 'Ciudadano',
         x: x,
         y: y,
         direction: 'down',
-        color: '#3498db',
+        color: getRandomColor(),
         joined_at: new Date().toISOString(),
         last_activity: new Date().toISOString()
       };
@@ -237,34 +246,16 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
       if (error) {
         console.error('Error joining room:', error);
-        await handleJoinFallback(userData);
       }
     } catch (error) {
       console.error('Error joining room:', error);
     }
   };
 
-  const handleJoinFallback = async (userData) => {
-    try {
-      const { error: updateError } = await supabaseClient
-        .from('room_users')
-        .update(userData)
-        .eq('user_id', currentUser.id);
-
-      if (updateError) {
-        const { error: insertError } = await supabaseClient
-          .from('room_users')
-          .insert(userData)
-          .select()
-          .maybeSingle();
-
-        if (insertError && insertError.code !== '23505') {
-          console.error('Fallback insert error:', insertError);
-        }
-      }
-    } catch (error) {
-      console.error('Error in fallback join:', error);
-    }
+  // Generar color aleatorio
+  const getRandomColor = () => {
+    const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+    return colors[Math.floor(Math.random() * colors.length)];
   };
 
   // Limpiar usuarios inactivos
@@ -323,24 +314,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Cargar elementos del mapa
-  const loadMapElements = async () => {
-    try {
-      const elements = [
-        { id: 1, map: 'ciudad', type: 'building', x: 100, y: 100, width: 200, height: 150, color: '#95a5a6', name: 'Posada' },
-        { id: 2, map: 'ciudad', type: 'building', x: 400, y: 150, width: 180, height: 120, color: '#e74c3c', name: 'Tienda' },
-        { id: 3, map: 'ciudad', type: 'npc', x: 250, y: 300, width: 30, height: 30, color: '#f39c12', name: 'Mercader' },
-        { id: 4, map: 'bosque', type: 'tree', x: 200, y: 200, width: 30, height: 50, color: '#27ae60', name: 'Árbol' },
-        { id: 5, map: 'bosque', type: 'tree', x: 300, y: 350, width: 30, height: 50, color: '#27ae60', name: 'Árbol' },
-        { id: 6, map: 'castillo', type: 'building', x: 300, y: 100, width: 300, height: 200, color: '#7f8c8d', name: 'Torreón' },
-      ];
-      
-      setMapElements(elements);
-    } catch (error) {
-      console.error('Error loading map elements:', error);
-    }
-  };
-
   // Iniciar el bucle de movimiento
   const startMovement = () => {
     const move = () => {
@@ -360,9 +333,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     if (!currentUserData) return;
     
     let { x, y, direction } = currentUserData;
-    const speed = 5;
+    const speed = 4;
     let newDirection = direction;
     
+    // Procesar teclas presionadas
     movementKeys.current.forEach(key => {
       switch(key) {
         case 'w':
@@ -388,16 +362,16 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       }
     });
     
-    const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
-    x = Math.max(20, Math.min(currentMap.width - 20, x));
-    y = Math.max(20, Math.min(currentMap.height - 20, y));
+    // Limitar al área del mapa
+    x = Math.max(20, Math.min(mapConfig.width - 20, x));
+    y = Math.max(20, Math.min(mapConfig.height - 20, y));
     
+    // Comprobar colisiones con edificios
+    const collision = checkCollision(x, y);
+    if (collision) return;
+    
+    // Actualizar solo si la posición cambió
     if (x !== currentUserData.x || y !== currentUserData.y || direction !== newDirection) {
-      const collision = checkCollision(x, y, mapElements);
-      if (collision) return;
-      
-      lastPosition.current = { x, y };
-      
       try {
         setMovementCooldown(true);
         
@@ -415,7 +389,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           console.error('Error moving avatar:', error);
         }
         
-        setTimeout(() => setMovementCooldown(false), 100);
+        setTimeout(() => setMovementCooldown(false), 50);
       } catch (error) {
         console.error('Error moving avatar:', error);
         setMovementCooldown(false);
@@ -423,94 +397,36 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Comprobar colisiones
-  const checkCollision = (x, y, elements) => {
-    for (const element of elements) {
-      if (element.map !== selectedMap) continue;
-      
-      if (x + 15 > element.x && x - 15 < element.x + element.width &&
-          y + 15 > element.y && y - 15 < element.y + element.height) {
+  // Comprobar colisiones con edificios
+  const checkCollision = (x, y) => {
+    // Colisión con edificios
+    for (const building of mapConfig.buildings) {
+      if (x + 15 > building.x && x - 15 < building.x + building.width &&
+          y + 15 > building.y && y - 15 < building.y + building.height) {
         return true;
       }
     }
-    return false;
-  };
-
-  // Interactuar con NPCs o objetos
-  const handleCanvasClick = (e) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
     
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const clickedNpc = mapElements.find(element => 
-      element.type === 'npc' && 
-      Math.sqrt(Math.pow(x - element.x, 2) + Math.pow(y - element.y, 2)) < 20
-    );
-    
-    if (clickedNpc) {
-      setNewMessage(`/hablar ${clickedNpc.name}`);
-    } else {
-      moveTo(x, y);
-    }
-  };
-
-  // Movimiento hacia un punto específico
-  const moveTo = async (targetX, targetY) => {
-    if (!currentUser?.id) return;
-    
-    try {
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({ 
-          x: Math.round(targetX), 
-          y: Math.round(targetY),
-          last_activity: new Date().toISOString()
-        })
-        .eq('user_id', currentUser.id);
-
-      if (error) {
-        console.error('Error moving avatar:', error);
+    // Colisión con árboles
+    for (const tree of mapConfig.trees) {
+      const distance = Math.sqrt(Math.pow(x - tree.x, 2) + Math.pow(y - tree.y, 2));
+      if (distance < 40) { // Radio del árbol + radio del avatar
+        return true;
       }
-    } catch (error) {
-      console.error('Error moving avatar:', error);
     }
+    
+    return false;
   };
 
   // Obtener nombre para mostrar
   const getUserDisplayName = (userId) => {
-    return userNames[userId] || `Aventurero${userId ? userId.slice(-4) : ''}`;
+    return userNames[userId] || `Ciudadano${userId ? userId.slice(-4) : ''}`;
   };
 
   // Enviar mensaje
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser?.id) return;
-
-    if (newMessage.startsWith('/')) {
-      const parts = newMessage.split(' ');
-      const command = parts[0].substring(1).toLowerCase();
-      
-      switch(command) {
-        case 'dado':
-          const roll = Math.floor(Math.random() * 100) + 1;
-          setNewMessage(`🎲 ${currentUser.username} tira un dado: ${roll}`);
-          break;
-        case 'hablar':
-          const npcName = parts[1];
-          setNewMessage(`🗣️ ${currentUser.username} habla con ${npcName || 'el NPC'}`);
-          break;
-        case 'emote':
-          const emote = parts[1] || 'saluda';
-          setNewMessage(`/me ${emote}`);
-          break;
-        default:
-          setNewMessage(`❌ Comando no reconocido: ${command}`);
-          break;
-      }
-    }
 
     try {
       const { error } = await supabaseClient
@@ -543,7 +459,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const initializeRoom = async () => {
       setIsLoading(true);
       try {
-        await loadMapElements();
         await loadUsers();
         await loadMessages();
         await joinRoom();
@@ -641,24 +556,22 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
+    canvas.width = mapConfig.width;
+    canvas.height = mapConfig.height;
     
-    canvas.width = currentMap.width;
-    canvas.height = currentMap.height;
-    
-    drawMap(ctx, selectedMap);
-  }, [users, selectedMap, mapElements, drawMap]);
+    drawCityMap(ctx);
+  }, [users, drawCityMap]);
 
   if (isLoading) {
     return (
-      <div className="world-modal">
-        <div className="world-content">
-          <div className="world-header">
-            <h2>🌍 Mundo de LupiApp</h2>
+      <div className="city-modal">
+        <div className="city-content">
+          <div className="city-header">
+            <h2>🏙️ Ciudad Lupi</h2>
             <button className="close-btn" onClick={onClose}>⨉</button>
           </div>
           <div className="loading-container">
-            <p>Entrando al mundo...</p>
+            <p>Entrando a la ciudad...</p>
           </div>
         </div>
       </div>
@@ -666,46 +579,30 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }
 
   return (
-    <div className="world-modal">
-      <div className="world-content">
-        <div className="world-header">
-          <h2>🌍 Mundo de LupiApp</h2>
+    <div className="city-modal">
+      <div className="city-content">
+        <div className="city-header">
+          <h2>🏙️ Ciudad Lupi</h2>
           <button className="close-btn" onClick={onClose}>⨉</button>
           <div className="player-count">
-            👥 {users.filter(user => user.user_id).length} jugadores conectados
+            👥 {users.filter(user => user.user_id).length} ciudadanos
           </div>
         </div>
         
-        <div className="map-selector">
-          <h3>Selecciona un mapa:</h3>
-          <div className="map-buttons">
-            {maps.map(map => (
-              <button
-                key={map.id}
-                onClick={() => setSelectedMap(map.id)}
-                className={selectedMap === map.id ? 'active' : ''}
-                style={{borderColor: map.color}}
-              >
-                {map.name}
-              </button>
-            ))}
-          </div>
+        <div className="controls-info">
+          <p>Usa WASD o Flechas para moverte por la ciudad</p>
         </div>
         
-        <div className="world-container">
+        <div className="city-container">
           <div className="game-container">
             <canvas 
               ref={canvasRef} 
-              onClick={handleCanvasClick}
-              className="game-world"
+              className="city-map"
             />
-            <div className="controls-help">
-              <p>Controles: WASD o Flechas para moverte | Clic para interactuar</p>
-            </div>
           </div>
           
-          <div className="game-chat">
-            <div className="chat-title">💬 Chat</div>
+          <div className="city-chat">
+            <div className="chat-title">💬 Plaza Central</div>
             <div className="messages">
               {messages.map(msg => (
                 <div key={msg.id} className="message">
@@ -722,11 +619,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje o /comando"
+                placeholder="Escribe un mensaje..."
                 disabled={!currentUser}
               />
               <button type="submit" disabled={!currentUser || !newMessage.trim()}>
-                ➤ Enviar
+                ➤
               </button>
             </form>
           </div>
