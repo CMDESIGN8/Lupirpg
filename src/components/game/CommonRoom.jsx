@@ -90,12 +90,19 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     64,
     64
   );
+// Nombre del jugador
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(name, x, y - spriteHeight / 2 - 5);
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "14px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText(name, x, y - 40);
-};
+    // Mensaje flotante
+    if (user.lastMessage) {
+      ctx.fillStyle = "#ff0";
+      ctx.font = "14px Arial";
+      ctx.fillText(user.lastMessage, x, y - spriteHeight);
+    }
+  };
 
   const drawRoom = (ctx) => {
     const width = ctx.canvas.width;
