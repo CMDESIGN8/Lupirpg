@@ -3,7 +3,7 @@ import "../styles/CommonRoom.css";
 
 // Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
 import playerSprite from "../assets/player.png";
-import mapBackground from "../assets/map.png"; // 👈 tu mapa
+import mapBackground from "../assets/map.png";
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
@@ -12,10 +12,20 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const canvasRef = useRef(null);
   const requestRef = useRef();
   const channelRef = useRef(null);
+  const lastUpdateRef = useRef(0);
 
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
+  const animationSpeed = 200; // ms entre cambios de frame
+
+  // Mapeo de direcciones a filas en el spritesheet
+  const directionMap = {
+    down: 0,
+    left: 1,
+    right: 2,
+    up: 3
+  };
 
   // ========================
   // 🔥 Supabase Presence
@@ -44,6 +54,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             y,
             direction: "down",
             frameIndex: 0,
+            lastFrameUpdate: Date.now()
           });
         }
       });
@@ -77,25 +88,31 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   mapImage.src = mapBackground;
 
   const drawAvatar = (ctx, user) => {
-  const { x, y, name } = user;
+    const { x, y, name, direction = "down", frameIndex = 0 } = user;
+    
+    // Calcular la posición en el spritesheet
+    const spriteX = frameIndex * spriteWidth;
+    const spriteY = directionMap[direction] * spriteHeight;
 
-  ctx.drawImage(
-    spriteImage,
-    0,
-    0,
-    spriteImage.width,
-    spriteImage.height,
-    x - 32,
-    y - 32,
-    64,
-    64
-  );
+    // Dibujar el frame correcto del spritesheet
+    ctx.drawImage(
+      spriteImage,
+      spriteX,
+      spriteY,
+      spriteWidth,
+      spriteHeight,
+      x - spriteWidth/2,  // Centrar el sprite en la posición x
+      y - spriteHeight/2, // Centrar el sprite en la posición y
+      spriteWidth,
+      spriteHeight
+    );
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "14px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText(name, x, y - 40);
-};
+    // Dibujar nombre de usuario
+    ctx.fillStyle = "#fff";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(name, x, y - spriteHeight/2 - 10);
+  };
 
   const drawRoom = (ctx) => {
     const width = ctx.canvas.width;
@@ -115,11 +132,27 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     users.forEach((user) => drawAvatar(ctx, user));
   };
 
-  const animate = () => {
+  const animate = (timestamp) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
     const ctx = canvas.getContext("2d");
     drawRoom(ctx);
+    
+    // Actualizar animaciones si es necesario
+    const now = Date.now();
+    if (now - lastUpdateRef.current > animationSpeed) {
+      lastUpdateRef.current = now;
+      
+      // Actualizar frameIndex para todos los usuarios
+      setUsers(prevUsers => 
+        prevUsers.map(user => ({
+          ...user,
+          frameIndex: (user.frameIndex + 1) % framesPerDirection
+        }))
+      );
+    }
+    
     requestRef.current = requestAnimationFrame(animate);
   };
 
@@ -160,13 +193,17 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           return;
       }
 
-      // Actualizar animación
+      // Limitar movimiento dentro del canvas
+      x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
+      y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
+
+      // Actualizar usuario
       const updatedUser = {
         ...user,
         x,
         y,
         direction,
-        frameIndex: (user.frameIndex + 1) % framesPerDirection,
+        lastFrameUpdate: Date.now()
       };
 
       // Estado local
