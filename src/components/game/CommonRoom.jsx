@@ -10,11 +10,14 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [selectedMap, setSelectedMap] = useState('ciudad');
   const [isMoving, setIsMoving] = useState(false);
   const [movementCooldown, setMovementCooldown] = useState(false);
+  const [mapElements, setMapElements] = useState([]);
+  
   const movementKeys = useRef(new Set());
   const animationFrame = useRef(null);
   const lastPosition = useRef({ x: 0, y: 0 });
-  
-  // Mapas disponibles (similar a las ciudades de Argentum)
+  const canvasRef = useRef(null); // Añadido canvasRef
+
+  // Mapas disponibles
   const maps = [
     { id: 'ciudad', name: '🏙️ Ciudad', color: '#4A90E2', width: 1000, height: 600 },
     { id: 'bosque', name: '🌲 Bosque', color: '#228B22', width: 1200, height: 800 },
@@ -23,9 +26,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     { id: 'taberna', name: '🍻 Taberna', width: 700, height: 500, color: '#8B0000' }
   ];
 
-  // Elementos interactivos del mapa
-  const [mapElements, setMapElements] = useState([]);
-  
   // Dibujar el mapa y los elementos
   const drawMap = useCallback((ctx, mapId) => {
     const map = maps.find(m => m.id === mapId) || maps[0];
@@ -35,7 +35,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.clearRect(0, 0, width, height);
     
     // Fondo del mapa
-    ctx.fillStyle = map.color + '40'; // Transparencia
+    ctx.fillStyle = map.color + '40';
     ctx.fillRect(0, 0, width, height);
     
     // Dibujar elementos del mapa
@@ -116,7 +116,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Dirección (indicada por un punto)
+    // Dirección
     ctx.fillStyle = '#000000';
     switch(direction) {
       case 'up':
@@ -150,6 +150,387 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 2;
     ctx.strokeText(user.name || 'Aventurero', x, y + 20);
     ctx.fillText(user.name || 'Aventurero', x, y + 20);
+  };
+
+  // Cargar usuarios
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('room_users')
+        .select('*')
+        .order('joined_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading users:', error);
+        return;
+      }
+      
+      if (data) {
+        const uniqueUsers = data.reduce((acc, user) => {
+          if (!acc.find(u => u.user_id === user.user_id)) {
+            acc.push(user);
+          }
+          return acc;
+        }, []);
+        
+        setUsers(uniqueUsers);
+        
+        const namesMap = {};
+        uniqueUsers.forEach(user => {
+          namesMap[user.user_id] = user.name;
+        });
+        setUserNames(namesMap);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  // Cargar mensajes
+  const loadMessages = async () => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('room_messages')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+      
+      if (data) {
+        setMessages(data);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  // Unirse a la sala
+  const joinRoom = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
+      const x = Math.round(Math.random() * (currentMap.width - 100) + 50);
+      const y = Math.round(Math.random() * (currentMap.height - 100) + 50);
+
+      const userData = {
+        user_id: currentUser.id,
+        name: currentUser.username || 'Aventurero',
+        x: x,
+        y: y,
+        direction: 'down',
+        color: '#3498db',
+        joined_at: new Date().toISOString(),
+        last_activity: new Date().toISOString()
+      };
+
+      const { error } = await supabaseClient
+        .from('room_users')
+        .upsert(userData, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
+
+      if (error) {
+        console.error('Error joining room:', error);
+        await handleJoinFallback(userData);
+      }
+    } catch (error) {
+      console.error('Error joining room:', error);
+    }
+  };
+
+  const handleJoinFallback = async (userData) => {
+    try {
+      const { error: updateError } = await supabaseClient
+        .from('room_users')
+        .update(userData)
+        .eq('user_id', currentUser.id);
+
+      if (updateError) {
+        const { error: insertError } = await supabaseClient
+          .from('room_users')
+          .insert(userData)
+          .select()
+          .maybeSingle();
+
+        if (insertError && insertError.code !== '23505') {
+          console.error('Fallback insert error:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Error in fallback join:', error);
+    }
+  };
+
+  // Limpiar usuarios inactivos
+  const cleanupInactiveUsers = async () => {
+    try {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
+      const { error } = await supabaseClient
+        .from('room_users')
+        .delete()
+        .lt('last_activity', fiveMinutesAgo);
+
+      if (error) {
+        console.error('Error cleaning up users:', error);
+      }
+    } catch (error) {
+      console.error('Error in cleanup:', error);
+    }
+  };
+
+  // Salir de la sala
+  const leaveRoom = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      const { error } = await supabaseClient
+        .from('room_users')
+        .delete()
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error leaving room:', error);
+      }
+    } catch (error) {
+      console.error('Error in leaveRoom:', error);
+    }
+  };
+
+  // Actualizar actividad del usuario
+  const updateUserActivity = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      const { error } = await supabaseClient
+        .from('room_users')
+        .update({ 
+          last_activity: new Date().toISOString() 
+        })
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error updating activity:', error);
+      }
+    } catch (error) {
+      console.error('Error updating activity:', error);
+    }
+  };
+
+  // Cargar elementos del mapa
+  const loadMapElements = async () => {
+    try {
+      const elements = [
+        { id: 1, map: 'ciudad', type: 'building', x: 100, y: 100, width: 200, height: 150, color: '#95a5a6', name: 'Posada' },
+        { id: 2, map: 'ciudad', type: 'building', x: 400, y: 150, width: 180, height: 120, color: '#e74c3c', name: 'Tienda' },
+        { id: 3, map: 'ciudad', type: 'npc', x: 250, y: 300, width: 30, height: 30, color: '#f39c12', name: 'Mercader' },
+        { id: 4, map: 'bosque', type: 'tree', x: 200, y: 200, width: 30, height: 50, color: '#27ae60', name: 'Árbol' },
+        { id: 5, map: 'bosque', type: 'tree', x: 300, y: 350, width: 30, height: 50, color: '#27ae60', name: 'Árbol' },
+        { id: 6, map: 'castillo', type: 'building', x: 300, y: 100, width: 300, height: 200, color: '#7f8c8d', name: 'Torreón' },
+      ];
+      
+      setMapElements(elements);
+    } catch (error) {
+      console.error('Error loading map elements:', error);
+    }
+  };
+
+  // Iniciar el bucle de movimiento
+  const startMovement = () => {
+    const move = () => {
+      if (movementKeys.current.size > 0 && isMoving) {
+        handleMovement();
+        animationFrame.current = requestAnimationFrame(move);
+      }
+    };
+    animationFrame.current = requestAnimationFrame(move);
+  };
+
+  // Manejar movimiento
+  const handleMovement = async () => {
+    if (movementCooldown || !currentUser?.id) return;
+    
+    const currentUserData = users.find(u => u.user_id === currentUser.id);
+    if (!currentUserData) return;
+    
+    let { x, y, direction } = currentUserData;
+    const speed = 5;
+    let newDirection = direction;
+    
+    movementKeys.current.forEach(key => {
+      switch(key) {
+        case 'w':
+        case 'arrowup':
+          y -= speed;
+          newDirection = 'up';
+          break;
+        case 's':
+        case 'arrowdown':
+          y += speed;
+          newDirection = 'down';
+          break;
+        case 'a':
+        case 'arrowleft':
+          x -= speed;
+          newDirection = 'left';
+          break;
+        case 'd':
+        case 'arrowright':
+          x += speed;
+          newDirection = 'right';
+          break;
+      }
+    });
+    
+    const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
+    x = Math.max(20, Math.min(currentMap.width - 20, x));
+    y = Math.max(20, Math.min(currentMap.height - 20, y));
+    
+    if (x !== currentUserData.x || y !== currentUserData.y || direction !== newDirection) {
+      const collision = checkCollision(x, y, mapElements);
+      if (collision) return;
+      
+      lastPosition.current = { x, y };
+      
+      try {
+        setMovementCooldown(true);
+        
+        const { error } = await supabaseClient
+          .from('room_users')
+          .update({ 
+            x: Math.round(x), 
+            y: Math.round(y),
+            direction: newDirection,
+            last_activity: new Date().toISOString()
+          })
+          .eq('user_id', currentUser.id);
+
+        if (error) {
+          console.error('Error moving avatar:', error);
+        }
+        
+        setTimeout(() => setMovementCooldown(false), 100);
+      } catch (error) {
+        console.error('Error moving avatar:', error);
+        setMovementCooldown(false);
+      }
+    }
+  };
+
+  // Comprobar colisiones
+  const checkCollision = (x, y, elements) => {
+    for (const element of elements) {
+      if (element.map !== selectedMap) continue;
+      
+      if (x + 15 > element.x && x - 15 < element.x + element.width &&
+          y + 15 > element.y && y - 15 < element.y + element.height) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Interactuar con NPCs o objetos
+  const handleCanvasClick = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const clickedNpc = mapElements.find(element => 
+      element.type === 'npc' && 
+      Math.sqrt(Math.pow(x - element.x, 2) + Math.pow(y - element.y, 2)) < 20
+    );
+    
+    if (clickedNpc) {
+      setNewMessage(`/hablar ${clickedNpc.name}`);
+    } else {
+      moveTo(x, y);
+    }
+  };
+
+  // Movimiento hacia un punto específico
+  const moveTo = async (targetX, targetY) => {
+    if (!currentUser?.id) return;
+    
+    try {
+      const { error } = await supabaseClient
+        .from('room_users')
+        .update({ 
+          x: Math.round(targetX), 
+          y: Math.round(targetY),
+          last_activity: new Date().toISOString()
+        })
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error moving avatar:', error);
+      }
+    } catch (error) {
+      console.error('Error moving avatar:', error);
+    }
+  };
+
+  // Obtener nombre para mostrar
+  const getUserDisplayName = (userId) => {
+    return userNames[userId] || `Aventurero${userId ? userId.slice(-4) : ''}`;
+  };
+
+  // Enviar mensaje
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !currentUser?.id) return;
+
+    if (newMessage.startsWith('/')) {
+      const parts = newMessage.split(' ');
+      const command = parts[0].substring(1).toLowerCase();
+      
+      switch(command) {
+        case 'dado':
+          const roll = Math.floor(Math.random() * 100) + 1;
+          setNewMessage(`🎲 ${currentUser.username} tira un dado: ${roll}`);
+          break;
+        case 'hablar':
+          const npcName = parts[1];
+          setNewMessage(`🗣️ ${currentUser.username} habla con ${npcName || 'el NPC'}`);
+          break;
+        case 'emote':
+          const emote = parts[1] || 'saluda';
+          setNewMessage(`/me ${emote}`);
+          break;
+        default:
+          setNewMessage(`❌ Comando no reconocido: ${command}`);
+          break;
+      }
+    }
+
+    try {
+      const { error } = await supabaseClient
+        .from('room_messages')
+        .insert({
+          user_id: currentUser.id,
+          content: newMessage.trim(),
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
+      setNewMessage('');
+      updateUserActivity();
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   // Efecto principal
@@ -254,129 +635,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     initializeRoom();
   }, [currentUser, supabaseClient, movementCooldown, isMoving]);
 
-  // Iniciar el bucle de movimiento
-  const startMovement = () => {
-    const move = () => {
-      if (movementKeys.current.size > 0 && isMoving) {
-        handleMovement();
-        animationFrame.current = requestAnimationFrame(move);
-      }
-    };
-    animationFrame.current = requestAnimationFrame(move);
-  };
-
-  // Manejar movimiento
-  const handleMovement = async () => {
-    if (movementCooldown || !currentUser?.id) return;
-    
-    const currentUserData = users.find(u => u.user_id === currentUser.id);
-    if (!currentUserData) return;
-    
-    let { x, y, direction } = currentUserData;
-    const speed = 5;
-    let newDirection = direction;
-    
-    // Calcular nueva posición basada en teclas presionadas
-    movementKeys.current.forEach(key => {
-      switch(key) {
-        case 'w':
-        case 'arrowup':
-          y -= speed;
-          newDirection = 'up';
-          break;
-        case 's':
-        case 'arrowdown':
-          y += speed;
-          newDirection = 'down';
-          break;
-        case 'a':
-        case 'arrowleft':
-          x -= speed;
-          newDirection = 'left';
-          break;
-        case 'd':
-        case 'arrowright':
-          x += speed;
-          newDirection = 'right';
-          break;
-      }
-    });
-    
-    // Limitar al área del mapa
-    const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
-    x = Math.max(20, Math.min(currentMap.width - 20, x));
-    y = Math.max(20, Math.min(currentMap.height - 20, y));
-    
-    // Actualizar solo si la posición cambió
-    if (x !== currentUserData.x || y !== currentUserData.y || direction !== newDirection) {
-      // Comprobar colisiones con elementos del mapa
-      const collision = checkCollision(x, y, mapElements);
-      if (collision) return; // No mover si hay colisión
-      
-      lastPosition.current = { x, y };
-      
-      try {
-        setMovementCooldown(true);
-        
-        const { error } = await supabaseClient
-          .from('room_users')
-          .update({ 
-            x: Math.round(x), 
-            y: Math.round(y),
-            direction: newDirection,
-            last_activity: new Date().toISOString()
-          })
-          .eq('user_id', currentUser.id);
-
-        if (error) {
-          console.error('Error moving avatar:', error);
-        }
-        
-        // Pequeño cooldown para evitar spam a la base de datos
-        setTimeout(() => setMovementCooldown(false), 100);
-      } catch (error) {
-        console.error('Error moving avatar:', error);
-        setMovementCooldown(false);
-      }
-    }
-  };
-
-  // Comprobar colisiones con elementos del mapa
-  const checkCollision = (x, y, elements) => {
-    for (const element of elements) {
-      if (element.map !== selectedMap) continue;
-      
-      // Colisión simple con rectángulos
-      if (x + 15 > element.x && x - 15 < element.x + element.width &&
-          y + 15 > element.y && y - 15 < element.y + element.height) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  // Cargar elementos del mapa
-  const loadMapElements = async () => {
-    try {
-      // En una implementación real, estos vendrían de la base de datos
-      const elements = [
-        { id: 1, map: 'ciudad', type: 'building', x: 100, y: 100, width: 200, height: 150, color: '#95a5a6', name: 'Posada' },
-        { id: 2, map: 'ciudad', type: 'building', x: 400, y: 150, width: 180, height: 120, color: '#e74c3c', name: 'Tienda' },
-        { id: 3, map: 'ciudad', type: 'npc', x: 250, y: 300, width: 30, height: 30, color: '#f39c12', name: 'Mercader' },
-        { id: 4, map: 'bosque', type: 'tree', x: 200, y: 200, width: 30, height: 50, color: '#27ae60', name: 'Árbol' },
-        { id: 5, map: 'bosque', type: 'tree', x: 300, y: 350, width: 30, height: 50, color: '#27ae60', name: 'Árbol' },
-        { id: 6, map: 'castillo', type: 'building', x: 300, y: 100, width: 300, height: 200, color: '#7f8c8d', name: 'Torreón' },
-      ];
-      
-      setMapElements(elements);
-    } catch (error) {
-      console.error('Error loading map elements:', error);
-    }
-  };
-
-  // (El resto de funciones como loadUsers, loadMessages, joinRoom, etc. se mantienen similares)
-  // ... [las funciones existentes se mantienen con pequeñas adaptaciones]
-
   // Dibujar en el canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -385,117 +643,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const ctx = canvas.getContext('2d');
     const currentMap = maps.find(m => m.id === selectedMap) || maps[0];
     
-    // Ajustar tamaño del canvas al mapa seleccionado
     canvas.width = currentMap.width;
     canvas.height = currentMap.height;
     
     drawMap(ctx, selectedMap);
   }, [users, selectedMap, mapElements, drawMap]);
-
-  // Interactuar con NPCs o objetos
-  const handleCanvasClick = (e) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Comprobar si se hizo clic en un NPC
-    const clickedNpc = mapElements.find(element => 
-      element.type === 'npc' && 
-      Math.sqrt(Math.pow(x - element.x, 2) + Math.pow(y - element.y, 2)) < 20
-    );
-    
-    if (clickedNpc) {
-      // Mostrar diálogo del NPC
-      setNewMessage(`/hablar ${clickedNpc.name}`);
-    } else {
-      // Mover al punto clicado (pathfinding simple)
-      const currentUserData = users.find(u => u.user_id === currentUser.id);
-      if (currentUserData) {
-        moveTo(x, y);
-      }
-    }
-  };
-
-  // Movimiento hacia un punto específico (clic)
-  const moveTo = async (targetX, targetY) => {
-    if (!currentUser?.id) return;
-    
-    // Aquí implementarías un algoritmo de pathfinding simple
-    // Por ahora, movimiento directo
-    try {
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({ 
-          x: Math.round(targetX), 
-          y: Math.round(targetY),
-          last_activity: new Date().toISOString()
-        })
-        .eq('user_id', currentUser.id);
-
-      if (error) {
-        console.error('Error moving avatar:', error);
-      }
-    } catch (error) {
-      console.error('Error moving avatar:', error);
-    }
-  };
-
-  // Enviar mensaje con soporte para comandos
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !currentUser?.id) return;
-
-    // Comandos especiales (como en Argentum)
-    if (newMessage.startsWith('/')) {
-      const parts = newMessage.split(' ');
-      const command = parts[0].substring(1).toLowerCase();
-      
-      switch(command) {
-        case 'dado':
-          // Tirar dado
-          const roll = Math.floor(Math.random() * 100) + 1;
-          setNewMessage(`🎲 ${currentUser.username} tira un dado: ${roll}`);
-          break;
-        case 'hablar':
-          // Hablar con NPC
-          const npcName = parts[1];
-          setNewMessage(`🗣️ ${currentUser.username} habla con ${npcName || 'el NPC'}`);
-          break;
-        case 'emote':
-          // Emote
-          const emote = parts[1] || 'saluda';
-          setNewMessage(`/me ${emote}`);
-          break;
-        default:
-          // Comando no reconocido
-          setNewMessage(`❌ Comando no reconocido: ${command}`);
-          break;
-      }
-    }
-
-    try {
-      const { error } = await supabaseClient
-        .from('room_messages')
-        .insert({
-          user_id: currentUser.id,
-          content: newMessage.trim(),
-          created_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error sending message:', error);
-        return;
-      }
-
-      setNewMessage('');
-      updateUserActivity();
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
 
   if (isLoading) {
     return (
