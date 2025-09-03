@@ -190,3 +190,26 @@
 .messages::-webkit-scrollbar-thumb:hover {
   background: #2980b9;
 }
+
+.lobby-map {
+  position: relative;
+  width: 600px;   /* tamaño del mapa */
+  height: 400px;
+  background-image: url('/assets/map.png'); /* tu mapa */
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #00ff99;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.player-avatar {
+  position: absolute;
+  width: 48px; /* tamaño del sprite */
+  height: 48px;
+  background-image: url('/assets/player.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-50%, -50%);
+}

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import "../styles/CommonRoom.css";
 
 // Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
-import playerSprite from "../assets/player.png"; 
+import playerSprite from "../assets/player.png";
+import mapBackground from "../assets/map.png"; // 👈 tu mapa
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
@@ -10,6 +11,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [newMessage, setNewMessage] = useState("");
   const canvasRef = useRef(null);
   const requestRef = useRef();
+  const channelRef = useRef(null);
 
   const spriteWidth = 32;
   const spriteHeight = 48;
@@ -22,8 +24,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const channel = supabaseClient.channel("lupi_common_room", {
       config: { presence: { key: currentUser.id } },
     });
+    channelRef.current = channel;
 
-    // 👥 Presencia en tiempo real
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
@@ -46,7 +48,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         }
       });
 
-    // 📩 Mensajes en tiempo real
+    // 📩 Mensajes
     const messageChannel = supabaseClient
       .channel("room_messages")
       .on(
@@ -66,13 +68,16 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [supabaseClient, currentUser]);
 
   // ========================
-  // 🎮 Animación de sala
+  // 🎮 Render Canvas
   // ========================
   const spriteImage = new Image();
   spriteImage.src = playerSprite;
 
+  const mapImage = new Image();
+  mapImage.src = mapBackground;
+
   const drawAvatar = (ctx, user) => {
-    const { x, y, direction = "down", frameIndex = 0, name, color } = user;
+    const { x, y, direction = "down", frameIndex = 0, name } = user;
     const dirMap = { down: 0, left: 1, right: 2, up: 3 };
     const row = dirMap[direction] || 0;
 
@@ -89,7 +94,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     );
 
     // Nombre
-    ctx.fillStyle = "#323C78";
+    ctx.fillStyle = "#fff";
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.fillText(name, x, y - spriteHeight / 2 - 5);
@@ -101,24 +106,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
     ctx.clearRect(0, 0, width, height);
 
-    // Fondo
-    ctx.fillStyle = "#E6F0FF";
-    ctx.fillRect(0, 0, width, height);
-
-    // Área de la sala
-    ctx.fillStyle = "#C8D8EB";
-    ctx.beginPath();
-    ctx.roundRect(50, 100, width - 100, height - 200, 15);
-    ctx.fill();
-    ctx.strokeStyle = "#B4C8E0";
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // Fondo con mapa
+    if (mapImage.complete) {
+      ctx.drawImage(mapImage, 0, 0, width, height);
+    } else {
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, width, height);
+    }
 
     // Dibujar usuarios
     users.forEach((user) => drawAvatar(ctx, user));
   };
 
-  // Animación continua
   const animate = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -133,27 +132,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [users]);
 
   // ========================
-  // 💬 Chat
-  // ========================
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    try {
-      const { error } = await supabaseClient.from("room_messages").insert({
-        user_id: currentUser.id,
-        content: newMessage.trim(),
-      });
-
-      if (error) console.error("Error sending message:", error);
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
-  // ========================
-  // 🕹️ Mover avatar con teclado
+  // 🕹️ Movimiento
   // ========================
   useEffect(() => {
     const handleKey = async (e) => {
@@ -184,21 +163,49 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           return;
       }
 
-      // Actualizar local
-      user.x = x;
-      user.y = y;
-      user.direction = direction;
-      user.frameIndex = (user.frameIndex + 1) % framesPerDirection;
-      setUsers([...users]);
+      // Actualizar animación
+      const updatedUser = {
+        ...user,
+        x,
+        y,
+        direction,
+        frameIndex: (user.frameIndex + 1) % framesPerDirection,
+      };
 
-      // Actualizar Supabase
-      const channel = supabaseClient.channel("lupi_common_room");
-      await channel.track(user);
+      // Estado local
+      setUsers((prev) =>
+        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+      );
+
+      // Estado remoto
+      if (channelRef.current) {
+        await channelRef.current.track(updatedUser);
+      }
     };
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [users, currentUser, supabaseClient]);
+  }, [users, currentUser]);
+
+  // ========================
+  // 💬 Chat
+  // ========================
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    try {
+      const { error } = await supabaseClient.from("room_messages").insert({
+        user_id: currentUser.id,
+        content: newMessage.trim(),
+      });
+
+      if (error) console.error("Error sending message:", error);
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
 
   return (
     <div className="common-room-modal">
