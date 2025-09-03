@@ -128,60 +128,73 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     return () => cancelAnimationFrame(requestRef.current);
   }, [users]);
 
-  // ========================
-  // 🕹️ Movimiento
+   // ========================
+  // 🕹️ Movimiento fluido
   // ========================
   useEffect(() => {
-    const handleKey = async (e) => {
+    const handleKeyDown = (e) => {
+      keysPressed[e.key] = true;
+    };
+
+    const handleKeyUp = (e) => {
+      keysPressed[e.key] = false;
+    };
+
+    const interval = setInterval(async () => {
       const user = users.find((u) => u.id === currentUser.id);
       if (!user) return;
 
-      let { x, y } = user;
-      let direction = user.direction;
+      let { x, y, direction } = user;
+      let moved = false;
 
-      switch (e.key) {
-        case "ArrowUp":
-          y -= 4;
-          direction = "up";
-          break;
-        case "ArrowDown":
-          y += 4;
-          direction = "down";
-          break;
-        case "ArrowLeft":
-          x -= 4;
-          direction = "left";
-          break;
-        case "ArrowRight":
-          x += 4;
-          direction = "right";
-          break;
-        default:
-          return;
+      if (keysPressed["ArrowUp"]) {
+        y -= 4;
+        direction = "up";
+        moved = true;
+      }
+      if (keysPressed["ArrowDown"]) {
+        y += 4;
+        direction = "down";
+        moved = true;
+      }
+      if (keysPressed["ArrowLeft"]) {
+        x -= 4;
+        direction = "left";
+        moved = true;
+      }
+      if (keysPressed["ArrowRight"]) {
+        x += 4;
+        direction = "right";
+        moved = true;
       }
 
-      // Actualizar animación
-      const updatedUser = {
-        ...user,
-        x,
-        y,
-        direction,
-        frameIndex: (user.frameIndex + 1) % framesPerDirection,
-      };
+      if (moved) {
+        const updatedUser = {
+          ...user,
+          x,
+          y,
+          direction,
+          frameIndex: (user.frameIndex + 1) % framesPerDirection,
+        };
 
-      // Estado local
-      setUsers((prev) =>
-        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-      );
+        setUsers((prev) =>
+          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+        );
 
-      // Estado remoto
-      if (channelRef.current) {
-        await channelRef.current.track(updatedUser);
+        if (channelRef.current) {
+          await channelRef.current.track(updatedUser);
+        }
       }
+    }, 120);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
-
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
   }, [users, currentUser]);
 
   // ========================
