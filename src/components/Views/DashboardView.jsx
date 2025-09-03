@@ -7,6 +7,7 @@ import AvatarSelector from '../AvatarSelector/AvatarSelector';
 import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
+import "../styles/DashboardView.css";
 
 
 const DashboardView = ({ 
