@@ -77,28 +77,25 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   mapImage.src = mapBackground;
 
   const drawAvatar = (ctx, user) => {
-    const { x, y, direction = "down", frameIndex = 0, name } = user;
-    const dirMap = { down: 0, left: 1, right: 2, up: 3 };
-    const row = dirMap[direction] || 0;
+  const { x, y, name } = user;
 
-    ctx.drawImage(
-      spriteImage,
-      frameIndex * spriteWidth,
-      row * spriteHeight,
-      spriteWidth,
-      spriteHeight,
-      x - spriteWidth / 2,
-      y - spriteHeight / 2,
-      spriteWidth,
-      spriteHeight
-    );
+  ctx.drawImage(
+    spriteImage,
+    0,
+    0,
+    spriteImage.width,
+    spriteImage.height,
+    x - 32,
+    y - 32,
+    64,
+    64
+  );
 
-    // Nombre
-    ctx.fillStyle = "#fff";
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(name, x, y - spriteHeight / 2 - 5);
-  };
+  ctx.fillStyle = "#fff";
+  ctx.font = "14px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(name, x, y - 40);
+};
 
   const drawRoom = (ctx) => {
     const width = ctx.canvas.width;
