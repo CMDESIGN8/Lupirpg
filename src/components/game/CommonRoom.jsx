@@ -11,12 +11,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const canvasRef = useRef(null);
   const requestRef = useRef();
   const channelRef = useRef(null);
-  const keysRef = useRef({}); // ⬅️ Para movimiento suave
+  const keysRef = useRef({}); // Para movimiento local
 
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
-  const speed = 2; // píxeles por frame
+  const speed = 2; // px por frame
+  const lerpFactor = 0.2; // para suavizar otros jugadores
 
   const directions = { down: 0, left: 1, right: 2, up: 3 };
 
@@ -38,7 +39,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
-        const allUsers = Object.values(state).map((u) => u[0]);
+        const allUsers = Object.values(state).map((u) => {
+          const u0 = u[0];
+          // Agregamos targetX/targetY para interpolar
+          return { ...u0, targetX: u0.x, targetY: u0.y };
+        });
         setUsers(allUsers);
       })
       .subscribe(async (status) => {
@@ -136,8 +141,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   };
 
   // ========================
-  // 🎮 Animación y movimiento
+  // 🎮 Animación y movimiento con lerp
   // ========================
+  const lerp = (start, end, t) => start + (end - start) * t;
+
   const animate = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -145,42 +152,54 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
     setUsers((prev) =>
       prev.map((user) => {
-        if (user.id !== currentUser.id) return user;
-
-        let { x, y, direction, frameIndex } = user;
+        let { x, y, targetX, targetY, direction, frameIndex } = user;
         let moving = false;
 
-        if (keysRef.current["ArrowUp"]) {
-          y -= speed;
-          direction = "up";
-          moving = true;
+        // Solo mover al usuario local con teclas
+        if (user.id === currentUser.id) {
+          if (keysRef.current["ArrowUp"]) {
+            targetY -= speed;
+            direction = "up";
+            moving = true;
+          }
+          if (keysRef.current["ArrowDown"]) {
+            targetY += speed;
+            direction = "down";
+            moving = true;
+          }
+          if (keysRef.current["ArrowLeft"]) {
+            targetX -= speed;
+            direction = "left";
+            moving = true;
+          }
+          if (keysRef.current["ArrowRight"]) {
+            targetX += speed;
+            direction = "right";
+            moving = true;
+          }
+
+          // Trackear posición remota
+          if (channelRef.current)
+            channelRef.current.track({
+              ...user,
+              x: targetX,
+              y: targetY,
+              direction,
+              frameIndex,
+            });
         }
-        if (keysRef.current["ArrowDown"]) {
-          y += speed;
-          direction = "down";
-          moving = true;
-        }
-        if (keysRef.current["ArrowLeft"]) {
-          x -= speed;
-          direction = "left";
-          moving = true;
-        }
-        if (keysRef.current["ArrowRight"]) {
-          x += speed;
-          direction = "right";
-          moving = true;
-        }
+
+        // Interpolación para todos (incluyendo local para suavidad)
+        x = lerp(x, targetX, lerpFactor);
+        y = lerp(y, targetY, lerpFactor);
 
         if (moving) {
           frameIndex = (frameIndex + 1) % framesPerDirection;
         } else {
-          frameIndex = 0; // idle
+          frameIndex = 0;
         }
 
-        if (channelRef.current)
-          channelRef.current.track({ ...user, x, y, direction, frameIndex });
-
-        return { ...user, x, y, direction, frameIndex };
+        return { ...user, x, y, targetX, targetY, direction, frameIndex };
       })
     );
 
