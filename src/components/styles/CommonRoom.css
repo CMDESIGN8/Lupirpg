@@ -203,13 +203,3 @@
   overflow: hidden;
 }
 
-.player-avatar {
-  position: absolute;
-  width: 48px; /* tamaño del sprite */
-  height: 48px;
-  background-image: url('/assets/player.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  transform: translate(-50%, -50%);
-}
