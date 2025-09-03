@@ -17,6 +17,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const spriteHeight = 48;
   const framesPerDirection = 3;
   const keysPressed = {};
+  const TILE_SIZE = 32; // tamaño de cada tile
+const SPRITE_SIZE = 64; // tamaño de cada frame de tu personaje
+const FRAMES_PER_DIRECTION = 3; // cantidad de frames de animación
 
   // ========================
   // 🔥 Supabase Presence
@@ -101,16 +104,16 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const row = dirMap[direction] || 0;
 
     ctx.drawImage(
-      spriteImage,
-      frameIndex * spriteWidth,
-      row * spriteHeight,
-      spriteWidth,
-      spriteHeight,
-      x - spriteWidth / 2,
-      y - spriteHeight / 2,
-      spriteWidth,
-      spriteHeight
-    );
+        sprite,
+        frameX,
+        frameY,
+        SPRITE_SIZE,
+        SPRITE_SIZE,
+        p.x,
+        p.y,
+        SPRITE_SIZE,
+        SPRITE_SIZE
+      );
 
     // Nombre del jugador
     ctx.fillStyle = "#fff";
