@@ -1,225 +1,5 @@
-/* src/styles/CommonRoom.css */
-.stadium-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-}
-
-.stadium-content {
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 15px;
-  padding: 20px;
-  width: 95%;
-  max-width: 1300px;
-  max-height: 90vh;
-  overflow: hidden;
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
-  border: 3px solid #ffd700;
-}
-
-.stadium-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #ffd700;
-}
-
-.stadium-header h2 {
-  color: #ffd700;
-  margin: 0;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-  font-size: 24px;
-}
-
-.close-btn {
-  background: #ff4757;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.close-btn:hover {
-  background: #ff6b81;
-  transform: scale(1.1);
-}
-
-.stadium-container {
-  display: flex;
-  gap: 20px;
-  height: 70vh;
-}
-
-.field-container {
-  flex: 3;
-  background: linear-gradient(135deg, #2E8B57, #228B22);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 100, 0, 0.7);
-  position: relative;
-}
-
-.soccer-field {
-  display: block;
-  cursor: pointer;
-  background: #2E8B57;
-  border-radius: 8px;
-}
-
-.locker-room-chat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(135deg, #1a2a6c, #000080);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 128, 0.7);
-  border: 2px solid #ffd700;
-}
-
-.chat-title {
-  background: #b21f1f;
-  color: #ffd700;
-  padding: 12px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 18px;
-  text-shadow: 1px 1px 2px #000;
-  border-bottom: 2px solid #ffd700;
-}
-
-.messages {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-  max-height: calc(70vh - 150px);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.message {
-  margin-bottom: 12px;
-  text-align: left;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid #ffd700;
-}
-
-.player-name {
-  font-weight: bold;
-  color: #ffd700;
-  margin-right: 5px;
-  text-shadow: 1px 1px 1px #000;
-}
-
-.message-content {
-  color: #ffffff;
-}
-
-.message-form {
-  display: flex;
-  padding: 15px;
-  border-top: 2px solid #ffd700;
-  background: rgba(178, 31, 31, 0.3);
-}
-
-.message-form input {
-  flex: 1;
-  padding: 12px;
-  border: 2px solid #ffd700;
-  border-radius: 6px;
-  margin-right: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-}
-
-.message-form input:focus {
-  outline: none;
-  box-shadow: 0 0 5px #ffd700;
-}
-
-.message-form button {
-  padding: 12px 18px;
-  background: linear-gradient(135deg, #b21f1f, #8B0000);
-  color: #ffd700;
-  border: 2px solid #ffd700;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  transition: all 0.2s;
-}
-
-.message-form button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8B0000, #b21f1f);
-  transform: scale(1.05);
-}
-
-.message-form button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  color: #ffd700;
-  font-size: 20px;
-  text-shadow: 1px 1px 2px #000;
-}
-
-/* Animaciones */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.message {
-  transition: transform 0.2s;
-}
-
-.message:hover {
-  transform: translateX(5px);
-}
-
-/* Scrollbar personalizado */
-.messages::-webkit-scrollbar {
-  width: 8px;
-}
-
-.messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.messages::-webkit-scrollbar-thumb {
-  background: #ffd700;
-  border-radius: 4px;
-}
-
-.messages::-webkit-scrollbar-thumb:hover {
-  background: #b21f1f;
-}
-
-/* styles/CommonRoom.css actualizado */
-.world-modal {
+/* 🎮 styles/CommonRoom.css */
+.common-room-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -233,19 +13,21 @@
   font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
 }
 
-.world-content {
+.common-room-content {
   background: rgba(0, 0, 0, 0.85);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 20px;
   width: 95%;
   max-width: 1400px;
   max-height: 90vh;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 0 30px rgba(0, 150, 255, 0.6);
   border: 2px solid #2ecc71;
+  overflow: hidden;
 }
 
-.world-header {
+.common-room-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -254,92 +36,180 @@
   border-bottom: 2px solid #2ecc71;
 }
 
-.world-header h2 {
+.common-room-header h2 {
   color: #2ecc71;
   margin: 0;
   text-shadow: 0 0 10px rgba(46, 204, 113, 0.8);
   font-size: 24px;
 }
 
-.player-count {
-  color: #3498db;
-  font-weight: bold;
-}
-
-.map-selector {
-  margin-bottom: 15px;
-  color: #f1c40f;
-}
-
-.map-selector h3 {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-}
-
-.map-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.map-buttons button {
-  background: transparent;
-  color: #ecf0f1;
-  border: 2px solid;
-  padding: 6px 12px;
-  border-radius: 5px;
+.close-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
   cursor: pointer;
-  transition: all 0.2s;
+  font-weight: bold;
+  font-size: 18px;
+  transition: all 0.2s ease;
 }
 
-.map-buttons button.active,
-.map-buttons button:hover {
-  background: currentColor;
-  color: #2c3e50;
+.close-btn:hover {
+  background: #c0392b;
+  transform: scale(1.1);
 }
 
-.world-container {
+/* ==============================
+   🔹 Contenedor principal
+   ============================== */
+.room-container {
   display: flex;
   gap: 20px;
   height: 70vh;
 }
 
-.game-container {
+/* 🎨 Canvas de juego */
+.canvas-container {
   flex: 3;
   background: #1e272e;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-  position: relative;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7);
 }
 
-.game-world {
-  display: block;
-  cursor: pointer;
-  background: #1e272e;
-  flex: 1;
+.canvas-container canvas {
+  border: 2px solid #2ecc71;
+  border-radius: 6px;
+  background: #2E8B57; /* color de campo estilo Argentum */
+  cursor: crosshair;
 }
 
-.controls-help {
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  color: #bdc3c7;
-  text-align: center;
-  font-size: 12px;
-}
-
-.game-chat {
+/* 💬 Chat lateral */
+.chat-container {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #1a2a6c, #000080);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 128, 0.7);
   border: 2px solid #f1c40f;
+  box-shadow: 0 0 15px rgba(0, 0, 128, 0.7);
 }
 
-/* El resto del CSS se mantiene similar con pequeños ajustes */
+.messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+}
 
+.message {
+  margin-bottom: 10px;
+  text-align: left;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #3498db;
+  transition: transform 0.2s;
+}
+
+.message:hover {
+  transform: translateX(5px);
+}
+
+.user-name {
+  font-weight: bold;
+  color: #3498db;
+  margin-right: 5px;
+}
+
+.message-content {
+  color: #ecf0f1;
+}
+
+/* Formulario de mensajes */
+.message-form {
+  display: flex;
+  padding: 12px;
+  border-top: 2px solid #f1c40f;
+  background: rgba(231, 76, 60, 0.2);
+}
+
+.message-form input {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #f39c12;
+  border-radius: 4px;
+  margin-right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+}
+
+.message-form input:focus {
+  outline: none;
+  box-shadow: 0 0 5px #f39c12;
+}
+
+.message-form button {
+  padding: 10px 15px;
+  background: #e74c3c;
+  color: white;
+  border: 2px solid #f39c12;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.message-form button:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.message-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollbar personalizado */
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+.messages::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+.messages::-webkit-scrollbar-thumb {
+  background: #3498db;
+  border-radius: 3px;
+}
+.messages::-webkit-scrollbar-thumb:hover {
+  background: #2980b9;
+}
+
+.lobby-map {
+  position: relative;
+  width: 600px;   /* tamaño del mapa */
+  height: 400px;
+  background-image: url('/assets/map.png'); /* tu mapa */
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #00ff99;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.player-avatar {
+  position: absolute;
+  width: 48px; /* tamaño del sprite */
+  height: 48px;
+  background-image: url('/assets/player.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-50%, -50%);
+}
