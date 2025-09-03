@@ -16,26 +16,25 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
   // Configuración del mapa de ciudad
   const mapConfig = {
-    width: 1000,
-    height: 800,
-    backgroundColor: '#4A90E2',
-    plaza: { x: 400, y: 300, width: 200, height: 200 },
+    width: 800,
+    height: 600,
+    plaza: { x: 300, y: 200, width: 200, height: 200 },
     buildings: [
-      { x: 100, y: 100, width: 150, height: 120, color: '#95a5a6', name: 'Posada' },
-      { x: 300, y: 100, width: 120, height: 100, color: '#e74c3c', name: 'Tienda' },
-      { x: 600, y: 100, width: 180, height: 140, color: '#8B4513', name: 'Ayuntamiento' },
-      { x: 100, y: 500, width: 130, height: 110, color: '#2c3e50', name: 'Casa' },
-      { x: 700, y: 500, width: 160, height: 130, color: '#7f8c8d', name: 'Mercado' }
+      { x: 50, y: 50, width: 120, height: 100, color: '#95a5a6', name: 'Posada' },
+      { x: 200, y: 50, width: 100, height: 80, color: '#e74c3c', name: 'Tienda' },
+      { x: 500, y: 50, width: 150, height: 120, color: '#8B4513', name: 'Ayuntamiento' },
+      { x: 50, y: 400, width: 110, height: 90, color: '#2c3e50', name: 'Casa' },
+      { x: 550, y: 400, width: 140, height: 110, color: '#7f8c8d', name: 'Mercado' }
     ],
     trees: [
-      { x: 250, y: 400 }, { x: 300, y: 450 }, { x: 200, y: 350 },
-      { x: 650, y: 350 }, { x: 700, y: 400 }, { x: 750, y: 300 }
+      { x: 150, y: 300 }, { x: 180, y: 330 }, { x: 120, y: 280 },
+      { x: 500, y: 280 }, { x: 530, y: 310 }, { x: 560, y: 250 }
     ]
   };
 
   // Dibujar el mapa de ciudad
   const drawCityMap = useCallback((ctx) => {
-    const { width, height, backgroundColor, plaza, buildings, trees } = mapConfig;
+    const { width, height, plaza, buildings, trees } = mapConfig;
     
     // Limpiar canvas
     ctx.clearRect(0, 0, width, height);
@@ -46,8 +45,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     
     // Dibujar caminos
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(0, plaza.y + plaza.height/2 - 25, width, 50); // Camino horizontal
-    ctx.fillRect(plaza.x + plaza.width/2 - 25, 0, 50, height); // Camino vertical
+    ctx.fillRect(0, plaza.y + plaza.height/2 - 20, width, 40);
+    ctx.fillRect(plaza.x + plaza.width/2 - 20, 0, 40, height);
     
     // Dibujar plaza central
     ctx.fillStyle = '#D2B48C';
@@ -59,7 +58,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     // Fuente en la plaza
     ctx.fillStyle = '#87CEEB';
     ctx.beginPath();
-    ctx.arc(plaza.x + plaza.width/2, plaza.y + plaza.height/2, 20, 0, Math.PI * 2);
+    ctx.arc(plaza.x + plaza.width/2, plaza.y + plaza.height/2, 15, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
@@ -68,44 +67,25 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       ctx.fillStyle = building.color;
       ctx.fillRect(building.x, building.y, building.width, building.height);
       
-      // Techo
-      ctx.fillStyle = '#8B0000';
-      ctx.beginPath();
-      ctx.moveTo(building.x - 10, building.y);
-      ctx.lineTo(building.x + building.width + 10, building.y);
-      ctx.lineTo(building.x + building.width/2, building.y - 20);
-      ctx.closePath();
-      ctx.fill();
-      
       // Puerta
       ctx.fillStyle = '#8B4513';
-      ctx.fillRect(building.x + building.width/2 - 15, building.y + building.height - 40, 30, 40);
+      ctx.fillRect(building.x + building.width/2 - 12, building.y + building.height - 30, 24, 30);
       
       // Ventanas
       ctx.fillStyle = '#ADD8E6';
-      for (let i = 0; i < 2; i++) {
-        for (let j = 0; j < 2; j++) {
-          ctx.fillRect(
-            building.x + 20 + i * (building.width - 50), 
-            building.y + 20 + j * (building.height - 60), 
-            20, 
-            20
-          );
-        }
-      }
+      ctx.fillRect(building.x + 15, building.y + 15, 20, 20);
+      ctx.fillRect(building.x + building.width - 35, building.y + 15, 20, 20);
     });
     
     // Dibujar árboles
     trees.forEach(tree => {
-      // Copa del árbol
       ctx.fillStyle = '#228B22';
       ctx.beginPath();
-      ctx.arc(tree.x, tree.y, 25, 0, Math.PI * 2);
+      ctx.arc(tree.x, tree.y, 20, 0, Math.PI * 2);
       ctx.fill();
       
-      // Tronco
       ctx.fillStyle = '#8B4513';
-      ctx.fillRect(tree.x - 5, tree.y + 15, 10, 25);
+      ctx.fillRect(tree.x - 4, tree.y + 12, 8, 20);
     });
     
     // Dibujar usuarios
@@ -116,12 +96,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
   // Dibujar avatar del usuario
   const drawAvatar = (ctx, user) => {
-    const { x, y, color, direction = 'down' } = user;
+    const { x, y, color = '#3498db', direction = 'down' } = user;
     
-    // Cuerpo (círculo)
-    ctx.fillStyle = color || '#3498db';
+    // Cuerpo
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(x, y, 15, 0, Math.PI * 2);
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
     ctx.fill();
     
     // Contorno
@@ -129,36 +109,36 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Dirección (cabeza)
+    // Cabeza (dirección)
     ctx.fillStyle = '#FFD700';
     ctx.beginPath();
     
     switch(direction) {
       case 'up':
-        ctx.arc(x, y - 8, 8, 0, Math.PI * 2);
+        ctx.arc(x, y - 6, 6, 0, Math.PI * 2);
         break;
       case 'down':
-        ctx.arc(x, y + 8, 8, 0, Math.PI * 2);
+        ctx.arc(x, y + 6, 6, 0, Math.PI * 2);
         break;
       case 'left':
-        ctx.arc(x - 8, y, 8, 0, Math.PI * 2);
+        ctx.arc(x - 6, y, 6, 0, Math.PI * 2);
         break;
       case 'right':
-        ctx.arc(x + 8, y, 8, 0, Math.PI * 2);
+        ctx.arc(x + 6, y, 6, 0, Math.PI * 2);
         break;
     }
     ctx.fill();
     ctx.stroke();
     
     // Nombre
-    ctx.font = '12px Arial';
+    ctx.font = '10px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeText(user.name || 'Ciudadano', x, y + 25);
-    ctx.fillText(user.name || 'Ciudadano', x, y + 25);
+    ctx.lineWidth = 1;
+    ctx.strokeText(user.name || 'Ciudadano', x, y + 20);
+    ctx.fillText(user.name || 'Ciudadano', x, y + 20);
   };
 
   // Cargar usuarios
@@ -175,17 +155,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       }
       
       if (data) {
-        const uniqueUsers = data.reduce((acc, user) => {
-          if (!acc.find(u => u.user_id === user.user_id)) {
-            acc.push(user);
-          }
-          return acc;
-        }, []);
-        
-        setUsers(uniqueUsers);
+        setUsers(data);
         
         const namesMap = {};
-        uniqueUsers.forEach(user => {
+        data.forEach(user => {
           namesMap[user.user_id] = user.name;
         });
         setUserNames(namesMap);
@@ -217,12 +190,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  // Unirse a la sala
+  // Unirse a la sala (VERSIÓN SIMPLIFICADA - sin direction)
   const joinRoom = async () => {
     if (!currentUser?.id) return;
 
     try {
-      // Posición inicial en la plaza central
       const x = mapConfig.plaza.x + mapConfig.plaza.width/2;
       const y = mapConfig.plaza.y + mapConfig.plaza.height/2;
 
@@ -231,222 +203,98 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         name: currentUser.username || 'Ciudadano',
         x: x,
         y: y,
-        direction: 'down',
-        color: getRandomColor(),
         joined_at: new Date().toISOString(),
         last_activity: new Date().toISOString()
       };
 
+      // Usar update en lugar de upsert para evitar problemas con columnas faltantes
       const { error } = await supabaseClient
         .from('room_users')
-        .upsert(userData, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false 
-        });
+        .update(userData)
+        .eq('user_id', currentUser.id);
 
       if (error) {
-        console.error('Error joining room:', error);
+        // Si el usuario no existe, hacer insert
+        const { error: insertError } = await supabaseClient
+          .from('room_users')
+          .insert(userData);
+
+        if (insertError) {
+          console.error('Error joining room:', insertError);
+        }
       }
     } catch (error) {
       console.error('Error joining room:', error);
     }
   };
 
-  // Generar color aleatorio
-  const getRandomColor = () => {
-    const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
-
-  // Limpiar usuarios inactivos
-  const cleanupInactiveUsers = async () => {
-    try {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      const { error } = await supabaseClient
-        .from('room_users')
-        .delete()
-        .lt('last_activity', fiveMinutesAgo);
-
-      if (error) {
-        console.error('Error cleaning up users:', error);
-      }
-    } catch (error) {
-      console.error('Error in cleanup:', error);
-    }
-  };
-
-  // Salir de la sala
-  const leaveRoom = async () => {
-    if (!currentUser?.id) return;
-
-    try {
-      const { error } = await supabaseClient
-        .from('room_users')
-        .delete()
-        .eq('user_id', currentUser.id);
-
-      if (error) {
-        console.error('Error leaving room:', error);
-      }
-    } catch (error) {
-      console.error('Error in leaveRoom:', error);
-    }
-  };
-
-  // Actualizar actividad del usuario
-  const updateUserActivity = async () => {
-    if (!currentUser?.id) return;
-
-    try {
-      const { error } = await supabaseClient
-        .from('room_users')
-        .update({ 
-          last_activity: new Date().toISOString() 
-        })
-        .eq('user_id', currentUser.id);
-
-      if (error) {
-        console.error('Error updating activity:', error);
-      }
-    } catch (error) {
-      console.error('Error updating activity:', error);
-    }
-  };
-
-  // Iniciar el bucle de movimiento
-  const startMovement = () => {
-    const move = () => {
-      if (movementKeys.current.size > 0 && isMoving) {
-        handleMovement();
-        animationFrame.current = requestAnimationFrame(move);
-      }
-    };
-    animationFrame.current = requestAnimationFrame(move);
-  };
-
-  // Manejar movimiento
+  // Movimiento local temporal (sin guardar en BD por ahora)
   const handleMovement = async () => {
     if (movementCooldown || !currentUser?.id) return;
     
     const currentUserData = users.find(u => u.user_id === currentUser.id);
     if (!currentUserData) return;
     
-    let { x, y, direction } = currentUserData;
+    let { x, y } = currentUserData;
     const speed = 4;
-    let newDirection = direction;
     
-    // Procesar teclas presionadas
     movementKeys.current.forEach(key => {
       switch(key) {
         case 'w':
         case 'arrowup':
           y -= speed;
-          newDirection = 'up';
           break;
         case 's':
         case 'arrowdown':
           y += speed;
-          newDirection = 'down';
           break;
         case 'a':
         case 'arrowleft':
           x -= speed;
-          newDirection = 'left';
           break;
         case 'd':
         case 'arrowright':
           x += speed;
-          newDirection = 'right';
           break;
       }
     });
     
     // Limitar al área del mapa
-    x = Math.max(20, Math.min(mapConfig.width - 20, x));
-    y = Math.max(20, Math.min(mapConfig.height - 20, y));
+    x = Math.max(15, Math.min(mapConfig.width - 15, x));
+    y = Math.max(15, Math.min(mapConfig.height - 15, y));
     
-    // Comprobar colisiones con edificios
+    // Comprobar colisiones
     const collision = checkCollision(x, y);
     if (collision) return;
     
-    // Actualizar solo si la posición cambió
-    if (x !== currentUserData.x || y !== currentUserData.y || direction !== newDirection) {
-      try {
-        setMovementCooldown(true);
-        
-        const { error } = await supabaseClient
-          .from('room_users')
-          .update({ 
-            x: Math.round(x), 
-            y: Math.round(y),
-            direction: newDirection,
-            last_activity: new Date().toISOString()
-          })
-          .eq('user_id', currentUser.id);
-
-        if (error) {
-          console.error('Error moving avatar:', error);
-        }
-        
-        setTimeout(() => setMovementCooldown(false), 50);
-      } catch (error) {
-        console.error('Error moving avatar:', error);
-        setMovementCooldown(false);
-      }
-    }
+    // Actualizar estado local
+    setUsers(prev => prev.map(user => 
+      user.user_id === currentUser.id 
+        ? { ...user, x, y }
+        : user
+    ));
+    
+    setMovementCooldown(true);
+    setTimeout(() => setMovementCooldown(false), 50);
   };
 
-  // Comprobar colisiones con edificios
+  // Comprobar colisiones
   const checkCollision = (x, y) => {
-    // Colisión con edificios
     for (const building of mapConfig.buildings) {
-      if (x + 15 > building.x && x - 15 < building.x + building.width &&
-          y + 15 > building.y && y - 15 < building.y + building.height) {
+      if (x + 12 > building.x && x - 12 < building.x + building.width &&
+          y + 12 > building.y && y - 12 < building.y + building.height) {
         return true;
       }
     }
     
-    // Colisión con árboles
     for (const tree of mapConfig.trees) {
       const distance = Math.sqrt(Math.pow(x - tree.x, 2) + Math.pow(y - tree.y, 2));
-      if (distance < 40) { // Radio del árbol + radio del avatar
+      if (distance < 32) {
         return true;
       }
     }
     
     return false;
-  };
-
-  // Obtener nombre para mostrar
-  const getUserDisplayName = (userId) => {
-    return userNames[userId] || `Ciudadano${userId ? userId.slice(-4) : ''}`;
-  };
-
-  // Enviar mensaje
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !currentUser?.id) return;
-
-    try {
-      const { error } = await supabaseClient
-        .from('room_messages')
-        .insert({
-          user_id: currentUser.id,
-          content: newMessage.trim(),
-          created_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error sending message:', error);
-        return;
-      }
-
-      setNewMessage('');
-      updateUserActivity();
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
   };
 
   // Efecto principal
@@ -462,44 +310,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         await loadUsers();
         await loadMessages();
         await joinRoom();
-
-        // Suscripción a cambios de usuarios
-        const userSubscription = supabaseClient
-          .channel('room_users_changes')
-          .on('postgres_changes', 
-            { 
-              event: '*', 
-              schema: 'public', 
-              table: 'room_users' 
-            }, 
-            (payload) => {
-              if (payload.eventType === 'INSERT') {
-                setUsers(prev => [...prev, payload.new]);
-              } else if (payload.eventType === 'DELETE') {
-                setUsers(prev => prev.filter(user => user.user_id !== payload.old.user_id));
-              } else if (payload.eventType === 'UPDATE') {
-                setUsers(prev => prev.map(user => 
-                  user.user_id === payload.new.user_id ? payload.new : user
-                ));
-              }
-            }
-          )
-          .subscribe();
-
-        // Suscripción a mensajes
-        const messageSubscription = supabaseClient
-          .channel('room_messages_changes')
-          .on('postgres_changes', 
-            { 
-              event: 'INSERT', 
-              schema: 'public', 
-              table: 'room_messages' 
-            }, 
-            (payload) => {
-              setMessages(prev => [...prev, payload.new]);
-            }
-          )
-          .subscribe();
 
         // Control de movimiento con teclado
         const handleKeyDown = (e) => {
@@ -526,16 +336,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
 
-        // Limpiar usuarios inactivos
-        const cleanupInterval = setInterval(cleanupInactiveUsers, 30000);
-
         return () => {
-          userSubscription.unsubscribe();
-          messageSubscription.unsubscribe();
           window.removeEventListener('keydown', handleKeyDown);
           window.removeEventListener('keyup', handleKeyUp);
-          clearInterval(cleanupInterval);
-          leaveRoom();
           if (animationFrame.current) {
             cancelAnimationFrame(animationFrame.current);
           }
@@ -548,7 +351,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     };
 
     initializeRoom();
-  }, [currentUser, supabaseClient, movementCooldown, isMoving]);
+  }, [currentUser, supabaseClient]);
+
+  // Iniciar el bucle de movimiento
+  const startMovement = () => {
+    const move = () => {
+      if (movementKeys.current.size > 0 && isMoving) {
+        handleMovement();
+        animationFrame.current = requestAnimationFrame(move);
+      }
+    };
+    animationFrame.current = requestAnimationFrame(move);
+  };
 
   // Dibujar en el canvas
   useEffect(() => {
@@ -590,7 +404,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         </div>
         
         <div className="controls-info">
-          <p>Usa WASD o Flechas para moverte por la ciudad</p>
+          <p>Usa WASD o Flechas para moverte</p>
         </div>
         
         <div className="city-container">
@@ -599,33 +413,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
               ref={canvasRef} 
               className="city-map"
             />
-          </div>
-          
-          <div className="city-chat">
-            <div className="chat-title">💬 Plaza Central</div>
-            <div className="messages">
-              {messages.map(msg => (
-                <div key={msg.id} className="message">
-                  <span className="player-name">
-                    {getUserDisplayName(msg.user_id)}:
-                  </span>
-                  <span className="message-content">{msg.content}</span>
-                </div>
-              ))}
-            </div>
-            
-            <form onSubmit={sendMessage} className="message-form">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje..."
-                disabled={!currentUser}
-              />
-              <button type="submit" disabled={!currentUser || !newMessage.trim()}>
-                ➤
-              </button>
-            </form>
           </div>
         </div>
       </div>
