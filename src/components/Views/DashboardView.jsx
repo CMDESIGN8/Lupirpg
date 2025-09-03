@@ -137,7 +137,7 @@ const DashboardView = ({
       {/* Header */}
       <div className="game-header">
         <div className="game-title">
-          <h1>LUPI FOOTBALL RPG</h1>
+          <h1>LUPI SPORTS RPG</h1>
           <div className="title-underline"></div>
         </div>
       </div>

@@ -6,8 +6,8 @@ const AuthView = ({ handleLogin, handleSignup, setEmail, setPassword, email, pas
   <div className="auth-container">
     <div className="auth-box">
       <div className="auth-title">
-        <h2 className="pulse-effect">LUPI FOOTBALL RPG</h2>
-        <p>Inicia tu aventura en el mundo del fútbol</p>
+        <h2 className="pulse-effect">LUPI SPORTS RPG</h2>
+        <p>Inicia tu aventura en el mundo del deporte</p>
       </div>
       
       <MessageDisplay message={message} />
