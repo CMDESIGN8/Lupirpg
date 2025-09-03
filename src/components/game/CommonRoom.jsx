@@ -1,238 +1,242 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import '../styles/CommonRoom.css';
+import React, { useState, useEffect, useRef } from "react";
+import "../styles/CommonRoom.css";
+
+// Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
+import playerSprite from "../assets/player.png"; 
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMoving, setIsMoving] = useState(false);
-  const [movementCooldown, setMovementCooldown] = useState(false);
-  
-  const movementKeys = useRef(new Set());
-  const animationFrame = useRef(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
   const canvasRef = useRef(null);
+  const requestRef = useRef();
 
-  // Configuración del mapa
-  const mapConfig = {
-    width: 800,
-    height: 600,
-    plaza: { x: 300, y: 200, width: 200, height: 200 }
-  };
+  const spriteWidth = 32;
+  const spriteHeight = 48;
+  const framesPerDirection = 3;
 
-  // Dibujar el mapa
-  const drawMap = useCallback((ctx) => {
-    const { width, height, plaza } = mapConfig;
-    
-    // Limpiar canvas
-    ctx.clearRect(0, 0, width, height);
-    
-    // Fondo verde
-    ctx.fillStyle = '#2E8B57';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Plaza central (color marrón)
-    ctx.fillStyle = '#8B4513'; // Color marrón
-    ctx.fillRect(plaza.x, plaza.y, plaza.width, plaza.height);
-    
-    // Borde plaza
-    ctx.strokeStyle = '#A0522D'; // Marrón más oscuro
-    ctx.lineWidth = 3;
-    ctx.strokeRect(plaza.x, plaza.y, plaza.width, plaza.height);
-    
-    // Dibujar usuarios
-    users.forEach(user => {
-      drawAvatar(ctx, user);
-    });
-  }, [users]);
-
-  // Dibujar avatar
-  const drawAvatar = (ctx, user) => {
-    const { x, y } = user;
-    
-    // Cuerpo (círculo azul)
-    ctx.fillStyle = '#3498db';
-    ctx.beginPath();
-    ctx.arc(x, y, 15, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Contorno negro
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Nombre
-    ctx.font = '12px Arial';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(user.name || 'Jugador', x, y + 20);
-  };
-
-  // Efecto principal
+  // ========================
+  // 🔥 Supabase Presence
+  // ========================
   useEffect(() => {
-    if (!currentUser?.id) {
-      setIsLoading(false);
-      return;
-    }
+    const channel = supabaseClient.channel("lupi_common_room", {
+      config: { presence: { key: currentUser.id } },
+    });
 
-    const initializeRoom = async () => {
-      setIsLoading(true);
-      try {
-        // Crear usuario local
-        const initialUser = {
-          user_id: currentUser.id,
-          name: currentUser.username || 'Jugador',
-          x: mapConfig.plaza.x + mapConfig.plaza.width/2,
-          y: mapConfig.plaza.y + mapConfig.plaza.height/2
-        };
-        
-        setUsers([initialUser]);
+    // 👥 Presencia en tiempo real
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const allUsers = Object.values(state).map((u) => u[0]);
+        setUsers(allUsers);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          const x = Math.round(Math.random() * 700 + 50);
+          const y = Math.round(Math.random() * 400 + 50);
 
-        // Control de teclado
-        const handleKeyDown = (e) => {
-          if (movementCooldown) return;
-          
-          const key = e.key.toLowerCase();
-          if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-            movementKeys.current.add(key);
-            if (!isMoving) {
-              setIsMoving(true);
-              startMovement();
-            }
-          }
-        };
-
-        const handleKeyUp = (e) => {
-          const key = e.key.toLowerCase();
-          movementKeys.current.delete(key);
-          if (movementKeys.current.size === 0) {
-            setIsMoving(false);
-          }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
-
-        return () => {
-          window.removeEventListener('keydown', handleKeyDown);
-          window.removeEventListener('keyup', handleKeyUp);
-          if (animationFrame.current) {
-            cancelAnimationFrame(animationFrame.current);
-          }
-        };
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeRoom();
-  }, [currentUser]);
-
-  // Movimiento
-  const handleMovement = () => {
-    if (movementCooldown || !currentUser?.id) return;
-    
-    setUsers(prev => prev.map(user => {
-      if (user.user_id !== currentUser.id) return user;
-      
-      let { x, y } = user;
-      const speed = 5;
-      
-      movementKeys.current.forEach(key => {
-        switch(key) {
-          case 'w':
-          case 'arrowup':
-            y -= speed;
-            break;
-          case 's':
-          case 'arrowdown':
-            y += speed;
-            break;
-          case 'a':
-          case 'arrowleft':
-            x -= speed;
-            break;
-          case 'd':
-          case 'arrowright':
-            x += speed;
-            break;
+          await channel.track({
+            id: currentUser.id,
+            name: currentUser.username || "Usuario",
+            x,
+            y,
+            direction: "down",
+            frameIndex: 0,
+          });
         }
       });
-      
-      // Limitar al mapa
-      x = Math.max(15, Math.min(mapConfig.width - 15, x));
-      y = Math.max(15, Math.min(mapConfig.height - 15, y));
-      
-      return { ...user, x, y };
-    }));
-    
-    setMovementCooldown(true);
-    setTimeout(() => setMovementCooldown(false), 50);
-  };
 
-  // Iniciar bucle de movimiento
-  const startMovement = () => {
-    const move = () => {
-      if (movementKeys.current.size > 0 && isMoving) {
-        handleMovement();
-        animationFrame.current = requestAnimationFrame(move);
-      }
+    // 📩 Mensajes en tiempo real
+    const messageChannel = supabaseClient
+      .channel("room_messages")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "room_messages" },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+      messageChannel.unsubscribe();
+      cancelAnimationFrame(requestRef.current);
     };
-    animationFrame.current = requestAnimationFrame(move);
+  }, [supabaseClient, currentUser]);
+
+  // ========================
+  // 🎮 Animación de sala
+  // ========================
+  const spriteImage = new Image();
+  spriteImage.src = playerSprite;
+
+  const drawAvatar = (ctx, user) => {
+    const { x, y, direction = "down", frameIndex = 0, name, color } = user;
+    const dirMap = { down: 0, left: 1, right: 2, up: 3 };
+    const row = dirMap[direction] || 0;
+
+    ctx.drawImage(
+      spriteImage,
+      frameIndex * spriteWidth,
+      row * spriteHeight,
+      spriteWidth,
+      spriteHeight,
+      x - spriteWidth / 2,
+      y - spriteHeight / 2,
+      spriteWidth,
+      spriteHeight
+    );
+
+    // Nombre
+    ctx.fillStyle = "#323C78";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(name, x, y - spriteHeight / 2 - 5);
   };
 
-  // Dibujar en canvas
-  useEffect(() => {
+  const drawRoom = (ctx) => {
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+
+    ctx.clearRect(0, 0, width, height);
+
+    // Fondo
+    ctx.fillStyle = "#E6F0FF";
+    ctx.fillRect(0, 0, width, height);
+
+    // Área de la sala
+    ctx.fillStyle = "#C8D8EB";
+    ctx.beginPath();
+    ctx.roundRect(50, 100, width - 100, height - 200, 15);
+    ctx.fill();
+    ctx.strokeStyle = "#B4C8E0";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Dibujar usuarios
+    users.forEach((user) => drawAvatar(ctx, user));
+  };
+
+  // Animación continua
+  const animate = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    canvas.width = mapConfig.width;
-    canvas.height = mapConfig.height;
-    
-    drawMap(ctx);
-  }, [users, drawMap]);
+    const ctx = canvas.getContext("2d");
+    drawRoom(ctx);
+    requestRef.current = requestAnimationFrame(animate);
+  };
 
-  if (isLoading) {
-    return (
-      <div className="city-modal">
-        <div className="city-content">
-          <div className="loading-container">
-            <p>Cargando ciudad...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [users]);
+
+  // ========================
+  // 💬 Chat
+  // ========================
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    try {
+      const { error } = await supabaseClient.from("room_messages").insert({
+        user_id: currentUser.id,
+        content: newMessage.trim(),
+      });
+
+      if (error) console.error("Error sending message:", error);
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  // ========================
+  // 🕹️ Mover avatar con teclado
+  // ========================
+  useEffect(() => {
+    const handleKey = async (e) => {
+      const user = users.find((u) => u.id === currentUser.id);
+      if (!user) return;
+
+      let { x, y } = user;
+      let direction = user.direction;
+
+      switch (e.key) {
+        case "ArrowUp":
+          y -= 4;
+          direction = "up";
+          break;
+        case "ArrowDown":
+          y += 4;
+          direction = "down";
+          break;
+        case "ArrowLeft":
+          x -= 4;
+          direction = "left";
+          break;
+        case "ArrowRight":
+          x += 4;
+          direction = "right";
+          break;
+        default:
+          return;
+      }
+
+      // Actualizar local
+      user.x = x;
+      user.y = y;
+      user.direction = direction;
+      user.frameIndex = (user.frameIndex + 1) % framesPerDirection;
+      setUsers([...users]);
+
+      // Actualizar Supabase
+      const channel = supabaseClient.channel("lupi_common_room");
+      await channel.track(user);
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [users, currentUser, supabaseClient]);
 
   return (
-    <div className="city-modal">
-      <div className="city-content">
-        <div className="city-header">
-          <h2>🏙️ Ciudad Lupi</h2>
-          <button className="close-btn" onClick={onClose}>⨉</button>
-          <div className="player-count">
-            👥 {users.length} ciudadanos
+    <div className="common-room-modal">
+      <div className="common-room-content">
+        <div className="common-room-header">
+          <h2>Sala Común de Lupi</h2>
+          <button className="close-btn" onClick={onClose}>
+            X
+          </button>
+        </div>
+
+        <div className="room-container">
+          {/* 🎮 Sala visual */}
+          <div className="canvas-container">
+            <canvas ref={canvasRef} width={800} height={500} />
           </div>
-        </div>
-        
-        <div className="controls-info">
-          <p>Usa WASD o Flechas para moverte</p>
-        </div>
-        
-        <div className="game-container">
-          <canvas 
-            ref={canvasRef}
-            className="city-map"
-            style={{ 
-              border: '2px solid blue',
-              background: '#2E8B57' 
-            }}
-            tabIndex={0} // Esto permite que el canvas reciba eventos de teclado
-          />
+
+          {/* 💬 Chat */}
+          <div className="chat-container">
+            <div className="messages">
+              {messages.map((msg) => (
+                <div key={msg.id} className="message">
+                  <span className="user-name">{msg.user_id}:</span>
+                  <span className="message-content">{msg.content}</span>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={sendMessage} className="message-form">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Escribe un mensaje..."
+              />
+              <button type="submit">Enviar</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
