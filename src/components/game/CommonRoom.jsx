@@ -14,15 +14,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const channelRef = useRef(null);
   const lastUpdateRef = useRef(0);
   const keysPressed = useRef({});
-  const animationData = useRef({});
-  const movementInterval = useRef(null);
+  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
 
   const spriteWidth = 32;
   const spriteHeight = 48;
-  const displaySize = 64; // Tamaño de visualización
   const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame
-  const movementSpeed = 4; // píxeles por movimiento
+  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
 
   // Mapeo de direcciones a filas en el spritesheet
   const directionMap = {
@@ -46,6 +43,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         const state = channel.presenceState();
         const allUsers = Object.values(state).map((u) => u[0]);
         
+        // Inicializar datos de animación para cada usuario
         allUsers.forEach(user => {
           if (!animationData.current[user.id]) {
             animationData.current[user.id] = {
@@ -63,6 +61,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           const x = Math.round(Math.random() * 700 + 50);
           const y = Math.round(Math.random() * 400 + 50);
 
+          // Inicializar datos de animación para el usuario actual
           animationData.current[currentUser.id] = {
             frameIndex: 0,
             lastUpdate: Date.now(),
@@ -97,9 +96,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       channel.unsubscribe();
       messageChannel.unsubscribe();
       cancelAnimationFrame(requestRef.current);
-      if (movementInterval.current) {
-        clearInterval(movementInterval.current);
-      }
     };
   }, [supabaseClient, currentUser]);
 
@@ -117,30 +113,31 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const drawAvatar = (ctx, user) => {
     const { x, y, name, direction = "down", id } = user;
     
+    // Obtener datos de animación desde la referencia
     const animData = animationData.current[id] || { frameIndex: 0 };
     const frameIndex = animData.frameIndex || 0;
     
+    // Calcular la posición en el spritesheet
     const spriteX = frameIndex * spriteWidth;
     const spriteY = directionMap[direction] * spriteHeight;
 
-    // Dibujar el frame escalado a 64x64 píxeles
+    // Dibujar el frame correcto del spritesheet
     ctx.drawImage(
       spriteImage.current,
       spriteX,
       spriteY,
       spriteWidth,
       spriteHeight,
-      x - displaySize/2,    // Centrado en X
-      y - displaySize/2,    // Centrado en Y
-      displaySize,          // Ancho de visualización
-      displaySize           // Alto de visualización
-    );
-
+       x - 32,             // Posición X (centrado en 64px)
+  y - 32,             // Posición Y (centrado en 64px)
+  64,                 // Nuevo ancho de visualización
+  64                  // Nuevo alto de visualización
+);
     // Dibujar nombre de usuario
     ctx.fillStyle = "#fff";
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(name, x, y - displaySize/2 - 10);
+    ctx.fillText(name, x, y - spriteHeight/2 - 10);
   };
 
   const drawRoom = (ctx) => {
@@ -149,6 +146,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
     ctx.clearRect(0, 0, width, height);
 
+    // Fondo con mapa
     if (mapImage.current.complete) {
       ctx.drawImage(mapImage.current, 0, 0, width, height);
     } else {
@@ -156,6 +154,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       ctx.fillRect(0, 0, width, height);
     }
 
+    // Dibujar usuarios
     users.forEach((user) => drawAvatar(ctx, user));
   };
 
@@ -173,6 +172,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
         animData.lastUpdate = now;
         
+        // Solo actualizar estado para el usuario actual (para enviar a Supabase)
         if (user.id === currentUser.id) {
           setUsers(prevUsers => 
             prevUsers.map(u => 
@@ -193,86 +193,68 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [users]);
 
   // ========================
-  // 🕹️ Movimiento - Versión mejorada
+  // 🕹️ Movimiento
   // ========================
   useEffect(() => {
-    const movePlayer = async () => {
-      const user = users.find((u) => u.id === currentUser.id);
-      if (!user) return;
-
-      let { x, y } = user;
-      let direction = user.direction;
-      let moved = false;
-
-      if (keysPressed.current.ArrowUp) {
-        y -= movementSpeed;
-        direction = "up";
-        moved = true;
-      }
-      if (keysPressed.current.ArrowDown) {
-        y += movementSpeed;
-        direction = "down";
-        moved = true;
-      }
-      if (keysPressed.current.ArrowLeft) {
-        x -= movementSpeed;
-        direction = "left";
-        moved = true;
-      }
-      if (keysPressed.current.ArrowRight) {
-        x += movementSpeed;
-        direction = "right";
-        moved = true;
-      }
-
-      if (!moved) return;
-
-      // Limitar movimiento dentro del canvas
-      x = Math.max(displaySize/2, Math.min(x, 800 - displaySize/2));
-      y = Math.max(displaySize/2, Math.min(y, 500 - displaySize/2));
-
-      // Actualizar datos de animación
-      if (animationData.current[currentUser.id]) {
-        animationData.current[currentUser.id].moving = true;
-        animationData.current[currentUser.id].direction = direction;
-      }
-
-      // Actualizar usuario
-      const updatedUser = {
-        ...user,
-        x,
-        y,
-        direction,
-        lastFrameUpdate: Date.now()
-      };
-
-      // Estado local
-      setUsers((prev) =>
-        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-      );
-
-      // Estado remoto
-      if (channelRef.current) {
-        await channelRef.current.track(updatedUser);
-      }
-    };
-
-    const handleKeyDown = (e) => {
+    const handleKeyDown = async (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault();
+        e.preventDefault(); // Prevenir scroll de la página
+        keysPressed.current[e.key] = true;
         
-        if (!keysPressed.current[e.key]) {
-          keysPressed.current[e.key] = true;
-          
-          // Iniciar movimiento continuo
-          if (!movementInterval.current) {
-            movementInterval.current = setInterval(movePlayer, 16); // ~60 FPS
-          }
+        const user = users.find((u) => u.id === currentUser.id);
+        if (!user) return;
 
-          // Iniciar animación
-          if (animationData.current[currentUser.id]) {
-            animationData.current[currentUser.id].moving = true;
-          }
+        let { x, y } = user;
+        let direction = user.direction;
+
+        switch (e.key) {
+          case "ArrowUp":
+            y -= 4;
+            direction = "up";
+            break;
+          case "ArrowDown":
+            y += 4;
+            direction = "down";
+            break;
+          case "ArrowLeft":
+            x -= 4;
+            direction = "left";
+            break;
+          case "ArrowRight":
+            x += 4;
+            direction = "right";
+            break;
+          default:
+            return;
+        }
+
+        // Limitar movimiento dentro del canvas
+        x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
+        y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
+
+        // Actualizar datos de animación
+        if (animationData.current[currentUser.id]) {
+          animationData.current[currentUser.id].moving = true;
+          animationData.current[currentUser.id].direction = direction;
+        }
+
+        // Actualizar usuario
+        const updatedUser = {
+          ...user,
+          x,
+          y,
+          direction,
+          lastFrameUpdate: Date.now()
+        };
+
+        // Estado local
+        setUsers((prev) =>
+          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+        );
+
+        // Estado remoto
+        if (channelRef.current) {
+          await channelRef.current.track(updatedUser);
         }
       }
     };
@@ -282,29 +264,19 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         keysPressed.current[e.key] = false;
         
         // Verificar si todas las teclas de dirección están liberadas
-        const noKeysPressed = !keysPressed.current.ArrowUp && 
-                             !keysPressed.current.ArrowDown && 
-                             !keysPressed.current.ArrowLeft && 
-                             !keysPressed.current.ArrowRight;
+        const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
         
-        if (noKeysPressed) {
-          // Detener movimiento
-          if (movementInterval.current) {
-            clearInterval(movementInterval.current);
-            movementInterval.current = null;
-          }
+        if (noKeysPressed && animationData.current[currentUser.id]) {
+          // Cuando se sueltan todas las teclas, resetear a frame 0
+          animationData.current[currentUser.id].moving = false;
+          animationData.current[currentUser.id].frameIndex = 0;
           
-          // Detener animación
-          if (animationData.current[currentUser.id]) {
-            animationData.current[currentUser.id].moving = false;
-            animationData.current[currentUser.id].frameIndex = 0;
-            
-            setUsers(prevUsers => 
-              prevUsers.map(user => 
-                user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
-              )
-            );
-          }
+          // Actualizar estado para forzar re-render
+          setUsers(prevUsers => 
+            prevUsers.map(user => 
+              user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
+            )
+          );
         }
       }
     };
@@ -315,9 +287,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      if (movementInterval.current) {
-        clearInterval(movementInterval.current);
-      }
     };
   }, [users, currentUser]);
 
@@ -352,10 +321,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         </div>
 
         <div className="room-container">
+          {/* 🎮 Sala visual */}
           <div className="canvas-container">
             <canvas ref={canvasRef} width={800} height={500} />
           </div>
 
+          {/* 💬 Chat */}
           <div className="chat-container">
             <div className="messages">
               {messages.map((msg) => (
