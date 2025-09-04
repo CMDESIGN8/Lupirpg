@@ -1,4 +1,4 @@
-/* 🎮 styles/CommonRoom.css - Estilo Deportivo RPG */
+/* 🎮 styles/CommonRoom.css - Estilo Deportivo RPG con Canvas Grande */
 .common-room-modal {
   position: fixed;
   top: 0;
@@ -12,30 +12,15 @@
   z-index: 1000;
   font-family: 'Roboto Condensed', 'Arial', sans-serif;
   overflow: hidden;
-}
-
-.common-room-modal::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 20%),
-    radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 20%),
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" x="2" y="2" width="96" height="96" rx="10" ry="10"/></svg>');
-  background-size: cover, cover, 100px 100px;
-  pointer-events: none;
+  padding: 20px;
 }
 
 .common-room-content {
   background: rgba(10, 25, 47, 0.95);
   border-radius: 15px;
-  padding: 25px;
+  padding: 20px;
   width: 95%;
-  max-width: 1400px;
-  max-height: 90vh;
+  height: 95vh;
   display: flex;
   flex-direction: column;
   box-shadow: 
@@ -61,10 +46,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
   border-bottom: 2px solid #ffd700;
-  position: relative;
+  flex-shrink: 0;
 }
 
 .common-room-header::after {
@@ -111,15 +96,17 @@
 }
 
 /* ==============================
-   🔹 Contenedor principal
+   🔹 Contenedor principal - Layout mejorado
    ============================== */
 .room-container {
   display: flex;
-  gap: 25px;
-  height: 70vh;
+  gap: 20px;
+  height: calc(100% - 70px);
+  flex: 1;
+  min-height: 0;
 }
 
-/* 🎨 Canvas de juego - Estilo Deportivo */
+/* 🎨 Canvas de juego - MUCHO MÁS GRANDE */
 .canvas-container {
   flex: 3;
   background: #1e3a5f;
@@ -133,6 +120,7 @@
     0 0 20px rgba(0, 150, 255, 0.5);
   border: 3px solid #ffd700;
   position: relative;
+  min-height: 0;
 }
 
 .canvas-container::before {
@@ -155,9 +143,13 @@
   cursor: crosshair;
   position: relative;
   z-index: 2;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
 }
 
-/* 💬 Chat lateral - Estilo RPG Deportivo */
+/* 💬 Chat lateral - Compacto pero funcional */
 .chat-container {
   flex: 1;
   display: flex;
@@ -168,6 +160,8 @@
   border: 3px solid #ffd700;
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
   position: relative;
+  min-width: 300px;
+  max-width: 350px;
 }
 
 .chat-container::before {
@@ -183,15 +177,16 @@
 
 .messages {
   flex: 1;
-  padding: 15px;
+  padding: 12px;
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.3);
+  font-size: 13px;
 }
 
 .message {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   text-align: left;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   border-left: 4px solid #f1c40f;
@@ -201,15 +196,14 @@
 }
 
 .message:hover {
-  transform: translateX(5px);
+  transform: translateX(3px);
   background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .message::before {
   content: '💬';
   position: absolute;
-  left: -25px;
+  left: -20px;
   top: 50%;
   transform: translateY(-50%);
   opacity: 0.5;
@@ -220,31 +214,30 @@
   color: #f1c40f;
   margin-right: 5px;
   text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+  font-size: 12px;
 }
 
 .message-content {
   color: #ecf0f1;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* Formulario de mensajes */
+/* Formulario de mensajes compacto */
 .message-form {
   display: flex;
-  padding: 15px;
+  padding: 12px;
   border-top: 3px solid #f1c40f;
   background: linear-gradient(to right, #e74c3c, #c0392b);
-  gap: 10px;
+  gap: 8px;
 }
 
 .message-form input {
   flex: 1;
-  padding: 12px 15px;
+  padding: 10px 12px;
   border: 2px solid #f39c12;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.95);
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
 }
 
 .message-form input:focus {
@@ -253,23 +246,21 @@
 }
 
 .message-form button {
-  padding: 12px 20px;
+  padding: 10px 15px;
   background: linear-gradient(to bottom, #2ecc71, #27ae60);
   color: white;
   border: 2px solid #f39c12;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  font-size: 13px;
+  white-space: nowrap;
   transition: all 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .message-form button:hover:not(:disabled) {
   background: linear-gradient(to bottom, #27ae60, #219653);
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
 }
 
 .message-form button:disabled {
@@ -278,41 +269,25 @@
   transform: none;
 }
 
-/* Scrollbar personalizado */
-.messages::-webkit-scrollbar {
-  width: 8px;
-}
-.messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-.messages::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #f1c40f, #f39c12);
-  border-radius: 4px;
-}
-.messages::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #f39c12, #e67e22);
-}
-
-/* Elementos decorativos deportivos */
+/* Elementos deportivos */
 .sport-elements {
   position: absolute;
   top: 10px;
   right: 10px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   z-index: 5;
 }
 
 .sport-icon {
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 16px;
+  font-size: 14px;
   animation: bounce 2s infinite;
 }
 
@@ -320,27 +295,22 @@
 .sport-icon:nth-child(2) { animation-delay: 0.5s; }
 .sport-icon:nth-child(3) { animation-delay: 1s; }
 
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* Estadísticas tipo RPG */
+/* Estadísticas RPG */
 .rpg-stats {
   position: absolute;
-  bottom: 15px;
-  left: 15px;
+  bottom: 10px;
+  left: 10px;
   background: rgba(0, 0, 0, 0.6);
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 8px;
   border: 2px solid #ffd700;
-  font-size: 12px;
+  font-size: 11px;
   color: #fff;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(5px);
 }
 
 .rpg-stats div {
-  margin: 5px 0;
+  margin: 4px 0;
   display: flex;
   justify-content: space-between;
 }
@@ -350,62 +320,67 @@
   font-weight: bold;
 }
 
-/* Efectos de sonido visuales */
-.sound-waves {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  padding: 0 10px;
+/* Scrollbar personalizado */
+.messages::-webkit-scrollbar {
+  width: 6px;
 }
 
-.wave {
-  width: 3px;
-  background: rgba(255, 215, 0, 0.5);
-  border-radius: 2px 2px 0 0;
-  animation: wave 1.5s infinite ease-in-out;
+.messages::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }
 
-.wave:nth-child(2) { animation-delay: 0.2s; height: 60%; }
-.wave:nth-child(3) { animation-delay: 0.4s; height: 80%; }
-.wave:nth-child(4) { animation-delay: 0.6s; height: 70%; }
-.wave:nth-child(5) { animation-delay: 0.8s; height: 90%; }
-
-@keyframes wave {
-  0%, 100% { height: 40%; }
-  50% { height: 100%; }
+.messages::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #f1c40f, #f39c12);
+  border-radius: 3px;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .room-container {
-    flex-direction: column;
-    height: auto;
+.messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #f39c12, #e67e22);
+}
+
+/* Animaciones */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Responsive para pantallas grandes */
+@media (min-width: 1600px) {
+  .common-room-content {
+    max-width: 1800px;
   }
   
   .canvas-container {
-    min-height: 400px;
+    flex: 4;
   }
   
   .chat-container {
-    min-height: 300px;
+    max-width: 400px;
+  }
+}
+
+/* Layout para pantallas más pequeñas */
+@media (max-width: 1200px) {
+  .room-container {
+    flex-direction: column;
+  }
+  
+  .canvas-container {
+    flex: 2;
+    min-height: 60vh;
+  }
+  
+  .chat-container {
+    max-width: 100%;
+    min-height: 30vh;
   }
   
   .common-room-header h2 {
     font-size: 22px;
   }
-}
-
-/* Efecto de puntuación */
-.score-flash {
-  animation: scoreFlash 0.5s ease-in-out;
-}
-
-@keyframes scoreFlash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  
+  .message::before {
+    display: none;
+  }
 }

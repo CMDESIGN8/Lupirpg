@@ -314,19 +314,32 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     <div className="common-room-modal">
       <div className="common-room-content">
         <div className="common-room-header">
-          <h2>Sala Común de Lupi</h2>
+          <h2>Arena Deportiva Lupi</h2>
           <button className="close-btn" onClick={onClose}>
             X
           </button>
         </div>
 
         <div className="room-container">
-          {/* 🎮 Sala visual */}
           <div className="canvas-container">
-            <canvas ref={canvasRef} width={800} height={500} />
+            <canvas 
+              ref={canvasRef} 
+              width={1200} 
+              height={800}
+              style={{ width: '100%', height: '100%' }}
+            />
+            <div className="sport-elements">
+              <div className="sport-icon">⚽</div>
+              <div className="sport-icon">🏀</div>
+              <div className="sport-icon">🏈</div>
+            </div>
+            <div className="rpg-stats">
+              <div>Nivel: <span className="stat-value">15</span></div>
+              <div>EXP: <span className="stat-value">1200/2000</span></div>
+              <div>Oro: <span className="stat-value">5,430</span></div>
+            </div>
           </div>
 
-          {/* 💬 Chat */}
           <div className="chat-container">
             <div className="messages">
               {messages.map((msg) => (
