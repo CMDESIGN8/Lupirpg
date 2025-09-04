@@ -14,11 +14,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const channelRef = useRef(null);
   const lastUpdateRef = useRef(0);
   const keysPressed = useRef({});
+  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
 
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
-  const animationSpeed = 200; // ms entre cambios de frame
+  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
 
   // Mapeo de direcciones a filas en el spritesheet
   const directionMap = {
@@ -41,12 +42,31 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
         const allUsers = Object.values(state).map((u) => u[0]);
+        
+        // Inicializar datos de animación para cada usuario
+        allUsers.forEach(user => {
+          if (!animationData.current[user.id]) {
+            animationData.current[user.id] = {
+              frameIndex: 0,
+              lastUpdate: Date.now(),
+              moving: false
+            };
+          }
+        });
+        
         setUsers(allUsers);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           const x = Math.round(Math.random() * 700 + 50);
           const y = Math.round(Math.random() * 400 + 50);
+
+          // Inicializar datos de animación para el usuario actual
+          animationData.current[currentUser.id] = {
+            frameIndex: 0,
+            lastUpdate: Date.now(),
+            moving: false
+          };
 
           await channel.track({
             id: currentUser.id,
@@ -55,8 +75,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             y,
             direction: "down",
             frameIndex: 0,
-            lastFrameUpdate: Date.now(),
-            moving: false // Añadir propiedad moving
+            lastFrameUpdate: Date.now()
           });
         }
       });
@@ -92,7 +111,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, []);
 
   const drawAvatar = (ctx, user) => {
-    const { x, y, name, direction = "down", frameIndex = 0 } = user;
+    const { x, y, name, direction = "down", id } = user;
+    
+    // Obtener datos de animación desde la referencia
+    const animData = animationData.current[id] || { frameIndex: 0 };
+    const frameIndex = animData.frameIndex || 0;
     
     // Calcular la posición en el spritesheet
     const spriteX = frameIndex * spriteWidth;
@@ -141,28 +164,27 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     if (!canvas) return;
     
     const ctx = canvas.getContext("2d");
-    drawRoom(ctx);
-    
-    // Actualizar animaciones si es necesario
     const now = Date.now();
-    if (now - lastUpdateRef.current > animationSpeed) {
-      lastUpdateRef.current = now;
-      
-      // Solo actualizar frameIndex para usuarios que se están moviendo
-      setUsers(prevUsers => 
-        prevUsers.map(user => {
-          // Si el usuario es el actual y tiene teclas presionadas, está moviéndose
-          const isMoving = user.id === currentUser.id && 
-            Object.values(keysPressed.current).some(val => val);
-            
-          return {
-            ...user,
-            frameIndex: isMoving ? (user.frameIndex + 1) % framesPerDirection : 0
-          };
-        })
-      );
-    }
     
+    // Actualizar animaciones para todos los usuarios
+    users.forEach(user => {
+      const animData = animationData.current[user.id];
+      if (animData && animData.moving && now - animData.lastUpdate > animationSpeed) {
+        animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
+        animData.lastUpdate = now;
+        
+        // Solo actualizar estado para el usuario actual (para enviar a Supabase)
+        if (user.id === currentUser.id) {
+          setUsers(prevUsers => 
+            prevUsers.map(u => 
+              u.id === currentUser.id ? { ...u, frameIndex: animData.frameIndex } : u
+            )
+          );
+        }
+      }
+    });
+    
+    drawRoom(ctx);
     requestRef.current = requestAnimationFrame(animate);
   };
 
@@ -177,6 +199,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   useEffect(() => {
     const handleKeyDown = async (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault(); // Prevenir scroll de la página
         keysPressed.current[e.key] = true;
         
         const user = users.find((u) => u.id === currentUser.id);
@@ -210,14 +233,19 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
         y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
 
+        // Actualizar datos de animación
+        if (animationData.current[currentUser.id]) {
+          animationData.current[currentUser.id].moving = true;
+          animationData.current[currentUser.id].direction = direction;
+        }
+
         // Actualizar usuario
         const updatedUser = {
           ...user,
           x,
           y,
           direction,
-          lastFrameUpdate: Date.now(),
-          moving: true
+          lastFrameUpdate: Date.now()
         };
 
         // Estado local
@@ -236,12 +264,21 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         keysPressed.current[e.key] = false;
         
-        // Cuando se suelta la tecla, resetear a frame 0
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
-            user.id === currentUser.id ? { ...user, frameIndex: 0, moving: false } : user
-          )
-        );
+        // Verificar si todas las teclas de dirección están liberadas
+        const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
+        
+        if (noKeysPressed && animationData.current[currentUser.id]) {
+          // Cuando se sueltan todas las teclas, resetear a frame 0
+          animationData.current[currentUser.id].moving = false;
+          animationData.current[currentUser.id].frameIndex = 0;
+          
+          // Actualizar estado para forzar re-render
+          setUsers(prevUsers => 
+            prevUsers.map(user => 
+              user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
+            )
+          );
+        }
       }
     };
 
