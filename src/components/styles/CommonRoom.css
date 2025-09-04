@@ -1,64 +1,113 @@
-/* 🎮 styles/CommonRoom.css */
+/* 🎮 styles/CommonRoom.css - Estilo Deportivo RPG */
 .common-room-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, #0c1445, #1c3a6b, #4a6b8a);
+  background: linear-gradient(to bottom, #0a3d62, #1e5799, #3a7bd5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+  font-family: 'Roboto Condensed', 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.common-room-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 20%),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" x="2" y="2" width="96" height="96" rx="10" ry="10"/></svg>');
+  background-size: cover, cover, 100px 100px;
+  pointer-events: none;
 }
 
 .common-room-content {
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(10, 25, 47, 0.95);
+  border-radius: 15px;
+  padding: 25px;
   width: 95%;
   max-width: 1400px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 30px rgba(0, 150, 255, 0.6);
-  border: 2px solid #2ecc71;
+  box-shadow: 
+    0 0 30px rgba(0, 150, 255, 0.7),
+    inset 0 0 50px rgba(0, 0, 0, 0.3);
+  border: 3px solid #ffd700;
   overflow: hidden;
+  position: relative;
+}
+
+.common-room-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(to right, #ff6b6b, #ffd700, #4ecdc4, #1dd1a1);
+  border-radius: 5px 5px 0 0;
 }
 
 .common-room-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #2ecc71;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ffd700;
+  position: relative;
+}
+
+.common-room-header::after {
+  content: '⚽';
+  position: absolute;
+  right: 50px;
+  font-size: 24px;
+  opacity: 0.7;
 }
 
 .common-room-header h2 {
-  color: #2ecc71;
+  color: #ffd700;
   margin: 0;
-  text-shadow: 0 0 10px rgba(46, 204, 113, 0.8);
-  font-size: 24px;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: linear-gradient(to right, #ff6b6b, #ffd700, #4ecdc4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .close-btn {
-  background: #e74c3c;
+  background: linear-gradient(to bottom, #e74c3c, #c0392b);
   color: white;
   border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   font-weight: bold;
   font-size: 18px;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .close-btn:hover {
-  background: #c0392b;
-  transform: scale(1.1);
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* ==============================
@@ -66,140 +115,297 @@
    ============================== */
 .room-container {
   display: flex;
-  gap: 20px;
+  gap: 25px;
   height: 70vh;
 }
 
-/* 🎨 Canvas de juego */
+/* 🎨 Canvas de juego - Estilo Deportivo */
 .canvas-container {
   flex: 3;
-  background: #1e272e;
-  border-radius: 8px;
+  background: #1e3a5f;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7);
+  box-shadow: 
+    inset 0 0 30px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(0, 150, 255, 0.5);
+  border: 3px solid #ffd700;
+  position: relative;
+}
+
+.canvas-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.2) 50%, transparent 51%),
+    linear-gradient(transparent 49%, rgba(255, 255, 255, 0.2) 50%, transparent 51%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .canvas-container canvas {
-  border: 2px solid #2ecc71;
-  border-radius: 6px;
-  background: #2E8B57; /* color de campo estilo Argentum */
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #2a9d8f, #264653);
   cursor: crosshair;
+  position: relative;
+  z-index: 2;
 }
 
-/* 💬 Chat lateral */
+/* 💬 Chat lateral - Estilo RPG Deportivo */
 .chat-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a2a6c, #000080);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #1a2a6c, #1e3a5f);
+  border-radius: 12px;
   overflow: hidden;
-  border: 2px solid #f1c40f;
-  box-shadow: 0 0 15px rgba(0, 0, 128, 0.7);
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  position: relative;
+}
+
+.chat-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><rect fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="1" x="2" y="2" width="46" height="46" rx="5" ry="5"/></svg>');
+  pointer-events: none;
 }
 
 .messages {
   flex: 1;
-  padding: 12px;
+  padding: 15px;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .message {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   text-align: left;
-  padding: 8px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  border-left: 3px solid #3498db;
-  transition: transform 0.2s;
+  border-radius: 8px;
+  border-left: 4px solid #f1c40f;
+  transition: all 0.3s;
+  position: relative;
+  backdrop-filter: blur(5px);
 }
 
 .message:hover {
   transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.message::before {
+  content: '💬';
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.5;
 }
 
 .user-name {
   font-weight: bold;
-  color: #3498db;
+  color: #f1c40f;
   margin-right: 5px;
+  text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
 }
 
 .message-content {
   color: #ecf0f1;
+  font-size: 14px;
 }
 
 /* Formulario de mensajes */
 .message-form {
   display: flex;
-  padding: 12px;
-  border-top: 2px solid #f1c40f;
-  background: rgba(231, 76, 60, 0.2);
+  padding: 15px;
+  border-top: 3px solid #f1c40f;
+  background: linear-gradient(to right, #e74c3c, #c0392b);
+  gap: 10px;
 }
 
 .message-form input {
   flex: 1;
-  padding: 10px;
+  padding: 12px 15px;
   border: 2px solid #f39c12;
-  border-radius: 4px;
-  margin-right: 10px;
-  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
   font-size: 14px;
+  font-weight: 500;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .message-form input:focus {
   outline: none;
-  box-shadow: 0 0 5px #f39c12;
+  box-shadow: 0 0 8px #f39c12, inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .message-form button {
-  padding: 10px 15px;
-  background: #e74c3c;
+  padding: 12px 20px;
+  background: linear-gradient(to bottom, #2ecc71, #27ae60);
   color: white;
   border: 2px solid #f39c12;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
   transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .message-form button:hover:not(:disabled) {
-  background: #c0392b;
+  background: linear-gradient(to bottom, #27ae60, #219653);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
 }
 
 .message-form button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Scrollbar personalizado */
 .messages::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 .messages::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 .messages::-webkit-scrollbar-thumb {
-  background: #3498db;
-  border-radius: 3px;
+  background: linear-gradient(to bottom, #f1c40f, #f39c12);
+  border-radius: 4px;
 }
 .messages::-webkit-scrollbar-thumb:hover {
-  background: #2980b9;
+  background: linear-gradient(to bottom, #f39c12, #e67e22);
 }
 
-.lobby-map {
-  position: relative;
-  width: 600px;   /* tamaño del mapa */
-  height: 400px;
-  background-image: url('/assets/map.png'); /* tu mapa */
-  background-size: cover;
-  background-position: center;
-  border: 2px solid #00ff99;
+/* Elementos decorativos deportivos */
+.sport-elements {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  z-index: 5;
+}
+
+.sport-icon {
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  animation: bounce 2s infinite;
+}
+
+.sport-icon:nth-child(1) { animation-delay: 0s; }
+.sport-icon:nth-child(2) { animation-delay: 0.5s; }
+.sport-icon:nth-child(3) { animation-delay: 1s; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Estadísticas tipo RPG */
+.rpg-stats {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 15px;
   border-radius: 8px;
-  overflow: hidden;
+  border: 2px solid #ffd700;
+  font-size: 12px;
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
+.rpg-stats div {
+  margin: 5px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stat-value {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* Efectos de sonido visuales */
+.sound-waves {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 0 10px;
+}
+
+.wave {
+  width: 3px;
+  background: rgba(255, 215, 0, 0.5);
+  border-radius: 2px 2px 0 0;
+  animation: wave 1.5s infinite ease-in-out;
+}
+
+.wave:nth-child(2) { animation-delay: 0.2s; height: 60%; }
+.wave:nth-child(3) { animation-delay: 0.4s; height: 80%; }
+.wave:nth-child(4) { animation-delay: 0.6s; height: 70%; }
+.wave:nth-child(5) { animation-delay: 0.8s; height: 90%; }
+
+@keyframes wave {
+  0%, 100% { height: 40%; }
+  50% { height: 100%; }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .room-container {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .canvas-container {
+    min-height: 400px;
+  }
+  
+  .chat-container {
+    min-height: 300px;
+  }
+  
+  .common-room-header h2 {
+    font-size: 22px;
+  }
+}
+
+/* Efecto de puntuación */
+.score-flash {
+  animation: scoreFlash 0.5s ease-in-out;
+}
+
+@keyframes scoreFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
