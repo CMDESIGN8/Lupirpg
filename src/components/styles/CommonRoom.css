@@ -1,157 +1,128 @@
-/* 🎮 Fondo general estilo RPG estadio nocturno */
-.common-room-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at center, #0c1445 0%, #000814 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  font-family: 'Press Start 2P', cursive; /* estilo retro RPG */
-  letter-spacing: 1px;
-}
-
-/* Marco principal con glow */
-.common-room-content {
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 16px;
-  padding: 20px;
-  width: 95%;
-  max-width: 1400px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 40px rgba(0, 255, 150, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.8);
-  border: 3px solid #f1c40f;
-  overflow: hidden;
-  backdrop-filter: blur(6px);
-}
-
-/* ====================
-   Título épico
-   ==================== */
-.common-room-header h2 {
-  color: #f1c40f;
-  margin: 0;
-  font-size: 28px;
-  text-shadow: 0 0 10px #f39c12, 0 0 20px #e67e22;
-  letter-spacing: 2px;
-  font-family: 'Press Start 2P', cursive;
-}
-
-/* ====================
-   Canvas del juego
-   ==================== */
-.canvas-container {
-  flex: 3;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(145deg, #1a2a1a, #0d1f0d);
-  box-shadow: inset 0 0 40px rgba(0, 255, 100, 0.4);
-  position: relative;
-}
-
-.canvas-container::before {
-  content: "";
+/* ======================
+   HUD GENERAL
+   ====================== */
+.hud {
   position: absolute;
-  inset: 10px;
-  border: 2px dashed rgba(255, 215, 0, 0.4);
-  border-radius: 10px;
-  pointer-events: none;
-}
-
-.canvas-container canvas {
-  border: 3px solid #2ecc71;
-  border-radius: 6px;
-  background: #145214; /* césped oscuro */
-  box-shadow: 0 0 20px rgba(0, 255, 100, 0.6);
-}
-
-/* ====================
-   Chat RPG estilo pergamino
-   ==================== */
-.chat-container {
-  flex: 1;
+  top: 15px;
+  left: 15px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a1a40, #0d0d20);
-  border-radius: 10px;
-  border: 3px solid #f1c40f;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-}
-
-.messages {
-  flex: 1;
-  padding: 12px;
-  overflow-y: auto;
-  background: rgba(255, 255, 255, 0.03);
-  font-size: 12px;
+  gap: 12px;
   font-family: 'Press Start 2P', cursive;
-  color: #ecf0f1;
+  z-index: 2000;
+  color: #fff;
 }
 
-.message {
-  margin-bottom: 12px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid #3498db;
+/* ======================
+   Barra de vida / stamina
+   ====================== */
+.health-bar {
+  width: 250px;
+  height: 24px;
+  border: 3px solid #f1c40f;
   border-radius: 8px;
-  box-shadow: inset 0 0 5px rgba(52, 152, 219, 0.7);
+  background: rgba(0,0,0,0.6);
+  overflow: hidden;
+  box-shadow: 0 0 10px #f1c40f;
+}
+
+.health-fill {
+  height: 100%;
+  width: 100%; /* dinámico con JS */
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  transition: width 0.3s ease;
+  box-shadow: inset 0 0 8px #000, 0 0 12px #2ecc71;
+}
+
+/* ======================
+   Monedas / Lowcoins
+   ====================== */
+.coins-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.7);
+  padding: 6px 12px;
+  border: 2px solid #f1c40f;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.coins-display img {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 0 5px gold);
+}
+
+.coins-count {
+  color: gold;
+  font-size: 14px;
+  text-shadow: 0 0 5px gold, 0 0 10px orange;
+}
+
+/* ======================
+   Scoreboard deportivo
+   ====================== */
+.scoreboard {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: linear-gradient(135deg, #000428, #004e92);
+  border: 3px solid #f1c40f;
+  border-radius: 10px;
+  padding: 8px 20px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 0 15px #00f7ff, inset 0 0 10px rgba(0,0,0,0.8);
+  font-family: 'Press Start 2P', cursive;
+}
+
+.scoreboard span {
+  font-size: 16px;
+  margin: 0 10px;
+  text-shadow: 0 0 6px cyan, 0 0 12px #0ff;
+}
+
+.scoreboard .vs {
+  color: #f1c40f;
+  text-shadow: 0 0 8px #f39c12;
+}
+
+/* ======================
+   Inventario estilo cartas
+   ====================== */
+.inventory {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  background: rgba(0,0,0,0.6);
+  padding: 10px;
+  border: 3px solid #f1c40f;
+  border-radius: 12px;
+  box-shadow: 0 0 15px #f1c40f;
+}
+
+.inventory-slot {
+  width: 60px;
+  height: 80px;
+  border: 2px solid #3498db;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: #fff;
+  text-align: center;
+  box-shadow: inset 0 0 8px #3498db;
   transition: transform 0.2s;
 }
 
-.message:hover {
-  transform: scale(1.02);
-}
-
-.user-name {
-  font-weight: bold;
-  color: #00ffcc;
-  text-shadow: 0 0 5px #00ffcc;
-  margin-right: 6px;
-}
-
-.message-content {
-  color: #fff;
-}
-
-/* ====================
-   Input mensajes
-   ==================== */
-.message-form {
-  display: flex;
-  padding: 12px;
-  border-top: 2px solid #f1c40f;
-  background: rgba(255, 215, 0, 0.1);
-}
-
-.message-form input {
-  flex: 1;
-  padding: 10px;
-  border: 2px solid #f1c40f;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  font-family: 'Press Start 2P', cursive;
-}
-
-.message-form button {
-  padding: 10px 15px;
-  background: #00cc66;
-  color: #fff;
-  border: 2px solid #f1c40f;
-  border-radius: 6px;
-  font-weight: bold;
-  font-family: 'Press Start 2P', cursive;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.message-form button:hover {
-  background: #009944;
+.inventory-slot:hover {
+  transform: scale(1.05);
+  border-color: #2ecc71;
+  box-shadow: 0 0 10px #2ecc71;
 }
