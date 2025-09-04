@@ -128,12 +128,11 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       spriteY,
       spriteWidth,
       spriteHeight,
-      x - spriteWidth/2,  // Centrar el sprite en la posición x
-      y - spriteHeight/2, // Centrar el sprite en la posición y
-      spriteWidth,
-      spriteHeight
-    );
-
+       x - 32,             // Posición X (centrado en 64px)
+  y - 32,             // Posición Y (centrado en 64px)
+  64,                 // Nuevo ancho de visualización
+  64                  // Nuevo alto de visualización
+);
     // Dibujar nombre de usuario
     ctx.fillStyle = "#fff";
     ctx.font = "14px Arial";
