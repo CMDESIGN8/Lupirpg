@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../styles/CommonRoom.css";
 
-// Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
 import playerSprite from "../assets/player.png";
 import mapBackground from "../assets/map.png";
 
@@ -9,16 +8,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+
   const canvasRef = useRef(null);
   const requestRef = useRef();
   const channelRef = useRef(null);
+
   const keysPressed = useRef({});
-  const animationData = useRef({}); // Datos de animación sin estado
+  const animationData = useRef({});
 
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame
+  const animationSpeed = 120;
 
   const directionMap = {
     down: 0,
@@ -97,7 +98,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [supabaseClient, currentUser]);
 
   // ========================
-  // 🎮 Render Canvas
+  // 🎮 Canvas
   // ========================
   const spriteImage = useRef(new Image());
   const mapImage = useRef(new Image());
@@ -150,7 +151,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   };
 
   // ========================
-  // 🔄 Animación + Movimiento
+  // 🔄 Loop de Animación + Movimiento
   // ========================
   const animate = () => {
     const canvas = canvasRef.current;
@@ -162,22 +163,27 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     if (me) {
       let { x, y, direction } = me;
       const speed = 2;
+      let moving = false;
 
       if (keysPressed.current["ArrowUp"]) {
         y -= speed;
         direction = "up";
+        moving = true;
       }
       if (keysPressed.current["ArrowDown"]) {
         y += speed;
         direction = "down";
+        moving = true;
       }
       if (keysPressed.current["ArrowLeft"]) {
         x -= speed;
         direction = "left";
+        moving = true;
       }
       if (keysPressed.current["ArrowRight"]) {
         x += speed;
         direction = "right";
+        moving = true;
       }
 
       x = Math.max(spriteWidth / 2, Math.min(x, 800 - spriteWidth / 2));
@@ -191,15 +197,17 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       if (channelRef.current) {
         channelRef.current.track(updatedUser);
       }
-    }
 
-    users.forEach((user) => {
-      const animData = animationData.current[user.id];
-      if (animData && animData.moving && now - animData.lastUpdate > animationSpeed) {
-        animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
-        animData.lastUpdate = now;
+      const animData = animationData.current[currentUser.id];
+      if (animData) {
+        animData.moving = moving;
+        if (moving && now - animData.lastUpdate > animationSpeed) {
+          animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
+          animData.lastUpdate = now;
+        }
+        if (!moving) animData.frameIndex = 0;
       }
-    });
+    }
 
     drawRoom(ctx);
     requestRef.current = requestAnimationFrame(animate);
@@ -218,29 +226,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
         e.preventDefault();
         keysPressed.current[e.key] = true;
-
-        if (animationData.current[currentUser.id]) {
-          animationData.current[currentUser.id].moving = true;
-          animationData.current[currentUser.id].direction = getDirectionFromKey(e.key);
-        }
       }
     };
 
     const handleKeyUp = (e) => {
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
         keysPressed.current[e.key] = false;
-
-        const noKeysPressed = !Object.values(keysPressed.current).some((val) => val);
-        if (noKeysPressed && animationData.current[currentUser.id]) {
-          animationData.current[currentUser.id].moving = false;
-          animationData.current[currentUser.id].frameIndex = 0;
-
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
-            )
-          );
-        }
       }
     };
 
@@ -251,22 +242,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [users, currentUser]);
-
-  const getDirectionFromKey = (key) => {
-    switch (key) {
-      case "ArrowUp":
-        return "up";
-      case "ArrowDown":
-        return "down";
-      case "ArrowLeft":
-        return "left";
-      case "ArrowRight":
-        return "right";
-      default:
-        return "down";
-    }
-  };
+  }, []);
 
   // ========================
   // 💬 Chat
