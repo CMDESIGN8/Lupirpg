@@ -13,6 +13,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const requestRef = useRef();
   const channelRef = useRef(null);
   const lastUpdateRef = useRef(0);
+  const keysPressed = useRef({});
 
   const spriteWidth = 32;
   const spriteHeight = 48;
@@ -54,7 +55,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             y,
             direction: "down",
             frameIndex: 0,
-            lastFrameUpdate: Date.now()
+            lastFrameUpdate: Date.now(),
+            moving: false // Añadir propiedad moving
           });
         }
       });
@@ -81,11 +83,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   // ========================
   // 🎮 Render Canvas
   // ========================
-  const spriteImage = new Image();
-  spriteImage.src = playerSprite;
+  const spriteImage = useRef(new Image());
+  const mapImage = useRef(new Image());
 
-  const mapImage = new Image();
-  mapImage.src = mapBackground;
+  useEffect(() => {
+    spriteImage.current.src = playerSprite;
+    mapImage.current.src = mapBackground;
+  }, []);
 
   const drawAvatar = (ctx, user) => {
     const { x, y, name, direction = "down", frameIndex = 0 } = user;
@@ -96,7 +100,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
     // Dibujar el frame correcto del spritesheet
     ctx.drawImage(
-      spriteImage,
+      spriteImage.current,
       spriteX,
       spriteY,
       spriteWidth,
@@ -121,8 +125,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     ctx.clearRect(0, 0, width, height);
 
     // Fondo con mapa
-    if (mapImage.complete) {
-      ctx.drawImage(mapImage, 0, 0, width, height);
+    if (mapImage.current.complete) {
+      ctx.drawImage(mapImage.current, 0, 0, width, height);
     } else {
       ctx.fillStyle = "#222";
       ctx.fillRect(0, 0, width, height);
@@ -132,7 +136,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     users.forEach((user) => drawAvatar(ctx, user));
   };
 
-  const animate = (timestamp) => {
+  const animate = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -144,12 +148,18 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     if (now - lastUpdateRef.current > animationSpeed) {
       lastUpdateRef.current = now;
       
-      // Actualizar frameIndex para todos los usuarios
+      // Solo actualizar frameIndex para usuarios que se están moviendo
       setUsers(prevUsers => 
-        prevUsers.map(user => ({
-          ...user,
-          frameIndex: (user.frameIndex + 1) % framesPerDirection
-        }))
+        prevUsers.map(user => {
+          // Si el usuario es el actual y tiene teclas presionadas, está moviéndose
+          const isMoving = user.id === currentUser.id && 
+            Object.values(keysPressed.current).some(val => val);
+            
+          return {
+            ...user,
+            frameIndex: isMoving ? (user.frameIndex + 1) % framesPerDirection : 0
+          };
+        })
       );
     }
     
@@ -165,60 +175,83 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   // 🕹️ Movimiento
   // ========================
   useEffect(() => {
-    const handleKey = async (e) => {
-      const user = users.find((u) => u.id === currentUser.id);
-      if (!user) return;
+    const handleKeyDown = async (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        keysPressed.current[e.key] = true;
+        
+        const user = users.find((u) => u.id === currentUser.id);
+        if (!user) return;
 
-      let { x, y } = user;
-      let direction = user.direction;
+        let { x, y } = user;
+        let direction = user.direction;
 
-      switch (e.key) {
-        case "ArrowUp":
-          y -= 4;
-          direction = "up";
-          break;
-        case "ArrowDown":
-          y += 4;
-          direction = "down";
-          break;
-        case "ArrowLeft":
-          x -= 4;
-          direction = "left";
-          break;
-        case "ArrowRight":
-          x += 4;
-          direction = "right";
-          break;
-        default:
-          return;
-      }
+        switch (e.key) {
+          case "ArrowUp":
+            y -= 4;
+            direction = "up";
+            break;
+          case "ArrowDown":
+            y += 4;
+            direction = "down";
+            break;
+          case "ArrowLeft":
+            x -= 4;
+            direction = "left";
+            break;
+          case "ArrowRight":
+            x += 4;
+            direction = "right";
+            break;
+          default:
+            return;
+        }
 
-      // Limitar movimiento dentro del canvas
-      x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
-      y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
+        // Limitar movimiento dentro del canvas
+        x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
+        y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
 
-      // Actualizar usuario
-      const updatedUser = {
-        ...user,
-        x,
-        y,
-        direction,
-        lastFrameUpdate: Date.now()
-      };
+        // Actualizar usuario
+        const updatedUser = {
+          ...user,
+          x,
+          y,
+          direction,
+          lastFrameUpdate: Date.now(),
+          moving: true
+        };
 
-      // Estado local
-      setUsers((prev) =>
-        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-      );
+        // Estado local
+        setUsers((prev) =>
+          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+        );
 
-      // Estado remoto
-      if (channelRef.current) {
-        await channelRef.current.track(updatedUser);
+        // Estado remoto
+        if (channelRef.current) {
+          await channelRef.current.track(updatedUser);
+        }
       }
     };
 
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    const handleKeyUp = (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        keysPressed.current[e.key] = false;
+        
+        // Cuando se suelta la tecla, resetear a frame 0
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === currentUser.id ? { ...user, frameIndex: 0, moving: false } : user
+          )
+        );
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [users, currentUser]);
 
   // ========================
