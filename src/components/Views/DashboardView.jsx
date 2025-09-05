@@ -383,7 +383,7 @@ const DashboardView = ({
       </div>
 
       {/* Tarjeta derecha: Próximo Partido */}
-      <div className="club-match-card">
+      <div className="player-card">
         <h3 className="match-title">
           Próximo Partido: {playerData.clubs.name || "Lupi FC"} vs Rivales FC
         </h3>
