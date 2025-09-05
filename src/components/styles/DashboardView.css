@@ -1,0 +1,182 @@
+/* Estilos para la tarjeta de club */
+.club-card {
+  background: linear-gradient(135deg, #1a1f2d 0%, #252a38 100%);
+  border: 1px solid #394b61;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.club-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+  z-index: 1;
+}
+
+.club-banner {
+  text-align: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #394b61;
+}
+
+.club-name {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.club-level {
+  font-size: 0.9rem;
+  color: #96ceb4;
+}
+
+.club-description {
+  margin-bottom: 15px;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  color: #b8c2cc;
+}
+
+.club-members {
+  margin-bottom: 20px;
+}
+
+.club-members h4 {
+  color: #ff6b6b;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.members-list {
+  display: grid;
+  gap: 8px;
+}
+
+.member-item {
+  background: rgba(57, 75, 97, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.member-name {
+  color: #e0e0e0;
+}
+
+.next-match {
+  background: rgba(57, 75, 97, 0.3);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #455a74;
+}
+
+.next-match h4 {
+  color: #45b7d1;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.next-match p {
+  color: #b8c2cc;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.challenges-table {
+  display: grid;
+  gap: 12px;
+}
+
+.challenge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(33, 37, 48, 0.6);
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #455a74;
+}
+
+.challenge-info {
+  flex: 1;
+}
+
+.challenge-name {
+  display: block;
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  margin-bottom: 3px;
+}
+
+.challenge-progress {
+  display: block;
+  font-size: 0.8rem;
+  color: #96ceb4;
+}
+
+.contribute-btn {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.contribute-btn:hover {
+  background: linear-gradient(135deg, #45b7d1 0%, #3498db 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Ajustes responsivos */
+@media (max-width: 1200px) {
+  .challenge-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .contribute-btn {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .club-card {
+    padding: 15px;
+  }
+  
+  .club-name {
+    font-size: 1.2rem;
+  }
+  
+  .challenge-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .contribute-btn {
+    align-self: stretch;
+    text-align: center;
+  }
+}

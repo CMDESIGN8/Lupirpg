@@ -297,6 +297,73 @@ const DashboardView = ({
           </div>
         </div>
 
+         {/* Nueva sección: Club */}
+        {playerData.clubs && (
+          <div className="club-card">
+            <div className="card-header">
+              <h2>TU CLUB</h2>
+              <div className="header-line"></div>
+            </div>
+            
+            <div className="club-info">
+              <div className="club-banner">
+                <h3 className="club-name">{playerData.clubs.name}</h3>
+                <div className="club-level">Nivel de Club: {playerData.clubs.level || 8}</div>
+              </div>
+              
+              <div className="club-description">
+                <p>Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.</p>
+              </div>
+              
+              <div className="club-members">
+  <h4>Miembros Conectados: {playerData.clubs.member_count || 12}</h4>
+  <div className="members-list">
+    <div className="member-item">
+      <span className="member-name">{playerData.username} (Tú)</span>
+    </div>
+    {/* Aquí podrías mapear miembros reales si los tienes disponibles */}
+    {playerData.clubs.members && playerData.clubs.members.slice(0, 4).map((member, index) => (
+      <div key={index} className="member-item">
+        <span className="member-name">{member.username}</span>
+      </div>
+    ))}
+  </div>
+</div>
+              
+              <div className="next-match">
+                <h4>Próximo Partido: {playerData.clubs.name} vs Rivales FC</h4>
+                <p>¡La colaboración es clave! Completa estos desafíos con tu club durante el partido.</p>
+                
+                <div className="challenges-table">
+                  <div className="challenge-row">
+                    <div className="challenge-info">
+                      <span className="challenge-name">Realizar 250 pases de club</span>
+                      <span className="challenge-progress">112/250</span>
+                    </div>
+                    <button className="contribute-btn">Contribuir +10</button>
+                  </div>
+                  
+                  <div className="challenge-row">
+                    <div className="challenge-info">
+                      <span className="challenge-name">Correr 100km acumulados</span>
+                      <span className="challenge-progress">45/100</span>
+                    </div>
+                    <button className="contribute-btn">Contribuir +5</button>
+                  </div>
+                  
+                  <div className="challenge-row">
+                    <div className="challenge-info">
+                      <span className="challenge-name">Lograr 50 recuperaciones</span>
+                      <span className="challenge-progress">15/50</span>
+                    </div>
+                    <button className="contribute-btn">Contribuir +2</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Derecha - Acciones rápidas */}
         <div className="actions-card">
           <div className="card-header">
