@@ -402,7 +402,7 @@ const DashboardView = ({
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: "45%" }}></div>
             </div>
-            <button className="action-btn primary">Contribuir +10</button>
+            <button className="contribute-btn">Contribuir +10</button>
           </div>
       
 
