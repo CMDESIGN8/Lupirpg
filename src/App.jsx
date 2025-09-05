@@ -158,20 +158,45 @@ const App = () => {
 };
 
   const checkProfile = async (userId) => {
-    setLoading(true);
-    try {
-      const { data: player, error: playerError } = await supabaseClient
-        .from('players')
-        .select('*, clubs(id, name, description)')
-        .eq('id', userId)
-        .single();
+  setLoading(true);
+  try {
+    const { data: player, error: playerError } = await supabaseClient
+      .from('players')
+      .select('*, clubs(id, name, description, owner_id)')
+      .eq('id', userId)
+      .single();
 
-      if (playerError && playerError.code === "PGRST116") {
-        setView('create_character');
-        setLoading(false);
-        return;
+    if (playerError && playerError.code === "PGRST116") {
+      setView('create_character');
+      setLoading(false);
+      return;
+    }
+    if (playerError) throw playerError;
+
+    // Obtener miembros del club si tiene uno
+    let clubMembers = [];
+    let clubStats = {
+      average_level: 1,
+      member_count: 0,
+      total_experience: 0
+    };
+
+    if (player.clubs) {
+      const { data: members, error: membersError } = await supabaseClient
+        .from('players')
+        .select('username, level, experience, online_status')
+        .eq('club_id', player.clubs.id)
+        .order('level', { ascending: false });
+
+      if (!membersError) {
+        clubMembers = members;
+        clubStats = {
+          average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
+          member_count: members.length,
+          total_experience: members.reduce((sum, m) => sum + m.experience, 0)
+        };
       }
-      if (playerError) throw playerError;
+    }
 
       const { data: skills, error: skillsError } = await supabaseClient
         .from('player_skills')
@@ -199,15 +224,21 @@ const App = () => {
       setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
       setAvailablePoints(player.skill_points);
       setLupiCoins(player.lupi_coins);
-      setPlayerData({ ...player, skills: skills || [] });
-      setCurrentClub(player.clubs);
-      setView('dashboard');
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setPlayerData({ 
+      ...player, 
+      skills: skills || [],
+      club_members: clubMembers,
+      club_stats: clubStats
+    });
+    
+    setCurrentClub(player.clubs ? { ...player.clubs, ...clubStats } : null);
+    setView('dashboard');
+  } catch (err) {
+    showMessage(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchLeaderboard = async () => {
     setLoading(true);
