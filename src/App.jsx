@@ -1051,7 +1051,7 @@ const handleCompleteMission = async (mission) => {
         marketItems, handleBuyItem, handleSellItem, itemToSell,
         messages, messagesEndRef, handleSendMessage, newMessage, setNewMessage,
         clubs, currentClub, clubMembers, handleViewClubDetails, handleJoinClub, handleLeaveClub,
-        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient, session,handleDropItem,
+        handleCreateClub, newClubName, setNewClubName, newClubDescription, setNewClubDescription, handleLogout, supabaseClient,handleDropItem,
     };
 
     switch (view) {
@@ -1072,9 +1072,9 @@ const handleCompleteMission = async (mission) => {
       case 'market': return <MarketView {...props} />;
       case 'sell_item': return <SellItemView {...props} />;
       case 'chat': return <ChatView {...props} />;
-      case 'clubs': return <ClubsView {...props} />;
-      case 'create_club': return <CreateClubView {...props} />;
-      case 'club_details': return <ClubDetailsView {...props} />;
+case 'clubs': return <ClubsSystem playerData={playerData} setPlayerData={setPlayerData} />;
+     // case 'create_club': return <CreateClubView {...props} />;
+      // case 'club_details': return <ClubDetailsView {...props} />;
       default: return <DashboardView {...props} />;
     }
   };

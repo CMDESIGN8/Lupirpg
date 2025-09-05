@@ -1,10 +1,30 @@
 import { useState, useEffect } from 'react';
+import { 
+  UserPlus, 
+  Users, 
+  LogIn, 
+  ChevronDown, 
+  Shield, 
+  Trophy, 
+  Swords, 
+  Target,
+  LogOut,
+  Crown,
+  BarChart3,
+  Calendar
+} from 'lucide-react';
+import ThemedButton from '../UI/ThemedButton';
+import MessageDisplay from '../UI/MessageDisplay';
+
+// Importa las vistas que ya tienes
 import ClubsView from './ClubsView';
 import ClubDetailsView from './ClubDetailsView';
+import CreateClubView from './CreateClubView';
+
+// Crea las nuevas vistas
 import ClubMissionsView from './ClubMissionsView';
 import ClubRankingsView from './ClubRankingsView';
 import ClubMatchesView from './ClubMatchesView';
-import CreateClubView from './CreateClubView';
 
 const ClubsSystem = ({ playerData, setPlayerData }) => {
   const [view, setView] = useState('clubs');
@@ -16,12 +36,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
   const [scheduledMatches, setScheduledMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
-    const [playerData, setPlayerData] = useState({
-  // tus datos de jugador aquí
-  club_id: null,
-  username: 'Lupi',
-  level: 15
-});
 
   // Simular carga de datos
   useEffect(() => {
@@ -39,8 +53,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
       fetchScheduledMatches();
     }
   }, [view]);
-
-
 
   const fetchClubs = () => {
     setLoading(true);
