@@ -330,74 +330,119 @@ const DashboardView = ({
           </div>
         </div>
       </div>
-{/* Nueva sección: Club */}
-        {playerData.clubs && (
-          <div className="club-card">
-            <div className="card-header">
-              <h2>TU CLUB</h2>
-              <div className="header-line"></div>
-            </div>
-            
-            <div className="club-info">
-              <div className="club-banner">
-                <h3 className="club-name">{playerData.clubs.name}</h3>
-                <div className="club-level">Nivel de Club: {playerData.clubs.level || 8}</div>
-              </div>
-              
-              <div className="club-description">
-                <p>Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.</p>
-              </div>
-              
-              <div className="club-members">
-  <h4>Miembros Conectados: {playerData.clubs.member_count || 12}</h4>
-  <div className="members-list">
-    <div className="member-item">
-      <span className="member-name">{playerData.username} (Tú)</span>
+
+  {/* Nueva sección: Club */}
+       {playerData.clubs && (
+  <div className="club-card">
+    <div className="card-header">
+      <h2>TU CLUB</h2>
+      <div className="header-line"></div>
     </div>
-    {/* Aquí podrías mapear miembros reales si los tienes disponibles */}
-    {playerData.clubs.members && playerData.clubs.members.slice(0, 4).map((member, index) => (
-      <div key={index} className="member-item">
-        <span className="member-name">{member.username}</span>
+    
+    <div className="club-info">
+      <div className="club-banner">
+        <h3 className="club-name">{playerData.clubs.name}</h3>
+        <div className="club-level">Nivel de Club: {playerData.clubs.level || 8}</div>
       </div>
-    ))}
-  </div>
-</div>
-              
-              <div className="next-match">
-                <h4>Próximo Partido: {playerData.clubs.name} vs Rivales FC</h4>
-                <p>¡La colaboración es clave! Completa estos desafíos con tu club durante el partido.</p>
-                
-                <div className="challenges-table">
-                  <div className="challenge-row">
-                    <div className="challenge-info">
-                      <span className="challenge-name">Realizar 250 pases de club</span>
-                      <span className="challenge-progress">112/250</span>
-                    </div>
-                    <button className="contribute-btn">Contribuir +10</button>
-                  </div>
-                  
-                  <div className="challenge-row">
-                    <div className="challenge-info">
-                      <span className="challenge-name">Correr 100km acumulados</span>
-                      <span className="challenge-progress">45/100</span>
-                    </div>
-                    <button className="contribute-btn">Contribuir +5</button>
-                  </div>
-                  
-                  <div className="challenge-row">
-                    <div className="challenge-info">
-                      <span className="challenge-name">Lograr 50 recuperaciones</span>
-                      <span className="challenge-progress">15/50</span>
-                    </div>
-                    <button className="contribute-btn">Contribuir +2</button>
-                  </div>
-                </div>
-              </div>
+      
+      <div className="club-description">
+        <p>Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.</p>
+      </div>
+      
+      <div className="club-members">
+        <h4>Miembros Conectados: {playerData.clubs.member_count || 12}</h4>
+        <div className="members-list">
+          <div className="member-item">
+            <span className="member-name">1. {playerData.username} (Tú)</span>
+          </div>
+          <div className="member-item">
+            <span className="member-name">2. Pérez</span>
+          </div>
+          <div className="member-item">
+            <span className="member-name">3. González</span>
+          </div>
+          <div className="member-item">
+            <span className="member-name">4. Rodríguez</span>
+          </div>
+          <div className="member-item">
+            <span className="member-name">5. Fernandez</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="next-match">
+        <h4>Próximo Partido: {playerData.clubs.name} vs Rivales FC</h4>
+        <p>¡La colaboración es clave! Completa estos desafíos con tu club durante el partido.</p>
+        
+        <div className="challenges-table">
+          <div className="challenge-row">
+            <div className="challenge-info">
+              <span className="challenge-name">Realizar 250 pases de club</span>
+              <span className="challenge-progress">112/250</span>
+            </div>
+            <button className="contribute-btn">Contribuir +10</button>
+          </div>
+          
+          <div className="challenge-row">
+            <div className="challenge-info">
+              <span className="challenge-name">Correr 100km acumulados</span>
+              <span className="challenge-progress">45/100</span>
+            </div>
+            <button className="contribute-btn">Contribuir +5</button>
+          </div>
+          
+          <div className="challenge-row">
+            <div className="challenge-info">
+              <span className="challenge-name">Lograr 50 recuperaciones</span>
+              <span className="challenge-progress">15/50</span>
+            </div>
+            <button className="contribute-btn">Contribuir +2</button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="club-store">
+        <h4>Tienda de Items</h4>
+        <div className="store-items">
+          <div className="store-item">
+            <div className="item-info">
+              <span className="item-name">Botines de Velocidad</span>
+              <span className="item-stats">+5 Velocidad</span>
+            </div>
+            <div className="item-action">
+              <span className="item-price">● 800</span>
+              <button className="buy-btn">Comprar</button>
             </div>
           </div>
-        )}
-        
-      {/* Panel de navegación inferior */}
+          
+          <div className="store-item">
+            <div className="item-info">
+              <span className="item-name">Baston de Precisión</span>
+              <span className="item-stats">+5 Pase</span>
+            </div>
+            <div className="item-action">
+              <span className="item-price">● 650</span>
+              <button className="buy-btn">Comprar</button>
+            </div>
+          </div>
+          
+          <div className="store-item">
+            <div className="item-info">
+              <span className="item-name">Vendas de Resistencia</span>
+              <span className="item-stats">+4 Resistencia</span>
+            </div>
+            <div className="item-action">
+              <span className="item-price">● 700</span>
+              <button className="buy-btn">Comprar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}    
+    
+     {/* Panel de navegación inferior */}
       <div className="nav-panel">
         <div className="nav-grid">
           <button className="nav-btn" onClick={() => { 
