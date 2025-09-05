@@ -2,6 +2,8 @@ import { UserPlus, Users, LogIn, ChevronDown, Shield } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 
+import '../styles/ClubsView.css';
+
 const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, loading, message, setView }) => (
   <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
     <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
