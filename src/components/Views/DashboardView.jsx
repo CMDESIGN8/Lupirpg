@@ -415,7 +415,6 @@ const DashboardView = ({
             </div>
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: "45%" }}></div>
-              <div className="xp-glow"></div>
             </div>
             <button className="contribute-btn">Contribuir +5</button>
           </div>
@@ -428,7 +427,6 @@ const DashboardView = ({
             </div>
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: "30%" }}></div>
-              <div className="xp-glow"></div>
             </div>
             <button className="contribute-btn">Contribuir +2</button>
           </div>
