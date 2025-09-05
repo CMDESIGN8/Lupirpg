@@ -16,19 +16,16 @@
   text-transform: uppercase;
 }
 
+/* Contenedor principal con dos columnas */
 .club-container {
   display: grid;
   grid-template-columns: 1fr 2fr; /* izquierda: info, derecha: desafíos */
   gap: 20px;
-  width: 100%;              /* ✅ ocupa todo el ancho disponible */
-  max-width: 100%;          /* ✅ elimina el límite */
-  margin: 20px 0;           /* ✅ solo margen arriba y abajo */
-  padding: 0 20px;          /* ✅ espacio lateral para que no pegue contra los bordes */
+  width: 100%;              
+  max-width: 100%;          
+  margin: 20px 0;           
+  padding: 0 20px;          
   box-sizing: border-box;
-  background: rgba(0, 20, 40, 0.7);
-  border: 1px solid #00ccff;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
 }
 
 /* Tarjetas */
@@ -36,10 +33,18 @@
 .club-match-card {
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 12px;       /* ✅ bordes un poco más suaves */
-  padding: 30px;             /* ✅ más espacio interno */
+  border-radius: 12px;
+  padding: 30px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 }
+
+/* ✅ Responsive: en pantallas chicas pasa a 1 columna */
+@media (max-width: 900px) {
+  .club-container {
+    grid-template-columns: 1fr; /* una sola columna */
+  }
+}
+
 
 /* Info Club */
 .club-name {
