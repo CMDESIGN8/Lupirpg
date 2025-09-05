@@ -16,12 +16,10 @@ import {
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 
-// Importa las vistas que ya tienes
+// Importa las vistas
 import ClubsView from './ClubsView';
 import ClubDetailsView from './ClubDetailsView';
 import CreateClubView from './CreateClubView';
-
-// Crea las nuevas vistas
 import ClubMissionsView from './ClubMissionsView';
 import ClubRankingsView from './ClubRankingsView';
 import ClubMatchesView from './ClubMatchesView';
