@@ -211,12 +211,13 @@
     border-image: initial;
     border-radius: 8px;
     transition: 0.2s;
-  background: linear-gradient(135deg, #0077ff, #0044aa);
-  color: white;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+  color: var(--lupi-darker);
+  transform: translateY(-1px);
 }
 
 .contribute-btn:hover {
-  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-  color: var(--lupi-darker);
+   background: linear-gradient(135deg, #0077ff, #0044aa);
+  color: white;
   transform: translateY(-1px);
 }
