@@ -335,7 +335,7 @@ const DashboardView = ({
 {playerData.clubs && (
   <section className="club-section">
     <div className='game-header'>
-    <h2 className="game-title">TU CLUB</h2>
+    <h2 className="club-title">TU CLUB</h2>
     <div class="title-underline"></div>
     </div>
     <p className="club-description">
