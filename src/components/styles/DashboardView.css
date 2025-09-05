@@ -80,11 +80,11 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.25rem;
-  color: rgb(0, 140, 255);
+  background: linear-gradient(90deg, rgb(0, 204, 255), rgb(0, 102, 255)) text;
 }
 
 .club-level-text {
-  color: rgb(0, 140, 255);
+  color: rgb(0, 153, 255);
   font-weight: bold;
 }
 
@@ -177,7 +177,7 @@
   align-items: center;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: rgb(136, 221, 255);
 }
 
 .progress-bar {
