@@ -297,7 +297,40 @@ const DashboardView = ({
           </div>
         </div>
 
-         {/* Nueva sección: Club */}
+        {/* Derecha - Acciones rápidas */}
+        <div className="actions-card">
+          <div className="card-header">
+            <h2>ACCIÓN RÁPIDA</h2>
+            <div className="header-line"></div>
+          </div>
+          
+          <div className="action-buttons">
+            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
+              <span className="nav-icon">⚡</span>
+              <span>Entrenar</span>
+            </button>
+            
+            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
+              <span className="nav-icon">🔍</span>
+              <span>Buscar Objeto</span>
+            </button>
+            
+            <button className="action-btn secondary" onClick={() => { 
+              fetchMissions(); 
+              setView('missions'); 
+            }} disabled={loading}>
+              <span className="nav-icon">⚽</span>
+              <span>Misiones</span>
+            </button>
+
+           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+  <span className="nav-icon">🏠</span>
+  <span>SALA COMUN</span>
+</button>
+          </div>
+        </div>
+      </div>
+{/* Nueva sección: Club */}
         {playerData.clubs && (
           <div className="club-card">
             <div className="card-header">
@@ -363,42 +396,7 @@ const DashboardView = ({
             </div>
           </div>
         )}
-
-        {/* Derecha - Acciones rápidas */}
-        <div className="actions-card">
-          <div className="card-header">
-            <h2>ACCIÓN RÁPIDA</h2>
-            <div className="header-line"></div>
-          </div>
-          
-          <div className="action-buttons">
-            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
-              <span className="nav-icon">⚡</span>
-              <span>Entrenar</span>
-            </button>
-            
-            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
-              <span className="nav-icon">🔍</span>
-              <span>Buscar Objeto</span>
-            </button>
-            
-            <button className="action-btn secondary" onClick={() => { 
-              fetchMissions(); 
-              setView('missions'); 
-            }} disabled={loading}>
-              <span className="nav-icon">⚽</span>
-              <span>Misiones</span>
-            </button>
-
-           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
-  <span className="nav-icon">🏠</span>
-  <span>SALA COMUN</span>
-</button>
-
-          </div>
-        </div>
-      </div>
-
+        
       {/* Panel de navegación inferior */}
       <div className="nav-panel">
         <div className="nav-grid">
