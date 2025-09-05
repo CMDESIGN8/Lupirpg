@@ -1,3 +1,5 @@
+@import '../../styles/variables.css';
+
 /* Sección Club */
 .club-section {
   margin-bottom: 3rem;
@@ -214,6 +216,7 @@
 }
 
 .contribute-btn:hover {
-  background: linear-gradient(135deg, #45b7d1 0%, #3498db 100%);
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+  color: var(--lupi-darker);
   transform: translateY(-1px);
 }
