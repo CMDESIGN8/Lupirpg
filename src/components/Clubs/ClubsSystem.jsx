@@ -5,6 +5,10 @@ import CreateClubView from './CreateClubView';
 import ClubMissionsView from './ClubMissionsView';
 import ClubRankingsView from './ClubRankingsView';
 import ClubMatchesView from './ClubMatchesView';
+import ThemedButton from '../UI/ThemedButton';
+import MessageDisplay from '../UI/MessageDisplay';
+
+
 
 const ClubsSystem = ({ playerData, setPlayerData }) => {
   const [view, setView] = useState('clubs');
@@ -104,7 +108,7 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
     setLoading(true);
     setTimeout(() => {
       setPlayerData({ ...playerData, club_id: clubId });
-      setMessage({ text: '¡Te has unido al club exitosamente!', type: 'success' });
+      showMessage('¡Te has unido al club exitosamente!', 'success');
       setLoading(false);
       setView('club_details');
       fetchClubDetails(clubId);
@@ -180,15 +184,17 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
       );
     default:
       return (
-        <ClubsView
-          clubs={clubs}
-          handleViewClubDetails={handleViewClubDetails}
-          handleJoinClub={handleJoinClub}
-          playerData={playerData}
-          loading={loading}
-          message={message}
-          setView={setView}
-        />
+        <div>
+          <MessageDisplay message={message} />
+          <ClubsView
+            clubs={clubs}
+            handleViewClubDetails={handleViewClubDetails}
+            handleJoinClub={handleJoinClub}
+            playerData={playerData}
+            loading={loading}
+            setView={setView}
+          />
+        </div>
       );
   }
 };
