@@ -335,17 +335,15 @@ const DashboardView = ({
 {playerData.clubs && (
   <section className="club-section">
     <h2 className="club-title">TU CLUB</h2>
-
+    <h3 className="club-description">
+          Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. 
+          Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
+        </h3>
     <div className="club-container">
       {/* Tarjeta izquierda: Info del Club */}
       <div className="club-info-card">
         <h3 className="club-name">{playerData.clubs.name || "Lupi FC"}</h3>
         <p className="club-level">Nivel de Club: {playerData.clubs.level || 8}</p>
-
-        <p className="club-description">
-          Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. 
-          Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
-        </p>
 
         <h4 className="club-members-title">
           Miembros Conectados: {playerData.clubs.member_count || 12}
