@@ -18,6 +18,8 @@ import { positions, sports, skillNames, initialSkillPoints } from './constants';
 import { supabaseClient } from './services/supabase'; // Importación correcta
 import LupiMiniGame from "./components/game/LupiMiniGame";
 import RewardChest from "./components/game/RewardChest";
+import ClubsSystem from './components/Clubs/ClubsSystem';
+
 
 const App = () => {
   const [session, setSession] = useState(null);
