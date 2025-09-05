@@ -1,4 +1,4 @@
-import { UserPlus, Users, LogIn, ChevronDown } from 'lucide-react';
+import { UserPlus, Users, LogIn, ChevronDown, Shield } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 
@@ -9,44 +9,21 @@ const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, l
       <MessageDisplay message={message} />
       {!playerData.club_id && (
         <div className="flex justify-end mb-4">
-          <ThemedButton 
-            onClick={() => setView('create_club')} 
-            icon={<UserPlus size={16} />} 
-            className="bg-green-600 hover:bg-green-500"
-          >
-            Crear Club
-          </ThemedButton>
+          <ThemedButton onClick={() => setView('create_club')} icon={<UserPlus size={16} />} className="bg-green-600 hover:bg-green-500">Crear Club</ThemedButton>
         </div>
       )}
       {loading ? <p className="text-center text-gray-500">Cargando clubes...</p> : (
         <div className="space-y-4">
           {clubs.length > 0 ? clubs.map(club => (
             <div key={club.id} className="bg-gray-100 p-4 rounded-lg shadow-inner border border-gray-300 flex justify-between items-center">
-              <div className="flex-1">
+              <div>
                 <h3 className="text-xl font-semibold text-blue-600">{club.name}</h3>
                 <p className="text-gray-700">{club.description}</p>
-                <div className="flex mt-2 text-sm text-gray-500">
-                  <span className="mr-4">Miembros: {club.members}</span>
-                  <span className="mr-4">Nivel: {club.level}</span>
-                  <span>Puntuación: {club.score}</span>
-                </div>
               </div>
               <div className="flex gap-2">
-                <ThemedButton 
-                  onClick={() => handleViewClubDetails(club)} 
-                  icon={<Users size={16} />}
-                >
-                  Ver
-                </ThemedButton>
+                <ThemedButton onClick={() => handleViewClubDetails(club)} icon={<Users size={16} />}>Ver</ThemedButton>
                 {!playerData.club_id && (
-                  <ThemedButton 
-                    onClick={() => handleJoinClub(club.id)} 
-                    disabled={loading} 
-                    icon={<LogIn size={16} />} 
-                    className="bg-green-600 hover:bg-green-500"
-                  >
-                    Unirse
-                  </ThemedButton>
+                  <ThemedButton onClick={() => handleJoinClub(club.id)} disabled={loading} icon={<LogIn size={16} />} className="bg-green-600 hover:bg-green-500">Unirse</ThemedButton>
                 )}
               </div>
             </div>
@@ -54,12 +31,7 @@ const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, l
         </div>
       )}
       <div className="flex justify-center mt-6">
-        <ThemedButton 
-          onClick={() => setView('dashboard')} 
-          icon={<ChevronDown size={20} />}
-        >
-          Volver
-        </ThemedButton>
+        <ThemedButton onClick={() => setView('dashboard')} icon={<ChevronDown size={20} />}>Volver</ThemedButton>
       </div>
     </div>
   </div>
