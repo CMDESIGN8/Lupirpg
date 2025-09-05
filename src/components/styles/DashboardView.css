@@ -197,6 +197,18 @@
 }
 
 .contribute-btn {
+  display: flex;
+    align-items: center;
+    font-weight: 700;
+    cursor: pointer;
+    gap: 12px;
+    padding: 15px;
+    border-width: initial;
+    border-style: none;
+    border-color: initial;
+    border-image: initial;
+    border-radius: 8px;
+    transition: 0.2s;
   background: linear-gradient(135deg, #0077ff, #0044aa);
   color: white;
 }
