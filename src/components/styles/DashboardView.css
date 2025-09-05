@@ -12,21 +12,25 @@
   text-transform: uppercase;
 }
 
-/* Contenedor principal */
 .club-container {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 2fr; /* izquierda: info, derecha: desafíos */
   gap: 20px;
+  width: 100%;              /* ✅ ocupa todo el ancho disponible */
+  max-width: 100%;          /* ✅ elimina el límite */
+  margin: 20px 0;           /* ✅ solo margen arriba y abajo */
+  padding: 0 20px;          /* ✅ espacio lateral para que no pegue contra los bordes */
+  box-sizing: border-box;
 }
 
 /* Tarjetas */
 .club-info-card,
 .club-match-card {
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 18px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;       /* ✅ bordes un poco más suaves */
+  padding: 30px;             /* ✅ más espacio interno */
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 }
 
 /* Info Club */
