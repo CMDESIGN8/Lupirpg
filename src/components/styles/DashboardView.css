@@ -8,11 +8,21 @@
 }
 
 .club-title {
-  font-size: 1.875rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #00aaff;
+  font-size: 2.2rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #00ccff, #0066ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
   text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.title-underline {
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, #00ccff, transparent);
+  margin-top: 5px;
 }
 
 .club-description {
