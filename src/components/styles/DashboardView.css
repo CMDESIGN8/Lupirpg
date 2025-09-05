@@ -2,6 +2,10 @@
 .club-section {
   max-width: 1100px;
   margin: 20px auto;
+  background: rgba(0, 20, 40, 0.7);
+  border: 1px solid #00ccff;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
 }
 
 .club-title {
@@ -21,6 +25,10 @@
   margin: 20px 0;           /* ✅ solo margen arriba y abajo */
   padding: 0 20px;          /* ✅ espacio lateral para que no pegue contra los bordes */
   box-sizing: border-box;
+  background: rgba(0, 20, 40, 0.7);
+  border: 1px solid #00ccff;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
 }
 
 /* Tarjetas */
