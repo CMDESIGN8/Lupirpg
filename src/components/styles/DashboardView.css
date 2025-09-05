@@ -81,18 +81,16 @@
   font-weight: bold;
   margin-bottom: 0.25rem;
   color: rgb(0, 140, 255);
-  text-shadow: rgb(0, 153, 255) 0px 0px 5px, rgb(0, 195, 255) 0px 0px 10px
 }
 
 .club-level-text {
-  color: rgb(251, 255, 0);
+  color: rgb(0, 140, 255);
   font-weight: bold;
 }
 
 .club-level-value {
   font-weight: 600;
   color: rgb(0, 255, 204);
-  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
 }
 
 /* Lista de miembros */
@@ -157,16 +155,20 @@
 }
 
 .challenge-item {
-  background: #f9fafb;
+  background: #13103ab3;
   padding: 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(0, 170, 255, .3);
 }
 
 .challenge-name {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #1f2937;
+  color: #fff;
+}
+
+.challenge span {
+  color: #b3b3ff;
 }
 
 .challenge-progress {
