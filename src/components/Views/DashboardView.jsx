@@ -343,7 +343,7 @@ const DashboardView = ({
     
     <div className="club-container">
       {/* Tarjeta izquierda: Info del Club */}
-      <div className="club-info-card">
+      <div className="player-card">
         <div className="club-header">
           <div className="club-logo">LFC</div>
           <div>
