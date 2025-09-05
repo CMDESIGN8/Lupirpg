@@ -1,127 +1,105 @@
-/* === Tarjeta principal estilo limpio === */
-.club-card {
+/* Contenedor principal con dos columnas */
+.club-container {
   display: grid;
-  grid-template-columns: 1fr 2fr; /* club a la izquierda, desafíos a la derecha */
+  grid-template-columns: 1fr 2fr; /* izquierda: info, derecha: desafíos */
   gap: 20px;
+  margin: 20px auto;
+  max-width: 1100px;
+}
+
+/* Tarjeta izquierda */
+.club-info-card {
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 20px;
-  color: #333;
-  margin-bottom: 20px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* === Banner club === */
-.club-banner {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 15px;
 }
 
 .club-name {
   font-size: 1.3rem;
   font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .club-level {
   font-size: 0.9rem;
-  color: #777;
+  color: #666;
+  margin-bottom: 15px;
 }
 
-/* === Descripción === */
 .club-description {
+  font-size: 0.9rem;
+  color: #444;
   margin-bottom: 15px;
   line-height: 1.4;
-  font-size: 0.9rem;
-  color: #555;
 }
 
-/* === Miembros === */
-.club-members h4 {
-  color: #222;
-  margin-bottom: 8px;
+.club-info-card h4 {
   font-size: 1rem;
   font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .members-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.member-item {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   font-size: 0.9rem;
   color: #444;
 }
 
-/* === Próximo partido === */
-.next-match {
-  background: #fafafa;
-  padding: 16px;
-  border-radius: 6px;
+/* Tarjeta derecha */
+.club-match-card {
+  background: #fff;
   border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.next-match h4 {
-  color: #333;
-  margin-bottom: 6px;
+.club-match-card h4 {
   font-size: 1rem;
   font-weight: 600;
+  margin-bottom: 6px;
 }
 
-.next-match p {
-  color: #666;
+.club-match-card p {
   font-size: 0.85rem;
-  margin-bottom: 12px;
-  line-height: 1.4;
+  color: #555;
+  margin-bottom: 15px;
 }
 
-/* === Retos === */
-.challenges-table {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.challenge-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* Retos */
+.challenge-block {
+  margin-bottom: 15px;
 }
 
 .challenge-info {
   display: flex;
   justify-content: space-between;
   font-size: 0.85rem;
-  color: #444;
-  font-weight: 500;
+  margin-bottom: 4px;
+  color: #333;
 }
 
-/* Barra de progreso estilo foto */
 .challenge-progress-bar {
-  position: relative;
   height: 6px;
   background: #eee;
   border-radius: 4px;
   overflow: hidden;
-  margin-top: 4px;
+  margin-bottom: 6px;
 }
 
 .challenge-progress-fill {
   height: 100%;
-  background: #4CAF50; /* verde */
+  background: #4CAF50;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-/* Botones */
+/* Botón */
 .contribute-btn {
-  align-self: flex-start;
   background: #f5f5f5;
   border: 1px solid #ddd;
   color: #333;

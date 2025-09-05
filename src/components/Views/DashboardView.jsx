@@ -333,78 +333,67 @@ const DashboardView = ({
 
   {/* Nueva sección: Club */}
        {playerData.clubs && (
-  <div className="club-card">
-    <div className="card-header">
-      <h2>TU CLUB</h2>
-      <div className="header-line"></div>
-    </div>
+  <div className="club-container">
+  {/* Tarjeta izquierda: Info del Club */}
+  <div className="club-info-card">
+    <h3 className="club-name">{playerData.clubs.name}</h3>
+    <div className="club-level">Nivel de Club: {playerData.clubs.level || 8}</div>
     
-    <div className="club-info">
-      <div className="club-banner">
-        <h3 className="club-name">{playerData.clubs.name}</h3>
-        <div className="club-level">Nivel de Club: {playerData.clubs.level || 8}</div>
-      </div>
-      
-      <div className="club-description">
-        <p>Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.</p>
-      </div>
-      
-      <div className="club-members">
-        <h4>Miembros Conectados: {playerData.clubs.member_count || 12}</h4>
-        <div className="members-list">
-          <div className="member-item">
-            <span className="member-name">1. {playerData.username} (Tú)</span>
-          </div>
-          <div className="member-item">
-            <span className="member-name">2. Pérez</span>
-          </div>
-          <div className="member-item">
-            <span className="member-name">3. González</span>
-          </div>
-          <div className="member-item">
-            <span className="member-name">4. Rodríguez</span>
-          </div>
-          <div className="member-item">
-            <span className="member-name">5. Fernandez</span>
-          </div>
-        </div>
-      </div>
-      
-      <div className="next-match">
-        <h4>Próximo Partido: {playerData.clubs.name} vs Rivales FC</h4>
-        <p>¡La colaboración es clave! Completa estos desafíos con tu club durante el partido.</p>
-        
-        <div className="challenges-table">
-          <div className="challenge-row">
-  <div className="challenge-info">
-    <span className="challenge-name">Realizar 250 pases de club</span>
-    <span className="challenge-progress">112/250</span>
+    <p className="club-description">
+      Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. 
+      Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
+    </p>
+
+    <h4>Miembros Conectados: {playerData.clubs.member_count || 12}</h4>
+    <ul className="members-list">
+      <li>1. {playerData.username} (Tú)</li>
+      <li>2. Pérez</li>
+      <li>3. González</li>
+      <li>4. Rodríguez</li>
+      <li>5. Fernandez</li>
+    </ul>
   </div>
-  <div className="challenge-progress-bar">
-    <div className="challenge-progress-fill" style={{ width: "45%" }}></div>
-  </div>
-  <button className="contribute-btn">Contribuir +10</button>
-</div>
-          
-          <div className="challenge-row">
-            <div className="challenge-info">
-              <span className="challenge-name">Correr 100km acumulados</span>
-              <span className="challenge-progress">45/100</span>
-            </div>
-            <button className="contribute-btn">Contribuir +5</button>
-          </div>
-          
-          <div className="challenge-row">
-            <div className="challenge-info">
-              <span className="challenge-name">Lograr 50 recuperaciones</span>
-              <span className="challenge-progress">15/50</span>
-            </div>
-            <button className="contribute-btn">Contribuir +2</button>
-          </div>
-        </div>
+
+  {/* Tarjeta derecha: Próximo Partido */}
+  <div className="club-match-card">
+    <h4>Próximo Partido: {playerData.clubs.name} vs Rivales FC</h4>
+    <p>¡La colaboración es clave! Completa estos desafíos con tu club durante el partido.</p>
+    
+    <div className="challenge-block">
+      <div className="challenge-info">
+        <span>Realizar 250 pases de club</span>
+        <span>112/250</span>
       </div>
+      <div className="challenge-progress-bar">
+        <div className="challenge-progress-fill" style={{ width: "45%" }}></div>
+      </div>
+      <button className="contribute-btn">Contribuir +10</button>
+    </div>
+
+    <div className="challenge-block">
+      <div className="challenge-info">
+        <span>Correr 100km acumulados</span>
+        <span>45/100</span>
+      </div>
+      <div className="challenge-progress-bar">
+        <div className="challenge-progress-fill" style={{ width: "45%" }}></div>
+      </div>
+      <button className="contribute-btn">Contribuir +5</button>
+    </div>
+
+    <div className="challenge-block">
+      <div className="challenge-info">
+        <span>Lograr 50 recuperaciones</span>
+        <span>15/50</span>
+      </div>
+      <div className="challenge-progress-bar">
+        <div className="challenge-progress-fill" style={{ width: "30%" }}></div>
+      </div>
+      <button className="contribute-btn">Contribuir +2</button>
     </div>
   </div>
+</div>
+
 )}    
     
      {/* Panel de navegación inferior */}
