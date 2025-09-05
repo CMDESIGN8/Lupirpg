@@ -333,11 +333,10 @@ const DashboardView = ({
 
   {/* Nueva sección: Club */}
 {playerData.clubs && (
-  <section className="club-section">
-    <div className='game-header'>
+ <section className="club-section">
+  <div class='player-card'>
     <h2 className="club-title">TU CLUB</h2>
     <div class="title-underline"></div>
-    </div>
     <p className="club-description">
       Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
     </p>
@@ -431,7 +430,8 @@ const DashboardView = ({
           </div>
         </div>
       </div>
-    </div>
+  </div>  
+  </div>
   </section>
 )}
     
