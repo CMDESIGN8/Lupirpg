@@ -1,22 +1,4 @@
 import { useState, useEffect } from 'react';
-import { 
-  UserPlus, 
-  Users, 
-  LogIn, 
-  ChevronDown, 
-  Shield, 
-  Trophy, 
-  Swords, 
-  Target,
-  LogOut,
-  Crown,
-  BarChart3,
-  Calendar
-} from 'lucide-react';
-import ThemedButton from '../UI/ThemedButton';
-import MessageDisplay from '../UI/MessageDisplay';
-
-// Importa las vistas
 import ClubsView from './ClubsView';
 import ClubDetailsView from './ClubDetailsView';
 import CreateClubView from './CreateClubView';
@@ -35,7 +17,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Simular carga de datos
   useEffect(() => {
     fetchClubs();
     if (view === 'club_details' && currentClub) {
@@ -50,11 +31,10 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
     if (view === 'club_matches') {
       fetchScheduledMatches();
     }
-  }, [view]);
+  }, [view, currentClub]);
 
   const fetchClubs = () => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setClubs([
         { id: 1, name: 'Dragones de Fuego', description: 'Club para jugadores competitivos', members: 12, level: 5, score: 2450 },
@@ -67,7 +47,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const fetchClubDetails = (clubId) => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       const club = clubs.find(c => c.id === clubId);
       if (club) {
@@ -85,7 +64,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const fetchClubMissions = () => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setClubMissions([
         { id: 1, name: 'Victoria en 5 partidas', description: 'Gana 5 partidas en modo competitivo', progress: 3, goal: 5, reward: 500 },
@@ -98,7 +76,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const fetchClubRankings = () => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setClubRankings([
         { position: 1, name: 'Titanes Legendarios', score: 3200, members: 15 },
@@ -113,7 +90,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const fetchScheduledMatches = () => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setScheduledMatches([
         { id: 1, opponent: 'Lobos Lunares', date: '15/05/2023', time: '20:00', status: 'Programado' },
@@ -126,7 +102,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const handleJoinClub = (clubId) => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setPlayerData({ ...playerData, club_id: clubId });
       setMessage({ text: '¡Te has unido al club exitosamente!', type: 'success' });
@@ -138,7 +113,6 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const handleLeaveClub = () => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setPlayerData({ ...playerData, club_id: null });
       setMessage({ text: 'Has abandonado el club', type: 'info' });
@@ -155,14 +129,12 @@ const ClubsSystem = ({ playerData, setPlayerData }) => {
 
   const handleChallengeClub = (clubId) => {
     setLoading(true);
-    // Simular una llamada a la API
     setTimeout(() => {
       setMessage({ text: 'Desafío enviado al club', type: 'success' });
       setLoading(false);
     }, 1000);
   };
 
-  // Renderizar la vista actual
   switch (view) {
     case 'create_club':
       return <CreateClubView setView={setView} />;
