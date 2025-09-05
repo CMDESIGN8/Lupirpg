@@ -26,7 +26,7 @@
 }
 
 .club-description {
-  color: #666;
+  color: #fff;
   margin-bottom: 1.5rem;
   max-width: 48rem;
   line-height: 1.5;
@@ -167,8 +167,8 @@
   color: #fff;
 }
 
-.challenge span {
-  color: #b3b3ff;
+.challenge-progress span {
+  color: rgb(136, 221, 255);
 }
 
 .challenge-progress {
