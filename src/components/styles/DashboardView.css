@@ -80,8 +80,8 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.25rem;
-  color: rgb(0, 255, 204);
-  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
+  color: rgb(0, 140, 255);
+  text-shadow: rgb(0, 153, 255) 0px 0px 5px, rgb(0, 195, 255) 0px 0px 10px
 }
 
 .club-level-text {
@@ -91,8 +91,8 @@
 
 .club-level-value {
   font-weight: 600;
-  color: rgb(251, 255, 0);
-  text-shadow: rgb(251, 255, 0) 0px 0px 5px, rgb(255, 251, 0) 0px 0px 10px
+  color: rgb(0, 255, 204);
+  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
 }
 
 /* Lista de miembros */
