@@ -189,7 +189,6 @@
   border-radius: 0.25rem;
   overflow: hidden;
   margin-bottom: 0.5rem;
-  animation: xp-glow 2s infinite;
 }
 
 .progress-fill {
