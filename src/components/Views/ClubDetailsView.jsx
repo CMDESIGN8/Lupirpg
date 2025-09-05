@@ -1,45 +1,75 @@
-import { LogIn, LogOut, ChevronDown } from 'lucide-react';
+import { LogIn, LogOut, ChevronDown, Users, ArrowLeft } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
-
 import '../styles/ClubDetailsView.css';
 
 const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoinClub, playerData, fetchClubs, loading, message, setView }) => (
-  <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
-    <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
+  <div className="club-details-container">
+    <div className="club-details-card">
+      <MessageDisplay message={message} />
+      
       {currentClub ? (
         <>
-          <h2 className="text-3xl font-bold text-center mb-2 text-blue-600">{currentClub.name}</h2>
-          <p className="text-center text-gray-600 mb-6">{currentClub.description}</p>
-          <h3 className="text-xl font-semibold mb-4 text-blue-600">Miembros</h3>
-          <div className="bg-gray-100 p-4 rounded-lg shadow-inner border border-gray-300">
-            {loading ? <p>Cargando miembros...</p> : (
-              <ul className="space-y-2">
-                {clubMembers.map(member => (
-                  <li key={member.username} className="flex justify-between items-center bg-white p-2 rounded-md">
-                    <span className="text-blue-800">{member.username}</span>
-                    <span className="text-gray-500">Nivel: {member.level}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="club-header">
+            <h1 className="club-title">{currentClub.name}</h1>
+            <p className="club-description">{currentClub.description}</p>
           </div>
-          {playerData.club_id === currentClub.id ? (
-            <div className="flex justify-center mt-6">
-              <ThemedButton onClick={handleLeaveClub} disabled={loading} icon={<LogOut size={20} />} className="bg-red-600 hover:bg-red-500">Abandonar Club</ThemedButton>
+
+          <div className="members-section">
+            <h2 className="members-title">Miembros del Club</h2>
+            <div className="members-container">
+              {loading ? (
+                <p className="loading-text">Cargando miembros...</p>
+              ) : clubMembers.length > 0 ? (
+                <ul className="members-list">
+                  {clubMembers.map(member => (
+                    <li key={member.username} className="member-item">
+                      <span className="member-name">{member.username}</span>
+                      <span className="member-level">Nivel {member.level}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="empty-members">No hay miembros en este club</p>
+              )}
             </div>
-          ) : (
-            <div className="flex justify-center mt-6">
-              <ThemedButton onClick={() => handleJoinClub(currentClub.id)} disabled={loading} icon={<LogIn size={20} />} className="bg-green-600 hover:bg-green-500">Unirse al Club</ThemedButton>
-            </div>
-          )}
+          </div>
+
+          <div className="club-actions">
+            {playerData.club_id === currentClub.id ? (
+              <ThemedButton 
+                onClick={handleLeaveClub} 
+                disabled={loading} 
+                icon={<LogOut size={20} />} 
+                className="action-button leave-button"
+              >
+                Abandonar Club
+              </ThemedButton>
+            ) : (
+              <ThemedButton 
+                onClick={() => handleJoinClub(currentClub.id)} 
+                disabled={loading} 
+                icon={<LogIn size={20} />} 
+                className="action-button join-button"
+              >
+                Unirse al Club
+              </ThemedButton>
+            )}
+            
+            <ThemedButton 
+              onClick={() => { fetchClubs(); setView('clubs'); }} 
+              icon={<ArrowLeft size={20} />} 
+              className="action-button back-button"
+            >
+              Volver a Clubes
+            </ThemedButton>
+          </div>
         </>
-      ) : <p>Cargando detalles del club...</p>}
-      <div className="flex justify-center mt-6">
-        <ThemedButton onClick={() => { fetchClubs(); setView('clubs'); }} icon={<ChevronDown size={20} />}>Volver a Clubes</ThemedButton>
-      </div>
+      ) : (
+        <p className="loading-text">Cargando detalles del club...</p>
+      )}
     </div>
   </div>
 );
 
-export default ClubDetailsView; 
+export default ClubDetailsView;
