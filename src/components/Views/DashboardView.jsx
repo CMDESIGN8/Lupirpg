@@ -400,44 +400,6 @@ const DashboardView = ({
           </div>
         </div>
       </div>
-      
-      <div className="club-store">
-        <h4>Tienda de Items</h4>
-        <div className="store-items">
-          <div className="store-item">
-            <div className="item-info">
-              <span className="item-name">Botines de Velocidad</span>
-              <span className="item-stats">+5 Velocidad</span>
-            </div>
-            <div className="item-action">
-              <span className="item-price">● 800</span>
-              <button className="buy-btn">Comprar</button>
-            </div>
-          </div>
-          
-          <div className="store-item">
-            <div className="item-info">
-              <span className="item-name">Baston de Precisión</span>
-              <span className="item-stats">+5 Pase</span>
-            </div>
-            <div className="item-action">
-              <span className="item-price">● 650</span>
-              <button className="buy-btn">Comprar</button>
-            </div>
-          </div>
-          
-          <div className="store-item">
-            <div className="item-info">
-              <span className="item-name">Vendas de Resistencia</span>
-              <span className="item-stats">+4 Resistencia</span>
-            </div>
-            <div className="item-action">
-              <span className="item-price">● 700</span>
-              <button className="buy-btn">Comprar</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 )}    
