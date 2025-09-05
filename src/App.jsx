@@ -1073,8 +1073,8 @@ const handleCompleteMission = async (mission) => {
       case 'sell_item': return <SellItemView {...props} />;
       case 'chat': return <ChatView {...props} />;
 case 'clubs': return <ClubsSystem playerData={playerData} setPlayerData={setPlayerData} />;
-     // case 'create_club': return <CreateClubView {...props} />;
-      // case 'club_details': return <ClubDetailsView {...props} />;
+      case 'create_club': return <CreateClubView {...props} />;
+      case 'club_details': return <ClubDetailsView {...props} />;
       default: return <DashboardView {...props} />;
     }
   };
