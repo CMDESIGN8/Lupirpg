@@ -28,16 +28,36 @@ const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, l
         {loading ? (
           <p className="loading-clubs">Cargando clubes...</p>
         ) : clubs.length > 0 ? (
-          clubs.map(club => (
+            clubs.map(club => (
             <div key={club.id} className="club-card">
               {playerData.club_id === club.id && (
                 <span className="current-club-badge">Tu Club</span>
               )}
               
               <div className="club-info">
-                <h3 className="club-name">{club.name}</h3>
-                <p className="club-desc">{club.description || "Sin descripción"}</p>
-              </div>
+      <h3 className="club-name">
+        {club.name}
+        {club.average_level && (
+          <span style={{ 
+            fontSize: '0.8rem', 
+            color: '#00ffcc', 
+            marginLeft: '10px',
+            background: 'rgba(0, 255, 204, 0.1)',
+            padding: '2px 8px',
+            borderRadius: '10px',
+            border: '1px solid #00ffcc'
+          }}>
+            Nvl {club.average_level}
+          </span>
+        )}
+      </h3>
+      <p className="club-desc">{club.description || "Sin descripción"}</p>
+      {club.member_count && (
+        <p style={{ color: '#88ddff', fontSize: '0.9rem', marginTop: '5px' }}>
+          {club.member_count} miembro{club.member_count !== 1 ? 's' : ''}
+        </p>
+      )}
+    </div>
               
               <div className="club-actions">
                 <ThemedButton 

@@ -762,20 +762,40 @@ const getDailyMissionsCompleted = async (playerId) => {
   };
 
   const fetchClubs = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabaseClient
-        .from('clubs')
-        .select('*');
+  setLoading(true);
+  try {
+    const { data: clubsData, error } = await supabaseClient
+      .from('clubs')
+      .select(`
+        *,
+        players:players!club_id (
+          level
+        )
+      `);
+    
+    if (error) throw error;
+
+    // Calcular nivel promedio para cada club
+    const clubsWithStats = clubsData.map(club => {
+      const memberLevels = club.players.map(player => player.level);
+      const averageLevel = memberLevels.length > 0 
+        ? Math.round(memberLevels.reduce((sum, level) => sum + level, 0) / memberLevels.length)
+        : 1;
       
-      if (error) throw error;
-      setClubs(data);
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        ...club,
+        average_level: averageLevel,
+        member_count: club.players.length
+      };
+    });
+
+    setClubs(clubsWithStats);
+  } catch (err) {
+    showMessage(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCreateClub = async (e) => {
     e.preventDefault();
@@ -879,24 +899,37 @@ const getDailyMissionsCompleted = async (playerId) => {
 };
 
   const handleViewClubDetails = async (club) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabaseClient
-        .from('players')
-        .select('username, level')
-        .eq('club_id', club.id);
-      
-      if (error) throw error;
-      
-      setClubMembers(data);
-      setCurrentClub(club);
-      setView('club_details');
-    } catch (err) {
-      showMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const { data: members, error } = await supabaseClient
+      .from('players')
+      .select('username, level, experience')
+      .eq('club_id', club.id);
+    
+    if (error) throw error;
+    
+    // Calcular nivel promedio del club
+    const averageLevel = members.length > 0 
+      ? Math.round(members.reduce((sum, member) => sum + member.level, 0) / members.length)
+      : 1;
+    
+    // Calcular experiencia total del club
+    const totalExperience = members.reduce((sum, member) => sum + member.experience, 0);
+    
+    setClubMembers(members);
+    setCurrentClub({ 
+      ...club, 
+      average_level: averageLevel,
+      total_experience: totalExperience,
+      member_count: members.length 
+    });
+    setView('club_details');
+  } catch (err) {
+    showMessage(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // En App.jsx, añade estas funciones antes del renderContent
 
