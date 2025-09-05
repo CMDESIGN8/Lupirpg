@@ -189,12 +189,11 @@
   border-radius: 0.25rem;
   overflow: hidden;
   margin-bottom: 0.5rem;
-  animation: xp-glow 2s infinite;
 }
 
 .progress-fill {
   height: 100%;
-  background-color: #5cb910;
+  background-color: #10b964;
   border-radius: 0.25rem;
   transition: width 0.3s ease;
   animation: xp-glow 2s infinite;
