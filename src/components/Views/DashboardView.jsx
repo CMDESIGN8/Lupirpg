@@ -402,8 +402,9 @@ const DashboardView = ({
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: "45%" }}></div>
             </div>
-            <button className="contribute-btn">Contribuir +10</button>
+            <button className="action-btn secondary">Contribuir +10</button>
           </div>
+      
 
           {/* Desafío 2 */}
           <div className="challenge-item">
