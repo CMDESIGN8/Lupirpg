@@ -376,12 +376,15 @@ const DashboardView = ({
         
         <div className="challenges-table">
           <div className="challenge-row">
-            <div className="challenge-info">
-              <span className="challenge-name">Realizar 250 pases de club</span>
-              <span className="challenge-progress">112/250</span>
-            </div>
-            <button className="contribute-btn">Contribuir +10</button>
-          </div>
+  <div className="challenge-info">
+    <span className="challenge-name">Realizar 250 pases de club</span>
+    <span className="challenge-progress">112/250</span>
+  </div>
+  <div className="challenge-progress-bar">
+    <div className="challenge-progress-fill" style={{ width: "45%" }}></div>
+  </div>
+  <button className="contribute-btn">Contribuir +10</button>
+</div>
           
           <div className="challenge-row">
             <div className="challenge-info">
