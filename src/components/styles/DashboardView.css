@@ -80,22 +80,28 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.25rem;
-  color: #1f2937;
+  color: rgb(0, 255, 204);
+  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
 }
 
 .club-level-text {
-  color: #666;
+  color: rgb(251, 255, 0);
+  text-shadow: rgb(251, 255, 0) 0px 0px 5px, rgb(255, 251, 0) 0px 0px 10px
 }
 
 .club-level-value {
   font-weight: 600;
+  color: rgb(251, 255, 0);
+  text-shadow: rgb(251, 255, 0) 0px 0px 5px, rgb(255, 251, 0) 0px 0px 10px
 }
 
 /* Lista de miembros */
 .members-title {
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: #1f2937;
+  color: rgb(0, 255, 204);
+  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
+
 }
 
 .members-count {
@@ -107,7 +113,7 @@
   padding: 0;
   margin: 0;
   font-size: 0.875rem;
-  color: #374151;
+  color: #ffffff;
 }
 
 .members-list li {
@@ -126,7 +132,7 @@
 }
 
 .status-offline {
-  color: #9ca3af;
+  color: #f3c6c6;
 }
 
 /* Próximo partido */
@@ -134,13 +140,14 @@
   font-size: 1.25rem;
   font-weight: bold;
   margin-bottom: 1rem;
-  color: #1f2937;
+  color: rgb(0, 255, 204);
+  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
 }
 
 .match-description {
-  color: #666;
   margin-bottom: 1rem;
   line-height: 1.5;
+  color: #b3b3ff;
 }
 
 /* Desafíos */
