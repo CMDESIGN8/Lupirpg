@@ -1,139 +1,196 @@
-/* Sección general */
+/* Sección Club */
 .club-section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 5rem;
   max-width: 1100px;
-  margin: 20px auto;
-  background: rgba(0, 20, 40, 0.7);
-  border: 1px solid #00ccff;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .club-title {
-  font-size: 1.3rem;
+  font-size: 1.875rem;
   font-weight: bold;
+  margin-bottom: 0.5rem;
   color: #00aaff;
-  margin-bottom: 15px;
   text-transform: uppercase;
 }
 
-/* Contenedor principal con dos columnas */
+.club-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  max-width: 48rem;
+  line-height: 1.5;
+}
+
+/* Contenedor principal con grid */
 .club-container {
   display: grid;
-  grid-template-columns: 1fr 2fr; /* izquierda: info, derecha: desafíos */
-  gap: 20px;
-  width: 100%;              
-  max-width: 100%;          
-  margin: 20px 0;           
-  padding: 0 20px;          
-  box-sizing: border-box;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .club-container {
+    grid-template-columns: 1fr 2fr;
+  }
 }
 
 /* Tarjetas */
 .club-info-card,
 .club-match-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* ✅ Responsive: en pantallas chicas pasa a 1 columna */
-@media (max-width: 900px) {
-  .club-container {
-    grid-template-columns: 1fr; /* una sola columna */
-  }
+/* Info del Club - Estilo específico */
+.club-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-
-/* Info Club */
-.club-name {
-  font-size: 1.1rem;
+.club-logo {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #f5f5f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #059669;
   font-weight: bold;
-  margin-bottom: 4px;
+  font-size: 0.875rem;
 }
 
-.club-level {
-  font-size: 0.9rem;
+.club-name-main {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+.club-level-text {
   color: #666;
-  margin-bottom: 12px;
 }
 
-.club-description {
-  font-size: 0.85rem;
-  color: #444;
-  margin-bottom: 15px;
-  line-height: 1.4;
-}
-
-.club-members-title {
-  font-size: 0.95rem;
+.club-level-value {
   font-weight: 600;
-  margin-bottom: 8px;
+}
+
+/* Lista de miembros */
+.members-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.members-count {
+  font-weight: 600;
 }
 
 .members-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: 0.85rem;
-  color: #444;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.members-list li {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.member-status {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.status-online {
+  color: #10b981;
+}
+
+.status-offline {
+  color: #9ca3af;
 }
 
 /* Próximo partido */
 .match-title {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: bold;
-  margin-bottom: 6px;
+  margin-bottom: 1rem;
+  color: #1f2937;
 }
 
 .match-description {
-  font-size: 0.85rem;
-  color: #555;
-  margin-bottom: 15px;
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.5;
 }
 
-/* Retos */
-.challenge-block {
-  margin-bottom: 15px;
+/* Desafíos */
+.challenges-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.challenge-info {
+.challenge-item {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.challenge-name {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.challenge-progress {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-  color: #333;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
 }
 
-.challenge-progress-bar {
-  height: 6px;
-  background: #eee;
-  border-radius: 4px;
+.progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 0.5rem;
 }
 
-.challenge-progress-fill {
+.progress-fill {
   height: 100%;
-  background: #4CAF50;
-  border-radius: 4px;
+  background-color: #10b981;
+  border-radius: 0.25rem;
   transition: width 0.3s ease;
 }
 
-/* Botón */
 .contribute-btn {
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  color: #333;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .contribute-btn:hover {
-  background: #e0e0e0;
+  background: linear-gradient(135deg, #45b7d1 0%, #3498db 100%);
+  transform: translateY(-1px);
 }
