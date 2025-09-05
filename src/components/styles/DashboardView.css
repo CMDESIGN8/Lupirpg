@@ -86,7 +86,7 @@
 
 .club-level-text {
   color: rgb(251, 255, 0);
-  text-shadow: rgb(251, 255, 0) 0px 0px 5px, rgb(255, 251, 0) 0px 0px 10px
+  font-weight: bold;
 }
 
 .club-level-value {
@@ -99,9 +99,7 @@
 .members-title {
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: rgb(0, 255, 204);
-  text-shadow: rgb(0, 255, 204) 0px 0px 5px, rgb(0, 255, 204) 0px 0px 10px
-
+  color: rgb(0, 204, 255);
 }
 
 .members-count {
@@ -148,6 +146,7 @@
   margin-bottom: 1rem;
   line-height: 1.5;
   color: #b3b3ff;
+  font-weight: bold;
 }
 
 /* Desafíos */
