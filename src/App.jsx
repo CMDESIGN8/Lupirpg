@@ -182,21 +182,23 @@ const App = () => {
     };
 
     if (player.clubs) {
-      const { data: members, error: membersError } = await supabaseClient
-        .from('players')
-        .select('username, level, experience, online_status')
-        .eq('club_id', player.clubs.id)
-        .order('level', { ascending: false });
+  const { data: members, error: membersError } = await supabaseClient
+    .from('players')
+    .select('username, level, experience, online_status')
+    .eq('club_id', player.clubs.id)
+    .order('level', { ascending: false });
 
-      if (!membersError) {
-        clubMembers = members;
-        clubStats = {
-          average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
-          member_count: members.length,
-          total_experience: members.reduce((sum, m) => sum + m.experience, 0)
-        };
-      }
-    }
+  if (!membersError) {
+    clubMembers = members;
+    const onlineCount = members.filter(m => m.online_status).length;
+    clubStats = {
+      average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
+      member_count: members.length,
+      online_count: onlineCount,
+      total_experience: members.reduce((sum, m) => sum + m.experience, 0)
+    };
+  }
+}
 
       const { data: skills, error: skillsError } = await supabaseClient
         .from('player_skills')
