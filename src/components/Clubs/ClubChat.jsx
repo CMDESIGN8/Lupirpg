@@ -1,11 +1,9 @@
 // components/Club/ClubChat.jsx
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
 const ClubChat = ({ playerData, supabaseClient, session }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [onlineMembers, setOnlineMembers] = useState([]);
   const [activeTab, setActiveTab] = useState('chat');
 
   // Cargar mensajes y suscribirse a nuevos
@@ -13,35 +11,24 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
     if (!playerData?.clubs?.id) return;
     
     loadMessages();
-    updateOnlineMembers();
     
     const subscription = supabaseClient
       .channel('club_chat')
       .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'club_messages' },
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'club_messages',
+          filter: `club_id=eq.${playerData.clubs.id}`
+        },
         (payload) => {
           setMessages(prev => [...prev, payload.new]);
         }
       )
       .subscribe();
 
-    // Suscribirse a cambios de estado en línea
-    const onlineSubscription = supabaseClient
-      .channel('online_members')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'players' },
-        (payload) => {
-          if (payload.new.club_id === playerData.clubs.id || 
-              payload.old?.club_id === playerData.clubs.id) {
-            updateOnlineMembers();
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       subscription.unsubscribe();
-      onlineSubscription.unsubscribe();
     };
   }, [playerData?.clubs?.id]);
 
@@ -56,18 +43,6 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
       .limit(50);
 
     if (!error) setMessages(data || []);
-  };
-
-  const updateOnlineMembers = async () => {
-    if (!playerData?.clubs?.id) return;
-    
-    const { data, error } = await supabaseClient
-      .from('players')
-      .select('username, online_status')
-      .eq('club_id', playerData.clubs.id)
-      .eq('online_status', true);
-
-    if (!error) setOnlineMembers(data.map(m => m.username));
   };
 
   const sendMessage = async (e) => {
@@ -86,37 +61,6 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
     if (!error) setNewMessage('');
   };
 
-  // Actualizar estado en línea del usuario
-  useEffect(() => {
-    if (!session?.user?.id || !playerData?.clubs?.id) return;
-
-    const updateOnlineStatus = async () => {
-      await supabaseClient
-        .from('players')
-        .update({ 
-          online_status: true, 
-          last_online: new Date().toISOString() 
-        })
-        .eq('id', session.user.id);
-    };
-
-    updateOnlineStatus();
-
-    // Actualizar estado como offline al salir
-    const handleBeforeUnload = () => {
-      supabaseClient
-        .from('players')
-        .update({ 
-          online_status: false, 
-          last_online: new Date().toISOString() 
-        })
-        .eq('id', session.user.id);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [session?.user?.id, playerData?.clubs?.id]);
-
   if (!playerData?.clubs) {
     return (
       <div className="player-card">
@@ -126,50 +70,46 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
   }
 
   return (
-    <div className="player-card">
-      <div className="club-header">
-        <div className="club-logo">
-          {playerData.clubs.name ? playerData.clubs.name.substring(0, 2).toUpperCase() : 'LF'}
+    <div className="club-chat-container">
+      <div className="chat-header">
+        <h3>Chat del Club</h3>
+        <div className="chat-tabs">
+          <button 
+            className={activeTab === 'chat' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('chat')}
+          >
+            Chat
+          </button>
+          <button 
+            className={activeTab === 'info' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('info')}
+          >
+            Información
+          </button>
         </div>
-        <div>
-          <h3 className="club-name-main">{playerData.clubs.name}</h3>
-          <p className="club-level-text">
-            Nivel de Club: <span className="club-level-value">
-              {playerData.club_stats?.average_level || 1}
-            </span>
-          </p>
-        </div>
-      </div>
-      
-      <div className="chat-tabs">
-        <button 
-          className={activeTab === 'chat' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('chat')}
-        >
-          Chat
-        </button>
-        <button 
-          className={activeTab === 'members' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('members')}
-        >
-          Miembros
-        </button>
       </div>
       
       {activeTab === 'chat' ? (
-        <div className="chat-container">
+        <div className="chat-content">
           <div className="messages-container">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`message ${msg.player_id === session.user.id ? 'own-message' : ''}`}>
-                <div className="message-header">
-                  <span className="message-sender">{msg.players?.username || 'Usuario'}</span>
-                  <span className="message-time">
-                    {new Date(msg.created_at).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="message-content">{msg.message}</div>
+            {messages.length === 0 ? (
+              <div className="no-messages">
+                <p>¡Sé el primero en enviar un mensaje!</p>
+                <p>Coordina estrategias con tus compañeros de club.</p>
               </div>
-            ))}
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className={`message ${msg.player_id === session.user.id ? 'own-message' : ''}`}>
+                  <div className="message-header">
+                    <span className="message-sender">{msg.players?.username || 'Usuario'}</span>
+                    <span className="message-time">
+                      {new Date(msg.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className="message-content">{msg.message}</div>
+                </div>
+              ))
+            )}
           </div>
           
           <form onSubmit={sendMessage} className="message-form">
@@ -177,43 +117,68 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Escribe un mensaje..."
+              placeholder="Escribe un mensaje a tu club..."
               className="message-input"
+              maxLength={200}
             />
-            <button type="submit" className="send-button">Enviar</button>
+            <button 
+              type="submit" 
+              className="send-button"
+              disabled={!newMessage.trim()}
+            >
+              Enviar
+            </button>
           </form>
         </div>
       ) : (
-        <div className="members-section">
-          <h4 className="members-title">
-            Miembros: <span className="members-count">
-              {playerData.club_stats?.member_count || 0}
-            </span>
-            {playerData.club_stats?.online_count > 0 && (
-              <span style={{ color: '#00ff88', marginLeft: '10px', fontSize: '0.9rem' }}>
-                ({playerData.club_stats.online_count} en línea)
-              </span>
-            )}
-          </h4>
-          
-          <ul className="members-list">
-            {playerData.club_members?.slice(0, 10).map(member => (
-              <li key={member.username}>
-                <span className={`member-status ${member.online_status ? 'status-online' : 'status-offline'}`}>
-                  ●
-                </span> 
-                {member.username} {member.username === playerData.username ? '(Tú)' : ''}
-                <span style={{ marginLeft: 'auto', color: '#00ffcc', fontSize: '0.9rem' }}>
-                  Nvl {member.level}
+        <div className="club-info">
+          <div className="club-header">
+            <div className="club-logo">
+              {playerData.clubs.name ? playerData.clubs.name.substring(0, 2).toUpperCase() : 'LF'}
+            </div>
+            <div>
+              <h3 className="club-name-main">{playerData.clubs.name}</h3>
+              <p className="club-level-text">
+                Nivel de Club: <span className="club-level-value">
+                  {playerData.club_stats?.average_level || 1}
                 </span>
-              </li>
-            ))}
-            {playerData.club_stats?.member_count > 10 && (
-              <li style={{ color: '#88ddff', fontStyle: 'italic' }}>
-                +{playerData.club_stats.member_count - 10} miembros más...
-              </li>
-            )}
-          </ul>
+              </p>
+            </div>
+          </div>
+          
+          <div className="members-section">
+            <h4 className="members-title">
+              Miembros: <span className="members-count">
+                {playerData.club_stats?.member_count || 0}
+              </span>
+              {playerData.club_stats?.online_count > 0 && (
+                <span className="online-count">
+                  ({playerData.club_stats.online_count} en línea)
+                </span>
+              )}
+            </h4>
+            
+            <ul className="members-list">
+              {playerData.club_members?.slice(0, 8).map(member => (
+                <li key={member.username}>
+                  <span className={`member-status ${member.online_status ? 'status-online' : 'status-offline'}`}>
+                    ●
+                  </span> 
+                  <span className="member-name">
+                    {member.username} {member.username === playerData.username ? '(Tú)' : ''}
+                  </span>
+                  <span className="member-level">
+                    Nvl {member.level}
+                  </span>
+                </li>
+              ))}
+              {playerData.club_stats?.member_count > 8 && (
+                <li className="more-members">
+                  +{playerData.club_stats.member_count - 8} miembros más...
+                </li>
+              )}
+            </ul>
+          </div>
         </div>
       )}
     </div>

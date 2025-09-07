@@ -341,57 +341,18 @@ const DashboardView = ({
     <p className="club-description">
       Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. 
       Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
+      ¡Comunícate con tus compañeros a través del chat del club!
     </p>
     
     <div className="club-container">
-      {/* Tarjeta izquierda: Info del Club */}
-      <div className="player-card">
-        <div className="club-header">
-          <div className="club-logo">
-            {playerData.clubs.name ? playerData.clubs.name.substring(0, 2).toUpperCase() : 'LF'}
-          </div>
-          <div>
-            <h3 className="club-name-main">{playerData.clubs.name}</h3>
-            <p className="club-level-text">
-              Nivel de Club: <span className="club-level-value">
-                {playerData.club_stats?.average_level || 1}
-              </span>
-            </p>
-          </div>
-        </div>
-        
-        <h4 className="members-title">
-          Miembros: <span className="members-count">
-            {playerData.club_stats?.member_count || 0}
-          </span>
-          {playerData.club_stats?.online_count > 0 && (
-            <span style={{ color: '#00ff88', marginLeft: '10px', fontSize: '0.9rem' }}>
-              ({playerData.club_stats.online_count} en línea)
-            </span>
-          )}
-        </h4>
-        
-        <ul className="members-list">
-          {playerData.club_members?.slice(0, 5).map(member => (
-            <li key={member.username}>
-              <span className={`member-status ${member.online_status ? 'status-online' : 'status-offline'}`}>
-                ●
-              </span> 
-              {member.username} {member.username === playerData.username ? '(Tú)' : ''}
-              <span style={{ marginLeft: 'auto', color: '#00ffcc', fontSize: '0.9rem' }}>
-                Nvl {member.level}
-              </span>
-            </li>
-          ))}
-          {playerData.club_stats?.member_count > 5 && (
-            <li style={{ color: '#88ddff', fontStyle: 'italic' }}>
-              +{playerData.club_stats.member_count - 5} miembros más...
-            </li>
-          )}
-        </ul>
-      </div>
-
-      {/* Tarjeta derecha: Próximo Partido (placeholder por ahora) */}
+      {/* Chat del Club */}
+      <ClubChat 
+        playerData={playerData} 
+        supabaseClient={supabaseClient}
+        session={session}
+      />
+      
+      {/* Próximo Partido y Desafíos */}
       <div className="player-card">
         <h3 className="match-title">
           Próximo Partido: {playerData.clubs.name} vs Rival FC
