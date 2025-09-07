@@ -75,16 +75,16 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
         <h3>Chat del Club</h3>
         <div className="chat-tabs">
           <button 
-            className={activeTab === 'chat' ? 'tab-active' : ''}
-            onClick={() => setActiveTab('chat')}
-          >
-            Chat
-          </button>
-          <button 
             className={activeTab === 'info' ? 'tab-active' : ''}
             onClick={() => setActiveTab('info')}
           >
             Información
+          </button>
+          <button 
+            className={activeTab === 'chat' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('chat')}
+          >
+            Chat
           </button>
         </div>
       </div>
