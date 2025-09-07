@@ -509,7 +509,7 @@
 
 /* Estilos para el chat del club - Adaptados a tu diseño */
 .club-chat-container {
-  background: var(--lupi-card);
+  background: #001428b3;
   border: 2px solid var(--neon-blue);
   border-radius: var(--border-radius);
   padding: var(--spacing-md);
