@@ -178,8 +178,7 @@ const App = () => {
     let clubStats = {
       average_level: 1,
       member_count: 0,
-      total_experience: 0,
-      online_count: 0 // Agregar contador de online
+      total_experience: 0
     };
 
     if (player.clubs) {
@@ -189,18 +188,51 @@ const App = () => {
         .eq('club_id', player.clubs.id)
         .order('level', { ascending: false });
 
-      if (!membersError && members) {
+      if (!membersError) {
         clubMembers = members;
-        const onlineCount = members.filter(m => m.online_status).length;
-        
         clubStats = {
           average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
           member_count: members.length,
-          total_experience: members.reduce((sum, m) => sum + m.experience, 0),
-          online_count: onlineCount
+          total_experience: members.reduce((sum, m) => sum + m.experience, 0)
         };
       }
     }
+
+      const { data: skills, error: skillsError } = await supabaseClient
+        .from('player_skills')
+        .select('*')
+        .eq('player_id', userId);
+
+      if (skillsError) throw skillsError;
+
+      const { data: playerItems, error: itemsError } = await supabaseClient
+        .from('player_items')
+        .select('*, items(*)')
+        .eq('player_id', userId);
+
+      if (itemsError) throw itemsError;
+
+      const equipped = {};
+      (playerItems || []).forEach(item => {
+        if (item.is_equipped) {
+          equipped[item.items.skill_bonus] = item.items;
+        }
+      });
+      setInventory(playerItems || []);
+      setEquippedItems(equipped);
+
+      setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
+      setAvailablePoints(player.skill_points);
+      setLupiCoins(player.lupi_coins);
+      setPlayerData({ 
+      ...player, 
+      skills: skills || [],
+      club_members: clubMembers,
+      club_stats: clubStats
+    });
+    
+    setCurrentClub(player.clubs ? { ...player.clubs, ...clubStats } : null);
+    setView('dashboard');
   } catch (err) {
     showMessage(err.message);
   } finally {
