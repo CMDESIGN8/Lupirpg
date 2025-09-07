@@ -69,6 +69,12 @@ const DashboardView = ({
   const handleFindItem = () => {
     setActiveGame(true);
   };
+  
+const refreshClubData = async () => {
+  if (!session) return;
+  await checkProfile(session.user.id);
+  showMessage('Datos del club actualizados');
+};
 
   // Función que se ejecuta cuando el jugador gana el minijuego
  const handleGameFinish = async (gameReward) => {
