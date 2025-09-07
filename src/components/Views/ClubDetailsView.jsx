@@ -93,7 +93,8 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
           </div>
 
           <div className="club-actions">
-            {playerData.club_id === currentClub.id ? (
+            {/* CORRECCIÓN: Mejorar la lógica condicional para mostrar el botón correcto */}
+            {playerData && playerData.club_id === currentClub.id ? (
               <ThemedButton 
                 onClick={handleLeaveClub} 
                 disabled={loading} 
