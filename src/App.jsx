@@ -199,6 +199,49 @@ const App = () => {
     };
   }
 }
+useEffect(() => {
+  if (!session?.user?.id) return;
+
+  // Actualizar estado como online al cargar la aplicación
+  const setOnline = async () => {
+    await supabaseClient
+      .from('players')
+      .update({ 
+        online_status: true, 
+        last_online: new Date().toISOString() 
+      })
+      .eq('id', session.user.id);
+  };
+
+  setOnline();
+
+  // También establecer un intervalo para mantener el estado online
+  const onlineInterval = setInterval(() => {
+    supabaseClient
+      .from('players')
+      .update({ last_online: new Date().toISOString() })
+      .eq('id', session.user.id);
+  }, 30000); // Actualizar cada 30 segundos
+
+  return () => {
+    clearInterval(onlineInterval);
+    // No establecer offline aquí porque se hace en beforeunload
+  };
+}, [session?.user?.id]);
+
+const cleanupInactiveUsers = async () => {
+  const inactiveTime = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos
+  
+  const { error } = await supabaseClient
+    .from('players')
+    .update({ online_status: false })
+    .lt('last_online', inactiveTime)
+    .eq('online_status', true);
+
+  if (error) {
+    console.error('Error cleaning inactive users:', error);
+  }
+};
 
       const { data: skills, error: skillsError } = await supabaseClient
         .from('player_skills')

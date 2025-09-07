@@ -6,13 +6,14 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('info');
   const [onlineMembers, setOnlineMembers] = useState([]);
+  const [clubMembers, setClubMembers] = useState([]);
 
-  // Cargar mensajes y suscribirse a nuevos
+  // Cargar mensajes, miembros y suscribirse a cambios
   useEffect(() => {
     if (!playerData?.clubs?.id) return;
     
     loadMessages();
-    updateOnlineMembers();
+    loadClubMembers();
     
     const subscription = supabaseClient
       .channel('club_chat')
@@ -33,11 +34,10 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
     const onlineSubscription = supabaseClient
       .channel('online_members')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'players' },
+        { event: 'UPDATE', schema: 'public', table: 'players' },
         (payload) => {
-          if (payload.new?.club_id === playerData.clubs.id || 
-              payload.old?.club_id === playerData.clubs.id) {
-            updateOnlineMembers();
+          if (payload.new?.club_id === playerData.clubs.id) {
+            loadClubMembers(); // Recargar miembros cuando cambie el estado
           }
         }
       )
@@ -49,14 +49,34 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
     };
   }, [playerData?.clubs?.id]);
 
+  // Cargar miembros del club con su estado en línea
+  const loadClubMembers = async () => {
+    if (!playerData?.clubs?.id) return;
+    
+    const { data, error } = await supabaseClient
+      .from('players')
+      .select('username, level, online_status')
+      .eq('club_id', playerData.clubs.id)
+      .order('online_status', { ascending: false }) // Primero los en línea
+      .order('level', { ascending: false });
+
+    if (!error) {
+      setClubMembers(data || []);
+      
+      // Actualizar también onlineMembers para el contador
+      const online = data.filter(member => member.online_status);
+      setOnlineMembers(online.map(m => m.username));
+    }
+  };
+
   // Ordenar miembros: primero los en línea
-  const sortedMembers = playerData.club_members
-    ? [...playerData.club_members].sort((a, b) => {
+  const sortedMembers = clubMembers.length > 0 
+    ? [...clubMembers].sort((a, b) => {
         if (a.online_status && !b.online_status) return -1;
         if (!a.online_status && b.online_status) return 1;
-        return 0;
+        return b.level - a.level; // Luego por nivel descendente
       })
-    : [];
+    : playerData.club_members || [];
 
   const loadMessages = async () => {
     if (!playerData?.clubs?.id) return;
@@ -69,18 +89,6 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
       .limit(50);
 
     if (!error) setMessages(data || []);
-  };
-
-  const updateOnlineMembers = async () => {
-    if (!playerData?.clubs?.id) return;
-    
-    const { data, error } = await supabaseClient
-      .from('players')
-      .select('username, online_status')
-      .eq('club_id', playerData.clubs.id)
-      .eq('online_status', true);
-
-    if (!error) setOnlineMembers(data.map(m => m.username));
   };
 
   const sendMessage = async (e) => {
@@ -99,6 +107,37 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
     if (!error) setNewMessage('');
   };
 
+  // Actualizar estado en línea del usuario actual
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const updateOnlineStatus = async () => {
+      await supabaseClient
+        .from('players')
+        .update({ 
+          online_status: true, 
+          last_online: new Date().toISOString() 
+        })
+        .eq('id', session.user.id);
+    };
+
+    updateOnlineStatus();
+
+    // Actualizar estado como offline al salir
+    const handleBeforeUnload = () => {
+      supabaseClient
+        .from('players')
+        .update({ 
+          online_status: false, 
+          last_online: new Date().toISOString() 
+        })
+        .eq('id', session.user.id);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [session?.user?.id]);
+
   if (!playerData?.clubs) {
     return (
       <div className="player-card">
@@ -106,6 +145,13 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
       </div>
     );
   }
+
+  // Calcular estadísticas actualizadas
+  const onlineCount = clubMembers.filter(member => member.online_status).length;
+  const memberCount = clubMembers.length || playerData.club_stats?.member_count || 0;
+  const averageLevel = clubMembers.length > 0 
+    ? Math.round(clubMembers.reduce((sum, m) => sum + m.level, 0) / clubMembers.length)
+    : playerData.club_stats?.average_level || 1;
 
   return (
     <div className="club-chat-container">
@@ -137,7 +183,7 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
               <h3 className="club-name-main">{playerData.clubs.name}</h3>
               <p className="club-level-text">
                 Nivel de Club: <span className="club-level-value">
-                  {playerData.club_stats?.average_level || 1}
+                  {averageLevel}
                 </span>
               </p>
             </div>
@@ -146,11 +192,11 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
           <div className="members-section">
             <h4 className="members-title">
               Miembros: <span className="members-count">
-                {playerData.club_stats?.member_count || 0}
+                {memberCount}
               </span>
-              {playerData.club_stats?.online_count > 0 && (
+              {onlineCount > 0 && (
                 <span className="online-count">
-                  ({playerData.club_stats.online_count} en línea)
+                  ({onlineCount} en línea)
                 </span>
               )}
             </h4>
@@ -169,9 +215,9 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
                   </span>
                 </li>
               ))}
-              {playerData.club_stats?.member_count > 8 && (
+              {memberCount > 8 && (
                 <li className="more-members">
-                  +{playerData.club_stats.member_count - 8} miembros más...
+                  +{memberCount - 8} miembros más...
                 </li>
               )}
             </ul>
