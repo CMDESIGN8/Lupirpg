@@ -345,71 +345,59 @@ const DashboardView = ({
     </p>
     
     <div className="club-container">
-  {/* Tarjeta de Miembros */}
-  <div className="player-card">
-    <div className="club-header">
-      <div className="club-logo">LU</div>
-      <div>
-        <h3 className="club-name-main">{playerData.clubs.name}</h3>
-        <p className="club-level-text">Nivel de Club: <span className="club-level-value">{playerData.clubs.level}</span></p>
+      {/* Chat del Club - Toda la lógica está dentro de este componente */}
+      <ClubChat 
+        playerData={playerData} 
+        supabaseClient={supabaseClient}
+        session={session}
+      />
+      
+      {/* Próximo Partido y Desafíos */}
+      <div className="player-card">
+        <h3 className="match-title">
+          Próximo Partido: {playerData.clubs.name} vs Rival FC
+        </h3>
+        
+        <p className="match-description">
+          ¡La colaboración es clave! Completa estos desafíos con tu club.
+        </p>
+        
+        <div className="challenges-container">
+          <div className="challenge-item">
+            <div className="challenge-name">Realizar 250 pases de club</div>
+            <div className="challenge-progress">
+              <span>0/250</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: "0%" }}></div>
+            </div>
+            <button className="contribute-btn">Contribuir +10</button>
+          </div>
+          
+          <div className="challenge-item">
+            <div className="challenge-name">Correr 100km acumulados</div>
+            <div className="challenge-progress">
+              <span>0/100</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: "0%" }}></div>
+            </div>
+            <button className="contribute-btn">Contribuir +5</button>
+          </div>
+
+          <div className="challenge-item">
+            <div className="challenge-name">Lograr 50 recuperaciones</div>
+            <div className="challenge-progress">
+              <span>0/50</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: "0%" }}></div>
+            </div>
+            <button className="contribute-btn">Contribuir +2</button>
+          </div>
+        </div>
       </div>
     </div>
-
-    <h4 className="members-title">
-  MIEMBROS: <span className="members-count">{playerData.clubs?.members?.length || 0}</span>
-  <span className="online-count">{playerData.clubs?.online || 0} EN LÍNEA</span>
-</h4>
-
-<ul className="members-list">
-  {(playerData.clubs?.members || []).map((member, index) => (
-    <li key={index}>
-      <span className="member-name">{member.name}</span>
-      <span className="member-level">Nv {member.level}</span>
-    </li>
-  ))}
-</ul>
-  </div>
-
-  {/* Chat del Club */}
-  <ClubChat 
-    playerData={playerData} 
-    supabaseClient={supabaseClient}
-    session={session}
-  />
-
-  {/* Próximo Partido y Desafíos */}
-  <div className="player-card">
-    <h3 className="match-title">
-      Próximo Partido: {playerData.clubs.name} vs Rival FC
-    </h3>
-    <p className="match-description">
-      ¡La colaboración es clave! Completa estos desafíos con tu club.
-    </p>
-
-    <div className="challenges-container">
-      <div className="challenge-item">
-        <div className="challenge-name">Realizar 250 pases de club</div>
-        <div className="challenge-progress"><span>0/250</span></div>
-        <div className="progress-bar"><div className="progress-fill" style={{ width: "0%" }}></div></div>
-        <button className="contribute-btn">Contribuir +10</button>
-      </div>
-
-      <div className="challenge-item">
-        <div className="challenge-name">Correr 100km acumulados</div>
-        <div className="challenge-progress"><span>0/100</span></div>
-        <div className="progress-bar"><div className="progress-fill" style={{ width: "0%" }}></div></div>
-        <button className="contribute-btn">Contribuir +5</button>
-      </div>
-
-      <div className="challenge-item">
-        <div className="challenge-name">Lograr 50 recuperaciones</div>
-        <div className="challenge-progress"><span>0/50</span></div>
-        <div className="progress-bar"><div className="progress-fill" style={{ width: "0%" }}></div></div>
-        <button className="contribute-btn">Contribuir +2</button>
-      </div>
-    </div>
-  </div>
-</div>
   </section>
 )}
     
