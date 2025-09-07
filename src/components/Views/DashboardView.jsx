@@ -362,6 +362,11 @@ const DashboardView = ({
           Miembros: <span className="members-count">
             {playerData.club_stats?.member_count || 0}
           </span>
+          {playerData.club_stats?.online_count > 0 && (
+            <span style={{ color: '#00ff88', marginLeft: '10px', fontSize: '0.9rem' }}>
+              ({playerData.club_stats.online_count} en línea)
+            </span>
+          )}
         </h4>
         
         <ul className="members-list">
@@ -383,6 +388,23 @@ const DashboardView = ({
           )}
         </ul>
       </div>
+
+      // En DashboardView.jsx, agrega este botón:
+<div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+  <button 
+    onClick={refreshClubData}
+    style={{
+      padding: '8px 16px',
+      background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-dark-blue))',
+      border: 'none',
+      borderRadius: '20px',
+      color: 'white',
+      cursor: 'pointer'
+    }}
+  >
+    🔄 Actualizar datos del club
+  </button>
+</div>
 
       {/* Tarjeta derecha: Próximo Partido (placeholder por ahora) */}
       <div className="player-card">

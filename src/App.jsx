@@ -93,6 +93,62 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+  if (!session) return;
+
+  // Actualizar estado online al conectar
+  updateOnlineStatus(true);
+
+  const handleBeforeUnload = () => {
+    updateOnlineStatus(false);
+  };
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
+
+  // Configurar intervalo para mantener el estado online
+  const onlineInterval = setInterval(() => {
+    updateOnlineStatus(true);
+  }, 30000); // Actualizar cada 30 segundos
+
+  return () => {
+    clearInterval(onlineInterval);
+    updateOnlineStatus(false);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, [session]);
+
+// En App.jsx, agrega este useEffect para suscripciones en tiempo real
+useEffect(() => {
+  if (!session || !playerData?.clubs) return;
+
+  // Suscripción a cambios en los miembros del club
+  const clubSubscription = supabaseClient
+    .channel('club-members-updates')
+    .on('postgres_changes', 
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'players',
+        filter: `club_id=eq.${playerData.clubs.id}`
+      }, 
+      async (payload) => {
+        console.log('Club member update:', payload);
+        // Actualizar los datos del club
+        await checkProfile(session.user.id);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabaseClient.removeChannel(clubSubscription);
+  };
+}, [session, playerData?.clubs?.id]);
+
+const refreshClubData = async () => {
+  if (!session) return;
+  await checkProfile(session.user.id);
+  showMessage('Datos del club actualizados');
+};
+  useEffect(() => {
     if (view !== 'chat' || !supabaseClient) return;
     
     const fetchMessages = async () => {
@@ -133,6 +189,28 @@ const App = () => {
       supabaseClient.removeChannel(subscription); 
     };
   }, [view, playerData]);
+
+  const updateOnlineStatus = async (isOnline) => {
+  try {
+    const { error } = await supabaseClient
+      .from('players')
+      .update({ 
+        online_status: isOnline,
+        last_online: new Date().toISOString()
+      })
+      .eq('id', session.user.id);
+    
+    if (error) {
+      console.error('Error updating online status:', error);
+      // Si el campo no existe, podemos crearlo dinámicamente
+      if (error.message.includes('column \"online_status\" does not exist')) {
+        console.warn('Online status column does not exist. Please add it to your database.');
+      }
+    }
+  } catch (error) {
+    console.error('Error in updateOnlineStatus:', error);
+  }
+};
 
   const handleDropItem = async (playerItemId) => {
   setLoading(true);
@@ -178,7 +256,8 @@ const App = () => {
     let clubStats = {
       average_level: 1,
       member_count: 0,
-      total_experience: 0
+      total_experience: 0,
+      online_count: 0 // Agregar contador de online
     };
 
     if (player.clubs) {
@@ -188,51 +267,18 @@ const App = () => {
         .eq('club_id', player.clubs.id)
         .order('level', { ascending: false });
 
-      if (!membersError) {
+      if (!membersError && members) {
         clubMembers = members;
+        const onlineCount = members.filter(m => m.online_status).length;
+        
         clubStats = {
           average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
           member_count: members.length,
-          total_experience: members.reduce((sum, m) => sum + m.experience, 0)
+          total_experience: members.reduce((sum, m) => sum + m.experience, 0),
+          online_count: onlineCount
         };
       }
     }
-
-      const { data: skills, error: skillsError } = await supabaseClient
-        .from('player_skills')
-        .select('*')
-        .eq('player_id', userId);
-
-      if (skillsError) throw skillsError;
-
-      const { data: playerItems, error: itemsError } = await supabaseClient
-        .from('player_items')
-        .select('*, items(*)')
-        .eq('player_id', userId);
-
-      if (itemsError) throw itemsError;
-
-      const equipped = {};
-      (playerItems || []).forEach(item => {
-        if (item.is_equipped) {
-          equipped[item.items.skill_bonus] = item.items;
-        }
-      });
-      setInventory(playerItems || []);
-      setEquippedItems(equipped);
-
-      setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
-      setAvailablePoints(player.skill_points);
-      setLupiCoins(player.lupi_coins);
-      setPlayerData({ 
-      ...player, 
-      skills: skills || [],
-      club_members: clubMembers,
-      club_stats: clubStats
-    });
-    
-    setCurrentClub(player.clubs ? { ...player.clubs, ...clubStats } : null);
-    setView('dashboard');
   } catch (err) {
     showMessage(err.message);
   } finally {
