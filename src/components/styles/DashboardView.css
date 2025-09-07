@@ -275,16 +275,7 @@
 }
 
 /* ===== CHAT DEL CLUB ===== */
-.club-chat-container {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border: 2px solid var(--neon-purple);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-lg);
-  height: 500px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.3);
-}
+
 
 .chat-header {
   display: flex;
