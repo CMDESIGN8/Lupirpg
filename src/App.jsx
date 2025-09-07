@@ -240,6 +240,12 @@ const App = () => {
   }
 };
 
+const refreshClubData = async () => {
+  if (!session) return;
+  await checkProfile(session.user.id);
+  showMessage('Datos del club actualizados');
+};
+
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
