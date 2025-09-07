@@ -356,18 +356,18 @@ const DashboardView = ({
     </div>
 
     <h4 className="members-title">
-  MIEMBROS: <span className="members-count">{playerData.clubs?.members?.length || 0}</span>
-  <span className="online-count">{playerData.clubs?.online || 0} EN LÍNEA</span>
-</h4>
+      MIEMBROS: <span className="members-count">{playerData.clubs.members.length}</span>
+      <span className="online-count">{playerData.clubs.online} EN LÍNEA</span>
+    </h4>
 
-<ul className="members-list">
-  {(playerData.clubs?.members || []).map((member, index) => (
-    <li key={index}>
-      <span className="member-name">{member.name}</span>
-      <span className="member-level">Nv {member.level}</span>
-    </li>
-  ))}
-</ul>
+    <ul className="members-list">
+      {playerData.clubs.members.map((member, index) => (
+        <li key={index}>
+          <span className="member-name">{member.name}</span>
+          <span className="member-level">Nv {member.level}</span>
+        </li>
+      ))}
+    </ul>
   </div>
 
   {/* Chat del Club */}
