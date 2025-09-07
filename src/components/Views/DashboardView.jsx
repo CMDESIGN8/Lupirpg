@@ -8,7 +8,7 @@ import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
 import "../styles/DashboardView.css";
-import ClubChat from '../Club/ClubChat.jsx';
+import ClubChat from '../Clubs/ClubChat.jsx';
 
 
 
