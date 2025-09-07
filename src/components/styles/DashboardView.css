@@ -318,7 +318,6 @@
   background: var(--lupi-card);
   border: 2px solid var(--neon-blue);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-glow);
 }
 
 .club-title {
@@ -514,7 +513,6 @@
   border: 2px solid var(--neon-blue);
   border-radius: var(--border-radius);
   padding: var(--spacing-md);
-  box-shadow: var(--shadow-glow);
   height: 500px;
   display: flex;
   flex-direction: column;
