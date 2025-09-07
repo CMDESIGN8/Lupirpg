@@ -182,51 +182,51 @@ const App = () => {
     };
 
     if (player.clubs) {
-  const { data: members, error: membersError } = await supabaseClient
-    .from('players')
-    .select('username, level, experience, online_status')
-    .eq('club_id', player.clubs.id)
-    .order('level', { ascending: false });
+      const { data: members, error: membersError } = await supabaseClient
+        .from('players')
+        .select('username, level, experience, online_status')
+        .eq('club_id', player.clubs.id)
+        .order('level', { ascending: false });
 
-  if (!membersError) {
-    clubMembers = members;
-    const onlineCount = members.filter(m => m.online_status).length;
-    clubStats = {
-      average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
-      member_count: members.length,
-      online_count: onlineCount,
-      total_experience: members.reduce((sum, m) => sum + m.experience, 0)
-    };
-  }
-}
- 
-const { data: skills, error: skillsError } = await supabaseClient
-        .from('player_skills')
-        .select('*')
-        .eq('player_id', userId);
+      if (!membersError) {
+        clubMembers = members;
+        const onlineCount = members.filter(m => m.online_status).length;
+        clubStats = {
+          average_level: Math.round(members.reduce((sum, m) => sum + m.level, 0) / members.length),
+          member_count: members.length,
+          online_count: onlineCount,
+          total_experience: members.reduce((sum, m) => sum + m.experience, 0)
+        };
+      }
+    }
 
-      if (skillsError) throw skillsError;
+    const { data: skills, error: skillsError } = await supabaseClient
+      .from('player_skills')
+      .select('*')
+      .eq('player_id', userId);
 
-      const { data: playerItems, error: itemsError } = await supabaseClient
-        .from('player_items')
-        .select('*, items(*)')
-        .eq('player_id', userId);
+    if (skillsError) throw skillsError;
 
-      if (itemsError) throw itemsError;
+    const { data: playerItems, error: itemsError } = await supabaseClient
+      .from('player_items')
+      .select('*, items(*)')
+      .eq('player_id', userId);
 
-      const equipped = {};
-      (playerItems || []).forEach(item => {
-        if (item.is_equipped) {
-          equipped[item.items.skill_bonus] = item.items;
-        }
-      });
-      setInventory(playerItems || []);
-      setEquippedItems(equipped);
+    if (itemsError) throw itemsError;
 
-      setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
-      setAvailablePoints(player.skill_points);
-      setLupiCoins(player.lupi_coins);
-      setPlayerData({ 
+    const equipped = {};
+    (playerItems || []).forEach(item => {
+      if (item.is_equipped) {
+        equipped[item.items.skill_bonus] = item.items;
+      }
+    });
+    setInventory(playerItems || []);
+    setEquippedItems(equipped);
+
+    setSkills((skills || []).reduce((acc, skill) => ({ ...acc, [skill.skill_name]: skill.skill_value }), {}));
+    setAvailablePoints(player.skill_points);
+    setLupiCoins(player.lupi_coins);
+    setPlayerData({ 
       ...player, 
       skills: skills || [],
       club_members: clubMembers,
