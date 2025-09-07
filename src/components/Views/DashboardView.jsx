@@ -345,7 +345,7 @@ const DashboardView = ({
     </p>
     
     <div className="club-container">
-      {/* Chat del Club */}
+      {/* Chat del Club - Toda la lógica está dentro de este componente */}
       <ClubChat 
         playerData={playerData} 
         supabaseClient={supabaseClient}

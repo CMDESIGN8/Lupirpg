@@ -23,6 +23,7 @@
   line-height: 1.6;
 }
 
+/* Estilos para el club container */
 .club-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -30,172 +31,7 @@
   margin-top: var(--spacing-md);
 }
 
-.club-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
-
-.club-logo {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: white;
-}
-
-.club-name-main {
-  font-size: 1.4rem;
-  color: var(--neon-blue);
-  margin: 0;
-}
-
-.club-level-text {
-  color: var(--lupi-text-secondary);
-  margin: 0;
-}
-
-.club-level-value {
-  color: var(--neon-cyan);
-  font-weight: bold;
-}
-
-.members-title {
-  font-size: 1.1rem;
-  color: var(--neon-blue);
-  margin-bottom: var(--spacing-md);
-}
-
-.members-count {
-  color: var(--neon-cyan);
-  font-weight: bold;
-}
-
-.members-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.members-list li {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid rgba(0, 170, 255, 0.2);
-}
-
-.member-status {
-  font-size: 1.2rem;
-}
-
-.status-online {
-  color: #00ff88;
-}
-
-.status-offline {
-  color: #ff6b6b;
-  opacity: 0.6;
-}
-
-.match-title {
-  font-size: 1.2rem;
-  color: var(--neon-blue);
-  margin-bottom: var(--spacing-md);
-}
-
-.match-description {
-  color: var(--lupi-text-secondary);
-  margin-bottom: var(--spacing-lg);
-}
-
-.challenges-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.challenge-item {
-  background: rgba(0, 30, 60, 0.4);
-  border: 1px solid var(--neon-blue);
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-}
-
-.challenge-name {
-  font-weight: bold;
-  color: var(--lupi-text);
-  margin-bottom: var(--spacing-xs);
-}
-
-.challenge-progress {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-xs);
-  font-size: 0.9rem;
-  color: var(--lupi-text-secondary);
-}
-
-.progress-bar {
-  height: 6px;
-  background: rgba(0, 50, 100, 0.5);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: var(--spacing-sm);
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.contribute-btn {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-dark-blue));
-  border: none;
-  border-radius: var(--border-radius-sm);
-  color: white;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.contribute-btn:hover {
-  background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
-  transform: translateY(-1px);
-}
-
-/* Responsive */
-@media (max-width: 968px) {
-  .club-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .club-header {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .club-section {
-    padding: var(--spacing-md);
-  }
-  
-  .club-title {
-    font-size: 1.5rem;
-  }
-}
-
-/* Estilos para el chat del club - Adaptados a tu diseño */
+/* Estilos para el chat del club */
 .club-chat-container {
   background: var(--lupi-card);
   border: 2px solid var(--neon-blue);
@@ -282,6 +118,12 @@
   border-radius: var(--border-radius-sm);
   background: rgba(0, 40, 80, 0.3);
   border-left: 3px solid var(--neon-blue);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .own-message {
@@ -368,6 +210,9 @@
 
 .club-info .club-header {
   margin-bottom: 0;
+  padding: var(--spacing-md);
+  background: rgba(0, 30, 60, 0.3);
+  border-radius: var(--border-radius-sm);
 }
 
 .members-section {
@@ -379,6 +224,7 @@
   font-size: 1rem;
   color: var(--neon-blue);
   margin-bottom: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
 }
 
 .members-count {
@@ -394,7 +240,7 @@
 
 .members-list {
   list-style: none;
-  padding: 0;
+  padding: 0 var(--spacing-md);
   margin: 0;
 }
 
@@ -402,26 +248,43 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xs) 0;
+  padding: var(--spacing-sm) 0;
   border-bottom: 1px solid rgba(0, 170, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.member-online {
+  background: rgba(0, 255, 136, 0.1) !important;
+  border-left: 3px solid #00ff88;
+  padding-left: var(--spacing-sm) !important;
 }
 
 .member-status {
   font-size: 1rem;
+  width: 16px;
+  text-align: center;
 }
 
 .status-online {
   color: #00ff88;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 .status-offline {
-  color: #ff6b6b;
+  color: #94a3b8;
   opacity: 0.6;
 }
 
 .member-name {
   flex: 1;
   color: var(--lupi-text);
+  font-size: 0.9rem;
 }
 
 .member-level {
@@ -465,5 +328,10 @@
   .message-form {
     flex-direction: column;
   }
+  
+  .club-info .club-header {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
 }
-
