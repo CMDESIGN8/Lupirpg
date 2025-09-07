@@ -8,8 +8,6 @@ import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
 import "../styles/DashboardView.css";
-import ClubChat from '../Clubs/ClubChat.jsx';
-
 
 
 const DashboardView = ({ 
@@ -342,57 +340,99 @@ const DashboardView = ({
     <p className="club-description">
       Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. 
       Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
-      ¡Comunícate con tus compañeros a través del chat del club!
     </p>
     
-    <ClubChat 
-      playerData={playerData} 
-      supabaseClient={supabaseClient}
-      session={session}
-    />
-    
-    {/* Mantén la tarjeta de próximo partido si la necesitas */}
-    <div className="player-card" style={{marginTop: '20px'}}>
-      <h3 className="match-title">
-        Próximo Partido: {playerData.clubs.name} vs Rival FC
-      </h3>
-      
-      <p className="match-description">
-        ¡La colaboración es clave! Completa estos desafíos con tu club.
-      </p>
-      
-      <div className="challenges-container">
-        <div className="challenge-item">
-          <div className="challenge-name">Realizar 250 pases de club</div>
-          <div className="challenge-progress">
-            <span>0/250</span>
+    <div className="club-container">
+      {/* Tarjeta izquierda: Info del Club */}
+      <div className="player-card">
+        <div className="club-header">
+          <div className="club-logo">
+            {playerData.clubs.name ? playerData.clubs.name.substring(0, 2).toUpperCase() : 'LF'}
           </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: "0%" }}></div>
+          <div>
+            <h3 className="club-name-main">{playerData.clubs.name}</h3>
+            <p className="club-level-text">
+              Nivel de Club: <span className="club-level-value">
+                {playerData.club_stats?.average_level || 1}
+              </span>
+            </p>
           </div>
-          <button className="contribute-btn">Contribuir +10</button>
         </div>
         
-        <div className="challenge-item">
-          <div className="challenge-name">Correr 100km acumulados</div>
-          <div className="challenge-progress">
-            <span>0/100</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: "0%" }}></div>
-          </div>
-          <button className="contribute-btn">Contribuir +5</button>
-        </div>
+        <h4 className="members-title">
+          Miembros: <span className="members-count">
+            {playerData.club_stats?.member_count || 0}
+          </span>
+          {playerData.club_stats?.online_count > 0 && (
+            <span style={{ color: '#00ff88', marginLeft: '10px', fontSize: '0.9rem' }}>
+              ({playerData.club_stats.online_count} en línea)
+            </span>
+          )}
+        </h4>
+        
+        <ul className="members-list">
+          {playerData.club_members?.slice(0, 5).map(member => (
+            <li key={member.username}>
+              <span className={`member-status ${member.online_status ? 'status-online' : 'status-offline'}`}>
+                ●
+              </span> 
+              {member.username} {member.username === playerData.username ? '(Tú)' : ''}
+              <span style={{ marginLeft: 'auto', color: '#00ffcc', fontSize: '0.9rem' }}>
+                Nvl {member.level}
+              </span>
+            </li>
+          ))}
+          {playerData.club_stats?.member_count > 5 && (
+            <li style={{ color: '#88ddff', fontStyle: 'italic' }}>
+              +{playerData.club_stats.member_count - 5} miembros más...
+            </li>
+          )}
+        </ul>
+      </div>
 
-        <div className="challenge-item">
-          <div className="challenge-name">Lograr 50 recuperaciones</div>
-          <div className="challenge-progress">
-            <span>0/50</span>
+      {/* Tarjeta derecha: Próximo Partido (placeholder por ahora) */}
+      <div className="player-card">
+        <h3 className="match-title">
+          Próximo Partido: {playerData.clubs.name} vs Rival FC
+        </h3>
+        
+        <p className="match-description">
+          ¡La colaboración es clave! Completa estos desafíos con tu club.
+        </p>
+        
+        <div className="challenges-container">
+          <div className="challenge-item">
+            <div className="challenge-name">Realizar 250 pases de club</div>
+            <div className="challenge-progress">
+              <span>0/250</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: "0%" }}></div>
+            </div>
+            <button className="contribute-btn">Contribuir +10</button>
           </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: "0%" }}></div>
+          
+          <div className="challenge-item">
+            <div className="challenge-name">Correr 100km acumulados</div>
+            <div className="challenge-progress">
+              <span>0/100</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: "0%" }}></div>
+            </div>
+            <button className="contribute-btn">Contribuir +5</button>
           </div>
-          <button className="contribute-btn">Contribuir +2</button>
+
+          <div className="challenge-item">
+            <div className="challenge-name">Lograr 50 recuperaciones</div>
+            <div className="challenge-progress">
+              <span>0/50</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: "0%" }}></div>
+            </div>
+            <button className="contribute-btn">Contribuir +2</button>
+          </div>
         </div>
       </div>
     </div>
