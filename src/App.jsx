@@ -229,19 +229,7 @@ useEffect(() => {
   };
 }, [session?.user?.id]);
 
-const cleanupInactiveUsers = async () => {
-  const inactiveTime = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos
-  
-  const { error } = await supabaseClient
-    .from('players')
-    .update({ online_status: false })
-    .lt('last_online', inactiveTime)
-    .eq('online_status', true);
 
-  if (error) {
-    console.error('Error cleaning inactive users:', error);
-  }
-};
 
       const { data: skills, error: skillsError } = await supabaseClient
         .from('player_skills')
