@@ -199,39 +199,8 @@ const App = () => {
     };
   }
 }
-useEffect(() => {
-  if (!session?.user?.id) return;
-
-  // Actualizar estado como online al cargar la aplicación
-  const setOnline = async () => {
-    await supabaseClient
-      .from('players')
-      .update({ 
-        online_status: true, 
-        last_online: new Date().toISOString() 
-      })
-      .eq('id', session.user.id);
-  };
-
-  setOnline();
-
-  // También establecer un intervalo para mantener el estado online
-  const onlineInterval = setInterval(() => {
-    supabaseClient
-      .from('players')
-      .update({ last_online: new Date().toISOString() })
-      .eq('id', session.user.id);
-  }, 30000); // Actualizar cada 30 segundos
-
-  return () => {
-    clearInterval(onlineInterval);
-    // No establecer offline aquí porque se hace en beforeunload
-  };
-}, [session?.user?.id]);
-
-
-
-      const { data: skills, error: skillsError } = await supabaseClient
+ 
+const { data: skills, error: skillsError } = await supabaseClient
         .from('player_skills')
         .select('*')
         .eq('player_id', userId);
