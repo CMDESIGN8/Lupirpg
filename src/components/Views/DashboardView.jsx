@@ -69,12 +69,7 @@ const DashboardView = ({
   const handleFindItem = () => {
     setActiveGame(true);
   };
-  
-const refreshClubData = async () => {
-  if (!session) return;
-  await checkProfile(session.user.id);
-  showMessage('Datos del club actualizados');
-};
+
 
   // Función que se ejecuta cuando el jugador gana el minijuego
  const handleGameFinish = async (gameReward) => {
@@ -394,23 +389,6 @@ const refreshClubData = async () => {
           )}
         </ul>
       </div>
-
-      // En DashboardView.jsx, agrega este botón:
-<div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-  <button 
-    onClick={refreshClubData}
-    style={{
-      padding: '8px 16px',
-      background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-dark-blue))',
-      border: 'none',
-      borderRadius: '20px',
-      color: 'white',
-      cursor: 'pointer'
-    }}
-  >
-    🔄 Actualizar datos del club
-  </button>
-</div>
 
       {/* Tarjeta derecha: Próximo Partido (placeholder por ahora) */}
       <div className="player-card">
