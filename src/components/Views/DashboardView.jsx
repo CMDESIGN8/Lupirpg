@@ -490,10 +490,6 @@ const handleBuyItem = async (listing) => {
   </section>
 )}
     <section className="Market-section">
-        <h2 className="Merket-title">Tienda y Wallet</h2>
-        <Wallet size={20} />
-            <span className="balance-amount">{playerData?.lupi_coins || 0}</span>
-            <span className="balance-text">LupiCoins</span>
          <div className="Market-line"></div>
   <MarketView 
     marketItems={marketItems} // ✅ Pasa los datos, no la función
