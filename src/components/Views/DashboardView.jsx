@@ -62,25 +62,6 @@ const DashboardView = ({
   // En DashboardView, añade estos estados y funciones:
 const [marketItems, setMarketItems] = useState([]);
 
-const fetchMarketItems = async () => {
-  try {
-    const { data, error } = await supabaseClient
-      .from('market_listings')
-      .select(`
-        *,
-        player_items:player_items!inner(
-          items(*)
-        ),
-        players(*)
-      `);
-    
-    if (error) throw error;
-    setMarketItems(data || []);
-  } catch (error) {
-    console.error('Error fetching market items:', error);
-    showMessage('Error al cargar el mercado');
-  }
-};
 
 const handleBuyItem = async (listing) => {
   try {
