@@ -438,7 +438,7 @@
     display: flex;
     padding: 12px;
     border-top: 3px solid #0fcff1;
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-dark-blue));
+    background: linear-gradient(135deg, rgba(0, 55, 110, 0.7),rgba(0, 20, 40, 0.7));
     gap: 8px;
 }
 .message-form button {
