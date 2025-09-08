@@ -407,12 +407,10 @@ const DashboardView = ({
   </section>
 )}
     <section className="Market-section">
-    <h2 className="club-title">TU CLUB</h2>
-    <div className="header-line"></div>
-    <p className="club-description">
-      Aquí representas a tu club de barrio. El éxito en los partidos depende de la colaboración de todos los miembros. 
-      Participa en los desafíos cooperativos durante los encuentros para darle a tu equipo la ventaja necesaria para ganar.
-      ¡Comunícate con tus compañeros a través del chat del club!
+    <h2 className="Merket-title">Tienda y Wallet</h2>
+    <div className="Market-line"></div>
+    <p className="Market-description">
+      Usa las Lupicoins que ganas en los partidos para adquirir items que mejoran tus habilidades. Cada compra es una inversión en tu carrera como atleta digital. Tu wallet personal es `lcampos.Lupi`.
     </p>
   </section>
   
