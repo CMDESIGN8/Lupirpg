@@ -161,7 +161,7 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
                         </button>
                       </div>
                     ))
-                  ) : (
+                      ) : (
                     <div className="empty-state">
                       <Package size={48} />
                       <p>No hay objetos en el mercado</p>
