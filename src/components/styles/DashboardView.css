@@ -210,12 +210,12 @@
   }
 
   .status-online {
-    color: var(--neon-green);
+    color: #3eec47;
     animation: pulse 2s infinite;
   }
 
   .status-offline {
-    color: #64748b;
+    color: #ee7c7c;
     opacity: 0.7;
   }
 
