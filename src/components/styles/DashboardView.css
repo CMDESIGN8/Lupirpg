@@ -197,7 +197,7 @@
   }
 
   .member-online {
-    background: linear-gradient(90deg, rgba(0, 255, 136, 0.1) 0%, transparent 100%) !important;
+    background: linear-gradient(90deg, rgba(11, 253, 3, 0.205) 0%, transparent 100%) !important;
     border-left: 3px solid var(--neon-green) !important;
     box-shadow: var(--shadow-glow-green);
   }
