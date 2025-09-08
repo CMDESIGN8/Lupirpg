@@ -1,5 +1,6 @@
 // components/Club/ClubChat.jsx
 import { useState, useEffect } from 'react';
+import '../styles/ClubChat.css'   // 👈 acá importás tu CSS
 
 const ClubChat = ({ playerData, supabaseClient, session }) => {
   const [messages, setMessages] = useState([]);
