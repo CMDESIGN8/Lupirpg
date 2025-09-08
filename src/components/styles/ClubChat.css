@@ -839,36 +839,16 @@
 }
 
 .salacomun {
-    /* Estilo con borde neón animado */
+    /* Estilo con efecto de vidrio (glassmorphism) */
     padding: var(--spacing-lg);
-    margin: var(--spacing-xl) auto;
-    max-width: 800px;
-    background: rgba(15, 23, 42, 0.8);
+    margin: var(--spacing-xl) 0;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(168, 85, 247, 0.3);
     border-radius: var(--border-radius);
-    position: relative;
-    overflow: hidden;
-}
-
-.salacomun::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: var(--border-radius);
-    padding: 2px;
-    background: linear-gradient(45deg, var(--neon-purple), var(--neon-cyan), var(--neon-purple));
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
-    animation: borderGlow 3s infinite linear;
-}
-
-@keyframes borderGlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    backdrop-filter: blur(12px);
+    box-shadow: 
+        0 8px 32px rgba(168, 85, 247, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .salacomun .action-btn.secondary {
@@ -884,6 +864,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+    animation: borderGlow 3s infinite linear;
 }
 
 .salacomun .action-btn.secondary:hover:not(:disabled) {
@@ -901,4 +882,10 @@
 .salacomun .action-btn.secondary .nav-icon {
     font-size: 1.2rem;
     filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes borderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
