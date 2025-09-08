@@ -410,7 +410,14 @@ const DashboardView = ({
     <section className="Market-section">
     <h2 className="Merket-title">Tienda y Wallet</h2>
     <div className="Market-line"></div>
-    <MarketView />
+    <MarketView 
+  marketItems={marketItems} 
+  handleBuyItem={handleBuyItem} 
+  playerData={playerData} 
+  loading={loading} 
+  message={message} 
+  setView={setView}
+/>
   </section>
   
      {/* Panel de navegación inferior */}
