@@ -859,7 +859,7 @@
     background: linear-gradient(135deg, var(--neon-purple), #22cece);
     color: white;
     border: 2px solid var(--neon-blue);
-    border-radius: var(--border-radius-xs);
+    border-radius: 10%;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
