@@ -411,8 +411,7 @@ const DashboardView = ({
         <h2 className="Merket-title">Tienda y Wallet</h2>
         <div className="Market-line"></div>
         <MarketView 
-          marketItems={marketItems} 
-          handleBuyItem={handleBuyItem} 
+          marketItems={fetchMarketItems} 
           playerData={playerData} 
           loading={loading} 
           message={message} 
