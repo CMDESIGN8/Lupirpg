@@ -9,7 +9,7 @@ import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
 import "../styles/DashboardView.css";
 import ClubChat from '../Clubs/ClubChat.jsx';
-import MarketView from './view/marketview';
+import MarketView from '../MarketView.jsx';
 
 
 const DashboardView = ({ 
@@ -410,9 +410,7 @@ const DashboardView = ({
     <section className="Market-section">
     <h2 className="Merket-title">Tienda y Wallet</h2>
     <div className="Market-line"></div>
-    <p className="Market-description">
-      Usa las Lupicoins que ganas en los partidos para adquirir items que mejoran tus habilidades. Cada compra es una inversión en tu carrera como atleta digital. Tu wallet personal es `lcampos.Lupi`.
-    </p>
+    <MarketView />
   </section>
   
      {/* Panel de navegación inferior */}
