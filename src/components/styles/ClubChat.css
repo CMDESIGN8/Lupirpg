@@ -856,21 +856,20 @@
     align-items: center;
     gap: 10px;
     padding: 12px 24px;
-    background: linear-gradient(135deg, var(--neon-purple), #7e22ce);
+    background: linear-gradient(135deg, var(--neon-purple), #22cece);
     color: white;
-    border: none;
+    border: 2px solid var(--neon-blue);
     border-radius: var(--border-radius-xs);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
     animation: borderGlow 3s infinite linear;
 }
 
 .salacomun .action-btn.secondary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #7e22ce, var(--neon-purple));
+    background: linear-gradient(135deg, #22ce9a, var(--neon-purple));
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(168, 85, 247, 0.6);
+    box-shadow: 0 6px 16px rgba(85, 182, 247, 0.6);
 }
 
 .salacomun .action-btn.secondary:disabled {
