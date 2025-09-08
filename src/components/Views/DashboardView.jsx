@@ -396,6 +396,10 @@ const DashboardView = ({
             <button className="contribute-btn">Contribuir +2</button>
           </div>
         </div>
+        <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+  <span className="nav-icon">🏠</span>
+  <span>SALA COMUN</span>
+</button>
       </div>
     </div>
   </section>
