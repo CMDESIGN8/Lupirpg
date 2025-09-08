@@ -434,11 +434,13 @@
     word-break: break-word;
   }
 
-  .message-form {
+ .message-form {
     display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
-  }
+    padding: 12px;
+    border-top: 3px solid #0fcff1;
+    background: linear-gradient(to right, #3c80e7, #2b9dc0);
+    gap: 8px;
+}
 
   .message-input {
     flex: 1;
