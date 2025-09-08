@@ -514,15 +514,7 @@ const handleBuyItem = async (listing) => {
     </div>
 
     {/* Últimos 3 Avatares */}
-    <div className="preview-section">
-      <h3>Nuevos Avatares</h3>
-      {avatars.slice(0, 3).map(avatar => (
-        <div key={avatar.id} className="preview-avatar">
-          <img src={avatar.image_url} alt={avatar.name} />
-          <p>{avatar.name} - {avatar.price} LupiCoins</p>
-        </div>
-      ))}
-    </div>
+    
   </div>
 
   <button 
