@@ -7,7 +7,6 @@
     background: linear-gradient(135deg, var(--lupi-card) 0%, #1e293b 100%);
     border: 2px solid var(--neon-blue);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-glow);
     backdrop-filter: blur(10px);
   }
 
@@ -646,7 +645,6 @@
      border: 2px solid var(--neon-blue);
     border-radius: var(--border-radius);
     padding: var(--spacing-lg);
-    box-shadow: var(--shadow-glow);
     transition: all 0.3s ease;
     height: fit-content;
     }
@@ -656,6 +654,10 @@
     max-height: 60vh;
     overflow: hidden;   /* estructura */
     border: 2px solid var(--neon-blue);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    transition: all 0.3s ease;
+    height: fit-content;
     
   }
 
