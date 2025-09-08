@@ -447,6 +447,7 @@
     border: 1px solid rgba(168, 85, 247, 0.2);
     scrollbar-width: thin;
     scrollbar-color: var(--neon-purple) transparent;
+    min-height: 0; /* 👈 importante para que flex permita el scroll */
   }
 
   .messages-container::-webkit-scrollbar {
@@ -752,12 +753,22 @@
     .club-container {
       grid-template-columns: 1fr;
       gap: var(--spacing-lg);
+      display: flex;
+      flex-direction: column; /* stack en móvil */
+
     }
     
     .club-chat-container {
-      height: 400px;
-      order: 2;
-    }
+    height: 60vh;       /* altura relativa a pantalla */
+    max-height: 60vh;
+    overflow: hidden;   /* estructura */
+  }
+
+  .messages-container {
+    flex: 1;
+    min-height: 0;      /* scroll activo */
+    overflow-y: auto;
+  }
     
     .club-section {
       padding: var(--spacing-lg);
