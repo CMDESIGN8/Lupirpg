@@ -34,7 +34,8 @@
   }
 
   .club-description {
-    color: var(--lupi-text-secondary);
+    color: #fff;
+    font-weight: bold;
     text-align: center;
     margin-bottom: var(--spacing-xl);
     line-height: 1.7;
