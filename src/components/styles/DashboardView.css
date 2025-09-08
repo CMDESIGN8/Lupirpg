@@ -94,7 +94,18 @@
     color: white;
     box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
     border: 2px solid rgba(255, 255, 255, 0.1);
-  }
+    animation: glowPulse 2.5s infinite alternate;
+}
+
+@keyframes glowPulse {
+  from { box-shadow: 0 0 8px rgba(0,255,255,0.5); }
+  to { box-shadow: 0 0 20px rgba(0,255,255,0.9); }
+}
+
+.member-self {
+  background: linear-gradient(90deg, rgba(0,255,204,0.15), transparent);
+  border-left: 3px solid var(--neon-cyan);
+}
 
   .club-name-main {
     font-size: 1.6rem;
@@ -300,7 +311,13 @@
     flex-direction: column;
     flex: 1;
     gap: var(--spacing-md);
+    animation: fadeIn 0.3s ease;
   }
+
+  @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
   .messages-container {
     flex: 1;
@@ -654,13 +671,7 @@
       gap: var(--spacing-sm);
       padding: var(--spacing-md);
     }
-    
-    .club-logo {
-      width: 60px;
-      height: 60px;
-      font-size: 1.1rem;
-    }
-    
+
     .club-name-main {
       font-size: 1.3rem;
     }
