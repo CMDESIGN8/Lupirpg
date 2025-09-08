@@ -643,6 +643,7 @@
     height: 60vh;       /* altura relativa a pantalla */
     max-height: 60vh;
     overflow: hidden;   /* estructura */
+    border: 2px solid var(--neon-blue);
   }
 
   .messages-container {
