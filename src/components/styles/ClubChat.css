@@ -438,10 +438,24 @@
     display: flex;
     padding: 12px;
     border-top: 3px solid #0fcff1;
-    background: linear-gradient(to right, #3c80e7, #2b9dc0);
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-dark-blue));
     gap: 8px;
 }
-
+.message-form button {
+    color: rgb(255, 255, 255);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 15px;
+    background: linear-gradient(rgb(46, 204, 113), rgb(39, 174, 96));
+    border-width: 2px;
+    border-style: solid;
+    border-color: rgb(18, 243, 187);
+    border-image: initial;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: 0.2s;
+}
   .message-input {
     flex: 1;
     padding: var(--spacing-sm) var(--spacing-md);
