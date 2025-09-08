@@ -155,7 +155,7 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
     : playerData.club_stats?.average_level || 1;
 
   return (
-    <div className="club-chat-container">
+    <div className="player-card">
       <div className="chat-header">
         <h3>Chat del Club</h3>
         <div className="chat-tabs">
