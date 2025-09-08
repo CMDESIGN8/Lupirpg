@@ -78,8 +78,9 @@
 }
 
 .market-description {
-  color: var(--lupi-text-secondary);
+  color: #fff;
   font-size: 1rem;
+  font-weight: bold;
   line-height: 1.5;
   text-align: center;
   margin: 0;
