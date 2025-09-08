@@ -7,9 +7,9 @@ import AvatarSelector from '../AvatarSelector/AvatarSelector';
 import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
-import "../styles/DashboardView.css";
 import ClubChat from '../Clubs/ClubChat.jsx';
-import MarketView from '../Views/MarketView.jsx';
+import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
+import "../styles/DashboardView.css";
 
 
 const DashboardView = ({ 
@@ -408,17 +408,17 @@ const DashboardView = ({
   </section>
 )}
     <section className="Market-section">
-    <h2 className="Merket-title">Tienda y Wallet</h2>
-    <div className="Market-line"></div>
-    <MarketView 
-  marketItems={marketItems} 
-  handleBuyItem={handleBuyItem} 
-  playerData={playerData} 
-  loading={loading} 
-  message={message} 
-  setView={setView}
-/>
-  </section>
+        <h2 className="Merket-title">Tienda y Wallet</h2>
+        <div className="Market-line"></div>
+        <MarketView 
+          marketItems={marketItems} 
+          handleBuyItem={handleBuyItem} 
+          playerData={playerData} 
+          loading={loading} 
+          message={message} 
+          setView={setView}
+        />
+      </section>
   
      {/* Panel de navegación inferior */}
       <div className="nav-panel">
