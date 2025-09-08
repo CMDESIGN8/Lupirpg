@@ -839,10 +839,36 @@
 }
 
 .salacomun {
-    display: flex;
-    justify-content: center;
-    padding: var(--spacing-md);
-    margin: var(--spacing-lg) 0;
+    /* Estilo con borde neón animado */
+    padding: var(--spacing-lg);
+    margin: var(--spacing-xl) auto;
+    max-width: 800px;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: var(--border-radius);
+    position: relative;
+    overflow: hidden;
+}
+
+.salacomun::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--border-radius);
+    padding: 2px;
+    background: linear-gradient(45deg, var(--neon-purple), var(--neon-cyan), var(--neon-purple));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    animation: borderGlow 3s infinite linear;
+}
+
+@keyframes borderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .salacomun .action-btn.secondary {
