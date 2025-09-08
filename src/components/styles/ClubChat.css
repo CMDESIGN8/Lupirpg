@@ -312,6 +312,13 @@
     flex: 1;
     gap: var(--spacing-md);
     animation: fadeIn 0.3s ease;
+     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 2px solid var(--neon-blue);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-glow);
+    transition: all 0.3s ease;
+    height: fit-content;
   }
 
   @keyframes fadeIn {
@@ -644,6 +651,7 @@
     max-height: 60vh;
     overflow: hidden;   /* estructura */
     border: 2px solid var(--neon-blue);
+    
   }
 
   .messages-container {
