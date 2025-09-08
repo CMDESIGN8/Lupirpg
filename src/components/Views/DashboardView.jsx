@@ -490,15 +490,47 @@ const handleBuyItem = async (listing) => {
   </section>
 )}
     <section className="Market-section">
-         <div className="Market-line"></div>
-  <MarketView 
-    marketItems={marketItems} // ✅ Pasa los datos, no la función
-    handleBuyItem={handleBuyItem} // ✅ Añade esta prop
-    playerData={playerData} 
-    loading={loading} 
-    message={message} 
-    setView={setView}
-  />
+  <div className="market-preview-header">
+    <h2 className="Market-title">Tienda y Wallet</h2>
+    <div className="market-balance-preview">
+      <Wallet size={20} />
+      <span className="balance-amount">{playerData?.lupi_coins || 0}</span>
+      <span className="balance-text">LupiCoins</span>
+    </div>
+  </div>
+  
+  <div className="Market-line"></div>
+  
+  <div className="market-preview-content">
+    {/* Últimos 3 Items */}
+    <div className="preview-section">
+      <h3>Últimos Items</h3>
+      {marketItems.slice(0, 3).map(item => (
+        <div key={item.id} className="preview-item">
+          <h4>{item.player_items.items.name}</h4>
+          <p>Precio: {item.price} LupiCoins</p>
+        </div>
+      ))}
+    </div>
+
+    {/* Últimos 3 Avatares */}
+    <div className="preview-section">
+      <h3>Nuevos Avatares</h3>
+      {avatars.slice(0, 3).map(avatar => (
+        <div key={avatar.id} className="preview-avatar">
+          <img src={avatar.image_url} alt={avatar.name} />
+          <p>{avatar.name} - {avatar.price} LupiCoins</p>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <button 
+    onClick={() => { fetchMarketItems(); setView('market'); }}
+    className="view-market-btn"
+  >
+    Ver Mercado Completo
+  </button>
 </section>
   
      {/* Panel de navegación inferior */}

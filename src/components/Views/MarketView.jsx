@@ -84,7 +84,6 @@ const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, 
       <div className="market-box">
         <div className="market-header">
           <h2 className="market-title">MERCADO LUPI</h2>
-          <h4>Usa las Lupicoins que ganas en los partidos para adquirir items que mejoran tus habilidades. Cada compra es una inversión en tu carrera como atleta digital.</h4>
           <div className="market-balance">
             <Wallet size={20} />
             <span className="balance-amount">{playerData?.lupi_coins || 0}</span>
