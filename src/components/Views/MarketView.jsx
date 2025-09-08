@@ -6,6 +6,7 @@ import '../styles/MarketView.css';
 import React, { useState, useEffect } from 'react';
 import { Package } from "lucide-react";
 import { User } from "lucide-react";
+import MarketView from './view/marketview';
 
 
 const MarketView = ({ marketItems, handleBuyItem, playerData, loading, message, setView }) => {

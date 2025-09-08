@@ -9,6 +9,7 @@ import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
 import "../styles/DashboardView.css";
 import ClubChat from '../Clubs/ClubChat.jsx';
+import MarketView from './view/marketview';
 
 
 const DashboardView = ({ 
