@@ -643,7 +643,12 @@
       gap: var(--spacing-lg);
       display: flex;
       flex-direction: column; /* stack en móvil */
-
+     border: 2px solid var(--neon-blue);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-glow);
+    transition: all 0.3s ease;
+    height: fit-content;
     }
     
     .club-chat-container {
