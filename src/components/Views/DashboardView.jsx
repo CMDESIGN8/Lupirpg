@@ -399,7 +399,7 @@ const DashboardView = ({
       </div>
     </div>
     <div class="salacomun">
-    <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+    <button className="action" onClick={() => setShowCommonRoom(true)} disabled={loading}>
   <span className="nav-icon">🏠</span>
   <span>INGRESAR A LA SALA DE EQUIPO</span>
 </button>

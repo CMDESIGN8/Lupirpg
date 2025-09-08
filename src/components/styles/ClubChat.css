@@ -851,7 +851,7 @@
     height: fit-content;
 }
 
-.salacomun .action-btn.secondary {
+.salacomun .action {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -866,19 +866,19 @@
     animation: borderGlow 3s infinite linear;
 }
 
-.salacomun .action-btn.secondary:hover:not(:disabled) {
+.salacomun .action:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--neon-cyan), var(--neon-dark-blue));
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(85, 182, 247, 0.6);
 }
 
-.salacomun .action-btn.secondary:disabled {
+.salacomun .action:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
 }
 
-.salacomun .action-btn.secondary .nav-icon {
+.salacomun .action .nav-icon {
     font-size: 1.2rem;
     filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
