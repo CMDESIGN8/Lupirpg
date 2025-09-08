@@ -398,10 +398,12 @@ const DashboardView = ({
         </div>
       </div>
     </div>
+    <div class="salacomun">
     <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
   <span className="nav-icon">🏠</span>
   <span>SALA COMUN</span>
 </button>
+</div>
   </section>
 )}
     

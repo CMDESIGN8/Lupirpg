@@ -4,7 +4,7 @@
   .club-section {
     margin-top: var(--spacing-xxl);
     padding: var(--spacing-xl);
-    background: linear-gradient(135deg, var(--lupi-card) 0%, #1e293b 100%);
+    background: rgba(0, 20, 40, 0.7);
     border: 2px solid var(--neon-blue);
     border-radius: var(--border-radius);
     backdrop-filter: blur(10px);
@@ -836,4 +836,43 @@
 .status-offline {
   color: #ee7c7c;
   opacity: 0.7;
+}
+
+.salacomun {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.salacomun .action-btn.secondary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--neon-purple), #7e22ce);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+.salacomun .action-btn.secondary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7e22ce, var(--neon-purple));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(168, 85, 247, 0.6);
+}
+
+.salacomun .action-btn.secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.salacomun .action-btn.secondary .nav-icon {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
