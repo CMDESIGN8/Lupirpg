@@ -61,6 +61,10 @@ const DashboardView = ({
 
   // En DashboardView, añade estos estados y funciones:
 const [marketItems, setMarketItems] = useState([]);
+useEffect(() => {
+    fetchMarketItems();
+    loadEquippedAvatar();
+  }, []);
 
 
 const handleBuyItem = async (listing) => {
@@ -380,6 +384,12 @@ const handleBuyItem = async (listing) => {
   <span className="nav-icon">🏠</span>
   <span>SALA COMUN</span>
 </button>
+
+<button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
+            <span className="nav-icon">➡️</span>
+            <span>Transferir</span>
+          </button>
+
           </div>
         </div>
       </div>
