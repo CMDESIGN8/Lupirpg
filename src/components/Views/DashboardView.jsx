@@ -59,6 +59,75 @@ const DashboardView = ({
     }
   };
 
+  // En DashboardView, añade estos estados y funciones:
+const [marketItems, setMarketItems] = useState([]);
+
+const fetchMarketItems = async () => {
+  try {
+    const { data, error } = await supabaseClient
+      .from('market_listings')
+      .select(`
+        *,
+        player_items:player_items!inner(
+          items(*)
+        ),
+        players(*)
+      `);
+    
+    if (error) throw error;
+    setMarketItems(data || []);
+  } catch (error) {
+    console.error('Error fetching market items:', error);
+    showMessage('Error al cargar el mercado');
+  }
+};
+
+const handleBuyItem = async (listing) => {
+  try {
+    // 1. Eliminar del mercado
+    const { error: deleteError } = await supabaseClient
+      .from('market_listings')
+      .delete()
+      .eq('id', listing.id);
+    
+    if (deleteError) throw deleteError;
+
+    // 2. Transferir item al comprador
+    const { error: updateError } = await supabaseClient
+      .from('player_items')
+      .update({ player_id: session.user.id })
+      .eq('id', listing.player_items.id);
+    
+    if (updateError) throw updateError;
+
+    // 3. Actualizar monedas del comprador
+    const { error: coinsError } = await supabaseClient
+      .from('players')
+      .update({ lupi_coins: playerData.lupi_coins - listing.price })
+      .eq('id', session.user.id);
+    
+    if (coinsError) throw coinsError;
+
+    // 4. Dar monedas al vendedor
+    const { error: sellerError } = await supabaseClient
+      .from('players')
+      .update({ lupi_coins: listing.players.lupi_coins + listing.price })
+      .eq('id', listing.seller_id);
+    
+    if (sellerError) throw sellerError;
+
+    // 5. Actualizar estado local
+    setMarketItems(prev => prev.filter(item => item.id !== listing.id));
+    setPlayerData(prev => ({ ...prev, lupi_coins: prev.lupi_coins - listing.price }));
+    setInventory(prev => [...prev, listing.player_items]);
+    
+    showMessage('¡Compra exitosa!');
+  } catch (error) {
+    console.error('Error buying item:', error);
+    showMessage('Error al realizar la compra');
+  }
+};
+
   const handleAvatarClick = () => setShowAvatarSelector(true);
 
   const copyToClipboard = () => {
@@ -409,15 +478,19 @@ const DashboardView = ({
 )}
     <section className="Market-section">
         <h2 className="Merket-title">Tienda y Wallet</h2>
-        <div className="Market-line"></div>
-        <MarketView 
-          marketItems={fetchMarketItems} 
-          playerData={playerData} 
-          loading={loading} 
-          message={message} 
-          setView={setView}
-        />
-      </section>
+        <Wallet size={20} />
+            <span className="balance-amount">{playerData?.lupi_coins || 0}</span>
+            <span className="balance-text">LupiCoins</span>
+         <div className="Market-line"></div>
+  <MarketView 
+    marketItems={marketItems} // ✅ Pasa los datos, no la función
+    handleBuyItem={handleBuyItem} // ✅ Añade esta prop
+    playerData={playerData} 
+    loading={loading} 
+    message={message} 
+    setView={setView}
+  />
+</section>
   
      {/* Panel de navegación inferior */}
       <div className="nav-panel">
