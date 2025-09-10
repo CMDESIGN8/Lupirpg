@@ -1,7 +1,7 @@
 // components/Clubs/ClubsSystem.jsx
 import React, { useState, useEffect } from 'react';
 import ClubsView from '../Views/ClubsView';
-import CreateClubView from '../Views/CreateClubView';
+import CreateClubView from '../Club/CreateClubView';
 import ClubDetailsView from '../Views/ClubDetailsView';
 import ClubMissionsView from '../Views/ClubMissionsView';
 
