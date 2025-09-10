@@ -1,7 +1,7 @@
 // components/Clubs/ClubsSystem.jsx
 import React, { useState, useEffect } from 'react';
 import ClubsView from '../Views/ClubsView';
-import CreateClubView from '../Club/CreateClubView';
+import CreateClubView from '../Views/CreateClubView';
 import ClubDetailsView from '../Views/ClubDetailsView';
 import ClubMissionsView from '../Views/ClubMissionsView';
 
@@ -79,7 +79,7 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setInternalView={setInternalView}
+            setInternalView={setInternalView} // ✅ Asegúrate de que esta línea esté correcta
             onBackToClubs={handleBackToClubsList}
           />
         );
@@ -89,7 +89,7 @@ const ClubsSystem = ({
         return (
           <ClubMissionsView
             currentClub={selectedClub}
-            setInternalView={setInternalView}
+            setInternalView={setInternalView} // ✅ Asegúrate de que esta línea esté correcta
             isLeader={playerData.club_id === selectedClub?.id && selectedClub?.owner_id === playerData.id}
             onBackToClubDetails={() => setInternalView('club_details')}
           />
