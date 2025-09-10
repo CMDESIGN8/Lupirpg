@@ -1,6 +1,7 @@
 // src/components/UI/Modal.jsx
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import '../styles/Modal.css';
 
 const Modal = ({ isOpen, onClose, title, children }) => {
   // Cerrar modal con la tecla Escape

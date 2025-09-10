@@ -3,7 +3,7 @@ import { ChevronDown, Target, Users, Gift, Plus, ArrowLeft } from 'lucide-react'
 import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress';
 import { useClubMissions } from '../../hooks/useClubMissions';
-import CreateMissionModal from './CreateMissionModal';
+import CreateMissionModal from '../Clubs/CreateMissionModal';
 import ClubsSystem from '../Clubs/ClubsSystem';
 import { useState } from 'react';
 
