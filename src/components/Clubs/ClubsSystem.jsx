@@ -52,7 +52,7 @@ const ClubsSystem = ({
             playerData={playerData}
             loading={loading}
             message={message}
-            setView={setView}
+           setView={setInternalView}
           />
         );
       

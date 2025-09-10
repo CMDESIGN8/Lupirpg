@@ -3,7 +3,7 @@ import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import '../styles/ClubsView.css';
 
-const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, loading, message, setView }) => (
+const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, loading, message, setInternalView }) => (
   <div className="clubs-container">
     <div className="clubs-content">
       <div className="clubs-header">
@@ -15,7 +15,7 @@ const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, l
       {!playerData.club_id && (
         <div className="create-club-header">
           <ThemedButton 
-            onClick={() => setView('create_club')} 
+            onClick={() => setInternalView('create_club')}
             icon={<UserPlus size={16} />} 
             className="create-club-button"
           >
