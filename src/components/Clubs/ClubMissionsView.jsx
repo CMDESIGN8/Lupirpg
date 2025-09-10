@@ -1,5 +1,5 @@
-// src/components/Club/ClubMissionsView.jsx
-import { ChevronDown, Target, Users, Gift, Plus } from 'lucide-react';
+// src/components/Views/ClubMissionsView.jsx
+import { ChevronDown, Target, Users, Gift, Plus, ArrowLeft } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress';
 import { useClubMissions } from '../../hooks/useClubMissions';
@@ -26,7 +26,11 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
 
   const handleBackToClub = () => {
     console.log('Navigating back to club details');
-    setView('club_details');
+    if (setView) {
+      setView('club_details');
+    } else {
+      console.error('setView function is not available');
+    }
   };
 
   if (loading) {
@@ -42,7 +46,17 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
       <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
-        <h2 className="text-3xl font-bold text-center mb-6 text-blue-600">Misiones del Club</h2>
+        <div className="flex justify-between items-center mb-6">
+          <ThemedButton 
+            onClick={handleBackToClub}
+            icon={<ArrowLeft size={20} />}
+            className="bg-gray-600 hover:bg-gray-500"
+          >
+            Volver al Club
+          </ThemedButton>
+          <h2 className="text-3xl font-bold text-center text-blue-600">Misiones del Club</h2>
+          <div style={{ width: '140px' }}></div>
+        </div>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -121,15 +135,6 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
           )) : (
             <p className="text-center text-gray-500">No hay misiones disponibles actualmente.</p>
           )}
-        </div>
-        
-        <div className="flex justify-center mt-8">
-          <ThemedButton 
-            onClick={handleBackToClub}
-            icon={<ChevronDown size={20} />}
-          >
-            Volver al Club
-          </ThemedButton>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-// src/components/Club/CreateMissionModal.jsx
+// src/components/Views/CreateMissionModal.jsx
 import { useState } from 'react';
 import ThemedButton from '../UI/ThemedButton';
 import Modal from '../UI/Modal';
