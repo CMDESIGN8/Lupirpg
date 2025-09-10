@@ -50,7 +50,38 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
               </div>
             </div>
           )}
-
+<div className="missions-preview mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+  <h3 className="text-lg font-semibold text-blue-700 mb-3 flex items-center">
+    <Target className="mr-2" size={18} />
+    Misiones Activas
+  </h3>
+  
+  {currentClub.active_missions && currentClub.active_missions.length > 0 ? (
+    currentClub.active_missions.slice(0, 2).map(mission => (
+      <div key={mission.id} className="mb-3 last:mb-0">
+        <div className="flex justify-between text-sm">
+          <span className="font-medium">{mission.name}</span>
+          <span>{mission.progress}/{mission.goal}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+          <div 
+            className="bg-green-500 h-1.5 rounded-full" 
+            style={{ width: `${(mission.progress / mission.goal) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+    ))
+  ) : (
+    <p className="text-sm text-blue-600">No hay misiones activas actualmente.</p>
+  )}
+  
+  <ThemedButton 
+    onClick={() => setView('club_missions')}
+    className="mt-3 w-full bg-blue-600 hover:bg-blue-500 text-sm"
+  >
+    Ver Todas las Misiones
+  </ThemedButton>
+</div>
           {/* Barra de progreso de nivel (opcional) */}
           {currentClub.average_level && (
             <div className="level-progress">
