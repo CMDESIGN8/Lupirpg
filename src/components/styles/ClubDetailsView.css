@@ -508,3 +508,7 @@
   color:rgb(38, 172, 49);
   font-weight: bold;
 }
+.mission-preview-header {
+  color: var(--neon-cyan);
+  font-weight: bold;
+}
