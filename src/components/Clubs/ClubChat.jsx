@@ -1,6 +1,7 @@
 // components/Club/ClubChat.jsx
 import { useState, useEffect } from 'react';
 import '../styles/ClubChat.css'   // 👈 acá importás tu CSS
+import ClubLogo from '../assets/logo.png'; 
 
 const ClubChat = ({ playerData, supabaseClient, session }) => {
   const [messages, setMessages] = useState([]);
@@ -178,8 +179,20 @@ const ClubChat = ({ playerData, supabaseClient, session }) => {
         <div className="club-info">
           <div className="club-header">
             <div className="club-logo">
-              {playerData.clubs.name ? playerData.clubs.name.substring(0, 2).toUpperCase() : 'LF'}
-            </div>
+  <img 
+    src={ClubLogo} 
+    alt={playerData.clubs.name || 'Club logo'}
+    className="club-logo-image"
+    onError={(e) => {
+      e.target.style.display = 'none';
+    }}
+  />
+  {(!playerData.clubs.logo || playerData.clubs.logo === '') && (
+    <span className="club-initials">
+      {playerData.clubs.name ? playerData.clubs.name.substring(0, 2).toUpperCase() : 'LF'}
+    </span>
+  )}
+</div>
             <div>
               <h3 className="club-name-main">{playerData.clubs.name}</h3>
               <p className="club-level-text">
