@@ -1,22 +1,20 @@
 // src/components/Views/ClubDetailsView.jsx
-import { LogIn, LogOut, Users, ArrowLeft, Target, Users as UsersIcon, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogIn, LogOut, Users, ArrowLeft, Target, Star } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
-import '../styles/ClubDetailsView.css';
 import { useClubMissions } from '../../hooks/useClubMissions';
-import { useState, useEffect } from 'react';
 
-const ClubDetailsView = ({ 
-  currentClub, 
-  clubMembers, 
-  handleLeaveClub, 
-  handleJoinClub, 
-  playerData, 
-  fetchClubs, 
-  loading, 
-  message, 
-  setInternalView, // Recibir setInternalView en lugar de setView
-  onBackToClubs 
+const ClubDetailsView = ({
+  currentClub,
+  clubMembers,
+  handleLeaveClub,
+  handleJoinClub,
+  playerData,
+  loading,
+  message,
+  setInternalView, // ✅ Ahora debería recibir esta prop
+  onBackToClubs
 }) => {
   const [activeMissions, setActiveMissions] = useState([]);
   const { missions: allMissions, loading: missionsLoading } = useClubMissions(currentClub?.id);

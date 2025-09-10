@@ -41,9 +41,6 @@ const ClubsSystem = ({
     if (fetchClubs) fetchClubs();
   };
 
-  console.log('ClubsSystem - internalView:', internalView);
-  console.log('ClubsSystem - selectedClub:', selectedClub);
-
   const renderView = () => {
     switch (internalView) {
       case 'clubs_list':
@@ -68,7 +65,6 @@ const ClubsSystem = ({
         );
       
       case 'club_details':
-        console.log('Rendering ClubDetailsView with setInternalView');
         return (
           <ClubDetailsView
             currentClub={selectedClub}
@@ -79,13 +75,12 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setInternalView={setInternalView}
+            setInternalView={setInternalView} // ✅ Pasar correctamente
             onBackToClubs={handleBackToClubsList}
           />
         );
       
       case 'club_missions':
-        console.log('Rendering ClubMissionsView with setInternalView');
         return (
           <ClubMissionsView
             currentClub={selectedClub}
@@ -96,17 +91,7 @@ const ClubsSystem = ({
         );
       
       default:
-        return (
-          <ClubsView
-            clubs={clubs}
-            handleViewClubDetails={handleSelectClub}
-            handleJoinClub={handleJoinClub}
-            playerData={playerData}
-            loading={loading}
-            message={message}
-            setView={setView}
-          />
-        );
+        return <ClubsView {...this.props} />;
     }
   };
 
