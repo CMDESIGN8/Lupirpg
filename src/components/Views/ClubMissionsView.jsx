@@ -6,7 +6,7 @@ import { useClubMissions } from '../../hooks/useClubMissions';
 import CreateMissionModal from '../Clubs/CreateMissionModal';
 import { useState } from 'react';
 
-const ClubMissionsView = ({ currentClub, setView, isLeader, onBackToClubDetails }) => {
+const ClubMissionsView = ({ currentClub, setInternalView, isLeader, onBackToClubDetails }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { missions, loading, error, contributeToMission, createMission } = useClubMissions(currentClub?.id);
 
@@ -26,9 +26,9 @@ const ClubMissionsView = ({ currentClub, setView, isLeader, onBackToClubDetails 
 
   const handleBackToClub = () => {
     if (onBackToClubDetails) {
-      onBackToClubDetails(); // Usa la función específica para volver
-    } else if (setView) {
-      setView('club_details');
+      onBackToClubDetails();
+    } else if (setInternalView) {
+      setInternalView('club_details');
     }
   };
 

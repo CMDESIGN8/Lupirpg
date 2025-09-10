@@ -15,8 +15,8 @@ const ClubDetailsView = ({
   fetchClubs, 
   loading, 
   message, 
-  setView, // Ahora es setInternalView
-  onBackToClubs // Nueva prop para volver a la lista de clubes
+  setInternalView, // Recibir setInternalView en lugar de setView
+  onBackToClubs 
 }) => {
   const [activeMissions, setActiveMissions] = useState([]);
   const { missions: allMissions, loading: missionsLoading } = useClubMissions(currentClub?.id);
@@ -30,18 +30,18 @@ const ClubDetailsView = ({
 
   const handleViewMissions = () => {
     console.log('Navigating to club missions');
-    if (setView) {
-      setView('club_missions'); // Cambia a la vista interna de misiones
+    if (setInternalView) {
+      setInternalView('club_missions'); // Usar setInternalView
     } else {
-      console.error('setView function is not available');
+      console.error('setInternalView function is not available');
     }
   };
 
   const handleBackToClubs = () => {
     if (onBackToClubs) {
-      onBackToClubs(); // Usa la función específica para volver
-    } else if (setView) {
-      setView('clubs_list');
+      onBackToClubs();
+    } else if (setInternalView) {
+      setInternalView('clubs_list');
     }
   };
 

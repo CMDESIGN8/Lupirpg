@@ -41,7 +41,7 @@ const ClubsSystem = ({
   const handleBackToClubsList = () => {
     setSelectedClub(null);
     setInternalView('clubs_list');
-    if (fetchClubs) fetchClubs(); // Recargar la lista de clubes
+    if (fetchClubs) fetchClubs();
   };
 
   const renderView = () => {
@@ -55,7 +55,7 @@ const ClubsSystem = ({
             playerData={playerData}
             loading={loading}
             message={message}
-            setView={setView} // Para volver al dashboard
+            setView={setView}
           />
         );
       
@@ -78,7 +78,7 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setView={setInternalView} // Navegación interna
+            setInternalView={setInternalView} // Pasar setInternalView con nombre diferente
             onBackToClubs={handleBackToClubsList}
           />
         );
@@ -87,7 +87,7 @@ const ClubsSystem = ({
         return (
           <ClubMissionsView
             currentClub={selectedClub}
-            setView={setInternalView} // Navegación interna
+            setInternalView={setInternalView} // Pasar setInternalView con nombre diferente
             isLeader={playerData.club_id === selectedClub?.id && selectedClub?.owner_id === playerData.id}
             onBackToClubDetails={() => setInternalView('club_details')}
           />
