@@ -863,3 +863,28 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Navegación */
+.navigation-header {
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  background-color: #6b7280;
+  color: white;
+}
+
+.back-button:hover {
+  background-color: #4b5563;
+}
+
+/* Ajustes para el diseño */
+.club-details-card {
+  position: relative;
+}
+
+.club-actions {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
