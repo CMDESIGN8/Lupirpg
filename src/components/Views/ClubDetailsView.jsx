@@ -1,6 +1,6 @@
 // src/components/Views/ClubDetailsView.jsx
 import React, { useState, useEffect } from 'react';
-import { LogIn, LogOut, Users, ArrowLeft, Target, Star } from 'lucide-react';
+import { LogIn, LogOut, Users, ArrowLeft, Target, Users as UsersIcon, Star } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import { useClubMissions } from '../../hooks/useClubMissions';
