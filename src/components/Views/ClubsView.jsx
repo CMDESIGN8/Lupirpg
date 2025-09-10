@@ -39,7 +39,7 @@ const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, l
         {club.name}
         {club.average_level && (
           <span style={{ 
-            fontSize: '0.8rem', 
+            fontSize: '1.2rem', 
             color: '#00ffcc', 
             marginLeft: '10px',
             background: 'rgba(0, 255, 204, 0.1)',
