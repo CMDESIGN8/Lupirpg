@@ -1,6 +1,6 @@
 // src/hooks/useClubMissions.js
 import { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../services/supabase'; // Importación corregida
 
 export const useClubMissions = (clubId) => {
   const [missions, setMissions] = useState([]);
