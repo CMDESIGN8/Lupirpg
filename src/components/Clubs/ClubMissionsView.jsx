@@ -4,6 +4,7 @@ import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import CreateMissionModal from './CreateMissionModal';
+import ClubsSystem from '../Clubs/ClubsSystem';
 import { useState } from 'react';
 
 const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
