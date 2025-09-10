@@ -69,49 +69,51 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
               </div>
             )}
 
-            <div className="missions-preview">
-              <h3 className="missions-preview-title">
-                <Target className="mr-2" size={18} />
-                Misiones Activas
-              </h3>
-              
-              {missionsLoading ? (
-                <p className="loading-missions">Cargando misiones...</p>
-              ) : activeMissions && activeMissions.length > 0 ? (
-                <>
-                  {activeMissions.slice(0, 2).map(mission => (
-                    <div key={mission.id} className="mission-preview-item">
-                      <div className="mission-preview-header">
-                        <span className="mission-preview-name">{mission.name}</span>
-                        <span>{mission.progress}/{mission.goal}</span>
-                      </div>
-                      <div className="mission-preview-bar">
-                        <div 
-                          className="mission-preview-progress" 
-                          style={{ width: `${(mission.progress / mission.goal) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                  <ThemedButton 
-                    onClick={handleViewMissions}
-                    className="view-all-missions-btn"
-                  >
-                    Ver Todas las Misiones
-                  </ThemedButton>
-                </>
-              ) : (
-                <>
-                  <p className="no-missions-text">No hay misiones activas actualmente.</p>
-                  <ThemedButton 
-                    onClick={handleViewMissions}
-                    className="view-missions-btn"
-                  >
-                    Ver Misiones
-                  </ThemedButton>
-                </>
-              )}
-            </div>
+           <div className="missions-preview">
+  <h3 className="missions-preview-title">
+    <Target className="mr-2" size={24} />
+    Misiones Activas
+  </h3>
+  
+  {missionsLoading ? (
+    <p className="loading-missions">Cargando misiones...</p>
+  ) : activeMissions && activeMissions.length > 0 ? (
+    <>
+      {activeMissions.slice(0, 2).map(mission => (
+        <div key={mission.id} className="mission-preview-item">
+          <div className="mission-preview-header">
+            <span className="mission-preview-name">{mission.name}</span>
+            <span>{mission.progress}/{mission.goal}</span>
+          </div>
+          <div className="mission-preview-bar">
+            <div 
+              className="mission-preview-progress" 
+              style={{ width: `${Math.max(5, (mission.progress / mission.goal) * 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      ))}
+      <ThemedButton 
+        onClick={handleViewMissions}
+        className="view-all-missions-btn"
+      >
+        <Target size={16} className="mr-2" />
+        Ver Todas las Misiones
+      </ThemedButton>
+    </>
+  ) : (
+    <>
+      <p className="no-missions-text">No hay misiones activas actualmente.</p>
+      <ThemedButton 
+        onClick={handleViewMissions}
+        className="view-missions-btn"
+      >
+        <Target size={16} className="mr-2" />
+        Ver Misiones del Club
+      </ThemedButton>
+    </>
+  )}
+</div>
 
             {currentClub.average_level && (
               <div className="level-progress">
