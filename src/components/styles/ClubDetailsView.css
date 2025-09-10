@@ -262,6 +262,11 @@
  
 }
 
+.level-badge span {
+  color: rgb(255, 255, 255);
+  font-weight: bold;
+}
+
 /* Barra de progreso de nivel del club */
 .level-progress {
   margin-top: var(--spacing-md);
