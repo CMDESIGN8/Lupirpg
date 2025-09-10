@@ -159,7 +159,6 @@ const ClubDetailsView = ({
                     onClick={handleViewMissions}
                     className="view-all-missions-btn"
                   >
-                    <Target size={16} className="mr-2" />
                     Ver Todas las Misiones
                   </ThemedButton>
                 </>
