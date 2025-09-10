@@ -148,8 +148,7 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
         onClick={handleViewMissions}
         className="view-missions-btn"
       >
-        <Target size={16} className="mr-2" />
-        Ver Misiones del Club
+      Ver Misiones del Club
       </ThemedButton>
     </>
   )}

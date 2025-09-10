@@ -259,7 +259,7 @@
   font-weight: bold;
   display: inline-block;
   margin-left: var(--spacing-sm);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+ 
 }
 
 /* Barra de progreso de nivel del club */
