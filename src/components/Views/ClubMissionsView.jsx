@@ -1,6 +1,8 @@
 // src/components/Views/ClubMissionsView.jsx
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient'; // Importa supabase
+// --- AJUSTADO A TU IMPORTACIÓN ---
+// (Asegúrate que la ruta relativa sea la correcta desde este archivo)
+import { supabaseClient } from '../../services/supabase'; 
 import { ArrowLeft, Target } from 'lucide-react';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import ThemedButton from '../UI/ThemedButton';
@@ -10,10 +12,10 @@ const ClubMissionsView = ({ currentClub, setInternalView }) => {
   const { missions, loading, error, contributeToMission } = useClubMissions(currentClub?.id);
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
 
-  // Obtenemos el ID del jugador actual al cargar el componente
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Se usa supabaseClient en lugar de supabase
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (user) {
         setCurrentPlayerId(user.id);
       }
@@ -51,13 +53,11 @@ const ClubMissionsView = ({ currentClub, setInternalView }) => {
               </h3>
               <p className="text-gray-400 mt-1">{mission.description}</p>
               
-              {/* Usamos 'total_progress' que viene de nuestra función RPC */}
               <MissionProgress progress={mission.total_progress} goal={mission.goal} />
               
               <div className="flex justify-between items-center mt-4">
                 <p className="text-sm text-gray-300">Recompensa: {mission.reward}</p>
                 
-                {/* Ahora verificamos con 'is_active' */}
                 {mission.is_active ? (
                   <ThemedButton onClick={() => handleContribute(mission.id)}>
                     Contribuir (+1)

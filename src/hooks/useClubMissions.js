@@ -1,6 +1,7 @@
 // src/hooks/useClubMissions.js
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
+// --- AJUSTADO A TU IMPORTACIÓN ---
+import { supabaseClient } from '../services/supabase'; 
 
 export const useClubMissions = (clubId) => {
   const [missions, setMissions] = useState([]);
@@ -12,8 +13,8 @@ export const useClubMissions = (clubId) => {
     setLoading(true);
     setError(null);
     try {
-      // Usamos la función RPC para obtener las misiones y su progreso
-      const { data, error } = await supabase.rpc('get_club_missions_with_progress', {
+      // Se usa supabaseClient en lugar de supabase
+      const { data, error } = await supabaseClient.rpc('get_club_missions_with_progress', {
         club_id_param: clubId,
       });
 
@@ -38,15 +39,14 @@ export const useClubMissions = (clubId) => {
     }
     setError(null);
     try {
-      // Usamos la función RPC para registrar la contribución
-      const { data, error: rpcError } = await supabase.rpc('contribute_to_club_mission', {
+      // Se usa supabaseClient en lugar de supabase
+      const { data, error: rpcError } = await supabaseClient.rpc('contribute_to_club_mission', {
         mission_id_param: missionId,
         player_id_param: playerId,
       });
 
       if (rpcError) throw rpcError;
 
-      // Actualizamos el estado local con el nuevo progreso para una UI instantánea
       if (data && data.success) {
         setMissions(prevMissions =>
           prevMissions.map(m =>
