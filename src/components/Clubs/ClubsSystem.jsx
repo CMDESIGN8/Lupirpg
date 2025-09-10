@@ -79,7 +79,7 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setInternalView={setInternalView} // ✅ Asegúrate de que esta línea esté correcta
+            setInternalView={setInternalView}
             onBackToClubs={handleBackToClubsList}
           />
         );
@@ -89,7 +89,7 @@ const ClubsSystem = ({
         return (
           <ClubMissionsView
             currentClub={selectedClub}
-            setInternalView={setInternalView} // ✅ Asegúrate de que esta línea esté correcta
+            setInternalView={setInternalView}
             isLeader={playerData.club_id === selectedClub?.id && selectedClub?.owner_id === playerData.id}
             onBackToClubDetails={() => setInternalView('club_details')}
           />
