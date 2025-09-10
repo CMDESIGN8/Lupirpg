@@ -67,7 +67,7 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
 
             {/* Vista previa de misiones - CORREGIDO */}
             <div className="missions-preview">
-              <h3 className="text-lg font-semibold text-blue-700 mb-3 flex items-center">
+              <h3>
                 <Target className="mr-2" size={18} />
                 Misiones Activas
               </h3>

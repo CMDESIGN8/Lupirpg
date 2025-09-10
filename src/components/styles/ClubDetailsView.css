@@ -502,3 +502,9 @@
 .back-button svg {
   margin-right: 0.5rem;
 }
+
+.missions-preview h3 {
+
+  color:aqua;
+  font-weight: bold;
+}
