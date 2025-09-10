@@ -69,7 +69,47 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
               </div>
             )}
 
-           <div className="missions-preview">
+            {currentClub.average_level && (
+              <div className="level-progress">
+                <div className="progress-header">
+                  <span>Progreso del Club</span>
+                  <span>{currentClub.average_level} / 100</span>
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${Math.min(currentClub.average_level, 100)}%` }}
+                  >
+                    <div className="progress-glow"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="members-section">
+              <h2 className="members-title">
+                <Users size={20} style={{ display: 'inline', marginRight: '10px' }} />
+                Miembros del Club ({clubMembers.length})
+              </h2>
+              <div className="members-container">
+                {loading ? (
+                  <p className="loading-text">Cargando miembros...</p>
+                ) : clubMembers.length > 0 ? (
+                  <ul className="members-list">
+                    {clubMembers.map(member => (
+                      <li key={member.username} className="member-item">
+                        <span className="member-name">{member.username}</span>
+                        <span className="member-level">Nivel {member.level}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-members">No hay miembros en este club</p>
+                )}
+              </div>
+            </div>
+
+            <div className="missions-preview">
   <h3 className="missions-preview-title">
     <Target className="mr-2" size={24} />
     Misiones Activas
@@ -114,46 +154,6 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
     </>
   )}
 </div>
-
-            {currentClub.average_level && (
-              <div className="level-progress">
-                <div className="progress-header">
-                  <span>Progreso del Club</span>
-                  <span>{currentClub.average_level} / 100</span>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${Math.min(currentClub.average_level, 100)}%` }}
-                  >
-                    <div className="progress-glow"></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="members-section">
-              <h2 className="members-title">
-                <Users size={20} style={{ display: 'inline', marginRight: '10px' }} />
-                Miembros del Club ({clubMembers.length})
-              </h2>
-              <div className="members-container">
-                {loading ? (
-                  <p className="loading-text">Cargando miembros...</p>
-                ) : clubMembers.length > 0 ? (
-                  <ul className="members-list">
-                    {clubMembers.map(member => (
-                      <li key={member.username} className="member-item">
-                        <span className="member-name">{member.username}</span>
-                        <span className="member-level">Nivel {member.level}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="empty-members">No hay miembros en este club</p>
-                )}
-              </div>
-            </div>
 
             <div className="club-actions">
               {playerData.club_id === currentClub.id ? (
