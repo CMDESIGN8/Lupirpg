@@ -53,74 +53,20 @@ export const useClubMissions = (clubId) => {
   const fetchClubMissions = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Modo desarrollo: usar datos de prueba
-      if (import.meta.env.MODE === 'development') {
-        console.log('Usando misiones de prueba para desarrollo');
-        setMissions(mockMissions);
-        setLoading(false);
-        return;
-      }
+      // Siempre usar datos de prueba para desarrollo/demo
+      console.log('Usando misiones de prueba');
       
-      // Primero obtener las misiones del club
-      const { data: missionsData, error: missionsError } = await supabaseClient
-        .from('club_missions')
-        .select('*')
-        .eq('club_id', clubId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (missionsError) throw missionsError;
-
-      // Si no hay misiones, usar datos de prueba
-      if (!missionsData || missionsData.length === 0) {
-        console.log('No hay misiones en la BD, usando datos de prueba');
-        setMissions(mockMissions);
-        setLoading(false);
-        return;
-      }
-
-      // Para cada misión, obtener su progreso
-      const missionsWithProgress = await Promise.all(
-        missionsData.map(async (mission) => {
-          try {
-            const { data: progressData, error: progressError } = await supabaseClient
-              .rpc('get_club_mission_progress', { p_mission_id: mission.id });
-            
-            if (progressError) {
-              console.error('Error getting progress:', progressError);
-              return {
-                ...mission,
-                progress: Math.floor(Math.random() * mission.goal),
-                goal: mission.goal,
-                member_progress: Math.floor(Math.random() * 5) + 1,
-                completed: false
-              };
-            }
-
-            return {
-              ...mission,
-              progress: progressData?.current_progress || 0,
-              goal: mission.goal,
-              member_progress: progressData?.active_members || 0,
-              completed: (progressData?.current_progress || 0) >= mission.goal
-            };
-          } catch (err) {
-            console.error('Error processing mission:', err);
-            return {
-              ...mission,
-              progress: Math.floor(Math.random() * mission.goal),
-              goal: mission.goal,
-              member_progress: Math.floor(Math.random() * 5) + 1,
-              completed: false
-            };
-          }
-        })
-      );
-
-      setMissions(missionsWithProgress);
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setMissions(mockMissions);
+      
     } catch (err) {
-      console.error('Error fetching missions, using mock data:', err);
+      console.error('Error fetching missions:', err);
+      setError(err.message);
+      // En caso de error, usar datos de prueba
       setMissions(mockMissions);
     } finally {
       setLoading(false);
@@ -129,28 +75,24 @@ export const useClubMissions = (clubId) => {
 
   const contributeToMission = async (missionId, progressIncrement = 1) => {
     try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
-
-      // Obtener el player_id del usuario autenticado
-      const { data: playerData, error: playerError } = await supabaseClient
-        .from('players')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (playerError) throw playerError;
-
-      const { error } = await supabaseClient
-        .rpc('contribute_to_mission', {
-          p_mission_id: missionId,
-          p_player_id: playerData.id,
-          p_progress_increment: progressIncrement
-        });
-
-      if (error) throw error;
-
-      await fetchClubMissions();
+      console.log(`Contribuyendo a misión ${missionId} con +${progressIncrement}`);
+      
+      // Simular contribución
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Actualizar misiones localmente
+      setMissions(prevMissions => 
+        prevMissions.map(mission => 
+          mission.id === missionId 
+            ? {
+                ...mission,
+                progress: Math.min(mission.progress + progressIncrement, mission.goal),
+                completed: mission.progress + progressIncrement >= mission.goal
+              }
+            : mission
+        )
+      );
+      
       return true;
     } catch (err) {
       setError(err.message);
@@ -161,16 +103,22 @@ export const useClubMissions = (clubId) => {
 
   const createMission = async (missionData) => {
     try {
-      const { error } = await supabaseClient
-        .from('club_missions')
-        .insert([{
-          ...missionData,
-          club_id: clubId
-        }]);
-
-      if (error) throw error;
-
-      await fetchClubMissions();
+      console.log('Creando nueva misión:', missionData);
+      
+      // Simular creación
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const newMission = {
+        id: Date.now(), // ID temporal
+        club_id: clubId,
+        ...missionData,
+        progress: 0,
+        member_progress: 0,
+        completed: false,
+        is_active: true
+      };
+      
+      setMissions(prev => [newMission, ...prev]);
       return true;
     } catch (err) {
       setError(err.message);
@@ -182,6 +130,10 @@ export const useClubMissions = (clubId) => {
   useEffect(() => {
     if (clubId) {
       fetchClubMissions();
+    } else {
+      // Si no hay clubId, igualmente cargar misiones de prueba
+      setLoading(false);
+      setMissions(mockMissions.map(mission => ({ ...mission, club_id: null })));
     }
   }, [clubId]);
 
