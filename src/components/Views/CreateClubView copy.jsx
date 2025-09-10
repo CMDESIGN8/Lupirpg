@@ -41,13 +41,14 @@ const CreateClubView = ({ setView }) => {
           </div>
           
           <div className="flex gap-4 pt-4">
-            <ThemedButton 
-              type="button"
-              onClick={() => setView('clubs')} 
-              className="bg-gray-600 hover:bg-gray-500 flex-1"
-            >
-              Cancelar
-            </ThemedButton>
+            <ThemedButton
+  type="button"
+  // Cambia 'clubs' por 'clubs_list'
+  onClick={() => setView('clubs_list')}
+  className="bg-gray-600 hover:bg-gray-500 flex-1"
+>
+  Cancelar
+</ThemedButton>
             <ThemedButton 
               type="submit"
               className="bg-green-600 hover:bg-green-500 flex-1"
