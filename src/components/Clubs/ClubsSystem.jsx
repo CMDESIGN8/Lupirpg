@@ -12,7 +12,7 @@ const ClubsSystem = ({
   playerData,
   loading,
   message,
-  setView, // Esta es la función para cambiar la vista principal (dashboard, clubs, etc.)
+  setView, // Función principal para cambiar entre dashboard, clubs, etc.
   handleViewClubDetails,
   handleJoinClub,
   handleLeaveClub,
@@ -41,12 +41,7 @@ const ClubsSystem = ({
   const handleBackToClubsList = () => {
     setSelectedClub(null);
     setInternalView('clubs_list');
-    fetchClubs(); // Recargar la lista de clubes
-  };
-
-  // Función para volver al dashboard principal
-  const handleBackToDashboard = () => {
-    setView('dashboard'); // Volver al dashboard principal
+    if (fetchClubs) fetchClubs(); // Recargar la lista de clubes
   };
 
   const renderView = () => {
@@ -60,8 +55,7 @@ const ClubsSystem = ({
             playerData={playerData}
             loading={loading}
             message={message}
-            setView={setView}
-            onBackToDashboard={handleBackToDashboard}
+            setView={setView} // Para volver al dashboard
           />
         );
       
@@ -70,7 +64,6 @@ const ClubsSystem = ({
           <CreateClubView
             setView={setInternalView}
             onBack={() => setInternalView('clubs_list')}
-            // pasa otras props necesarias para crear club
           />
         );
       
@@ -85,7 +78,7 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setView={setInternalView} // Para navegación interna
+            setView={setInternalView} // Navegación interna
             onBackToClubs={handleBackToClubsList}
           />
         );
@@ -94,7 +87,7 @@ const ClubsSystem = ({
         return (
           <ClubMissionsView
             currentClub={selectedClub}
-            setView={setInternalView} // Para navegación interna
+            setView={setInternalView} // Navegación interna
             isLeader={playerData.club_id === selectedClub?.id && selectedClub?.owner_id === playerData.id}
             onBackToClubDetails={() => setInternalView('club_details')}
           />
@@ -110,7 +103,6 @@ const ClubsSystem = ({
             loading={loading}
             message={message}
             setView={setView}
-            onBackToDashboard={handleBackToDashboard}
           />
         );
     }

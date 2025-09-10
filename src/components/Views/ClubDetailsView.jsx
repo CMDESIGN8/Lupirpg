@@ -15,7 +15,8 @@ const ClubDetailsView = ({
   fetchClubs, 
   loading, 
   message, 
-  setView 
+  setView, // Ahora es setInternalView
+  onBackToClubs // Nueva prop para volver a la lista de clubes
 }) => {
   const [activeMissions, setActiveMissions] = useState([]);
   const { missions: allMissions, loading: missionsLoading } = useClubMissions(currentClub?.id);
@@ -30,23 +31,33 @@ const ClubDetailsView = ({
   const handleViewMissions = () => {
     console.log('Navigating to club missions');
     if (setView) {
-      setView('club_missions');
+      setView('club_missions'); // Cambia a la vista interna de misiones
     } else {
       console.error('setView function is not available');
     }
   };
 
   const handleBackToClubs = () => {
-    if (setView) {
+    if (onBackToClubs) {
+      onBackToClubs(); // Usa la función específica para volver
+    } else if (setView) {
       setView('clubs_list');
-    } else {
-      console.error('setView function is not available');
     }
   };
 
   return (
     <div className="club-details-container">
       <div className="club-details-card">
+        <div className="navigation-header">
+          <ThemedButton 
+            onClick={handleBackToClubs}
+            icon={<ArrowLeft size={20} />}
+            className="back-button"
+          >
+            Volver a Clubes
+          </ThemedButton>
+        </div>
+        
         <MessageDisplay message={message} />
         
         {currentClub ? (
@@ -195,14 +206,6 @@ const ClubDetailsView = ({
                   Unirse al Club
                 </ThemedButton>
               )}
-              
-              <ThemedButton 
-                onClick={handleBackToClubs}
-                icon={<ArrowLeft size={20} />} 
-                className="action-button back-button"
-              >
-                Volver a Clubes
-              </ThemedButton>
             </div>
           </>
         ) : (

@@ -1,13 +1,12 @@
 // src/components/Views/ClubMissionsView.jsx
-import { ChevronDown, Target, Users, Gift, Plus, ArrowLeft } from 'lucide-react';
+import { Target, Users, Gift, Plus, ArrowLeft, AlertCircle } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import CreateMissionModal from '../Clubs/CreateMissionModal';
-import ClubsSystem from '../Clubs/ClubsSystem';
 import { useState } from 'react';
 
-const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
+const ClubMissionsView = ({ currentClub, setView, isLeader, onBackToClubDetails }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { missions, loading, error, contributeToMission, createMission } = useClubMissions(currentClub?.id);
 
@@ -26,11 +25,10 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
   };
 
   const handleBackToClub = () => {
-    console.log('Navigating back to club details');
-    if (setView) {
+    if (onBackToClubDetails) {
+      onBackToClubDetails(); // Usa la función específica para volver
+    } else if (setView) {
       setView('club_details');
-    } else {
-      console.error('setView function is not available');
     }
   };
 
