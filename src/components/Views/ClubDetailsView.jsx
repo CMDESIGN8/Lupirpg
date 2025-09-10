@@ -1,4 +1,5 @@
-import { LogIn, LogOut, ChevronDown, Users, ArrowLeft, Trophy, Users as UsersIcon, Star, Target } from 'lucide-react';
+// src/components/Club/ClubDetailsView.jsx
+import { LogIn, LogOut, Users, ArrowLeft, Target, Users as UsersIcon, Star } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import '../styles/ClubDetailsView.css';
@@ -11,11 +12,15 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
 
   useEffect(() => {
     if (allMissions && allMissions.length > 0) {
-      // Filtrar misiones activas (no completadas)
       const active = allMissions.filter(mission => !mission.completed);
       setActiveMissions(active);
     }
   }, [allMissions]);
+
+  const handleViewMissions = () => {
+    console.log('Navigating to club missions');
+    setView('club_missions');
+  };
 
   return (
     <div className="club-details-container">
@@ -34,7 +39,6 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
               <p className="club-description">{currentClub.description}</p>
             </div>
 
-            {/* Estadísticas del Club */}
             {currentClub.average_level && (
               <div className="club-stats">
                 <div className="stat-item">
@@ -65,44 +69,43 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
               </div>
             )}
 
-            {/* Vista previa de misiones - CORREGIDO */}
             <div className="missions-preview">
-              <h3>
+              <h3 className="missions-preview-title">
                 <Target className="mr-2" size={18} />
                 Misiones Activas
               </h3>
               
               {missionsLoading ? (
-                <p className="text-sm text-blue-600">Cargando misiones...</p>
+                <p className="loading-missions">Cargando misiones...</p>
               ) : activeMissions && activeMissions.length > 0 ? (
                 <>
                   {activeMissions.slice(0, 2).map(mission => (
-                    <div key={mission.id} className="mission-item">
-                      <div className="mission-header">
-                        <span className="mission-name">{mission.name}</span>
+                    <div key={mission.id} className="mission-preview-item">
+                      <div className="mission-preview-header">
+                        <span className="mission-preview-name">{mission.name}</span>
                         <span>{mission.progress}/{mission.goal}</span>
                       </div>
-                      <div className="mission-progress">
+                      <div className="mission-preview-bar">
                         <div 
-                          className="mission-progress-fill" 
+                          className="mission-preview-progress" 
                           style={{ width: `${(mission.progress / mission.goal) * 100}%` }}
                         ></div>
                       </div>
                     </div>
                   ))}
                   <ThemedButton 
-                    onClick={() => setView('club_missions')}
-                    className="mt-3 w-full bg-blue-600 hover:bg-blue-500 text-sm"
+                    onClick={handleViewMissions}
+                    className="view-all-missions-btn"
                   >
                     Ver Todas las Misiones
                   </ThemedButton>
                 </>
               ) : (
                 <>
-                  <p className="no-missions">No hay misiones activas actualmente.</p>
+                  <p className="no-missions-text">No hay misiones activas actualmente.</p>
                   <ThemedButton 
-                    onClick={() => setView('club_missions')}
-                    className="mt-3 w-full bg-blue-600 hover:bg-blue-500 text-sm"
+                    onClick={handleViewMissions}
+                    className="view-missions-btn"
                   >
                     Ver Misiones
                   </ThemedButton>
@@ -110,7 +113,6 @@ const ClubDetailsView = ({ currentClub, clubMembers, handleLeaveClub, handleJoin
               )}
             </div>
 
-            {/* Barra de progreso de nivel (opcional) */}
             {currentClub.average_level && (
               <div className="level-progress">
                 <div className="progress-header">

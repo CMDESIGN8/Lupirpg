@@ -1,11 +1,11 @@
-    // src/components/UI/MissionProgress.jsx
-const MissionProgress = ({ progress, goal, type }) => {
+// src/components/UI/MissionProgress.jsx
+const MissionProgress = ({ progress, goal }) => {
   const percentage = Math.min(100, (progress / goal) * 100);
   
   return (
     <div className="mb-4">
       <div className="flex justify-between text-sm text-gray-600 mb-1">
-        <span>Progreso: {progress}/{goal} {type === 'member_count' ? 'miembros' : 'misiones'}</span>
+        <span>Progreso: {progress}/{goal}</span>
         <span>{Math.round(percentage)}%</span>
       </div>
       

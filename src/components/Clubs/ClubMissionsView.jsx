@@ -1,3 +1,4 @@
+// src/components/Club/ClubMissionsView.jsx
 import { ChevronDown, Target, Users, Gift, Plus } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress';
@@ -23,66 +24,71 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
     }
   };
 
+  const handleBackToClub = () => {
+    console.log('Navigating back to club details');
+    setView('club_details');
+  };
+
   if (loading) {
     return (
-      <div className="club-missions-container">
-        <div className="club-missions-card">
-          <p className="loading-text">Cargando misiones...</p>
+      <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
+        <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
+          <p className="text-center text-gray-500">Cargando misiones...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="club-missions-container">
-      <div className="club-missions-card">
-        <h2 className="club-missions-title">Misiones del Club</h2>
+    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
+      <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
+        <h2 className="text-3xl font-bold text-center mb-6 text-blue-600">Misiones del Club</h2>
         
         {error && (
-          <div className="error-message">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
         {isLeader && (
-          <div className="create-mission-button-container">
+          <div className="flex justify-end mb-6">
             <ThemedButton 
               onClick={() => setShowCreateModal(true)}
               icon={<Plus size={16} />}
-              className="create-mission-button"
+              className="bg-green-600 hover:bg-green-500"
             >
               Crear Misión
             </ThemedButton>
           </div>
         )}
         
-        <div className="missions-info">
-          <h3 className="missions-info-title">
+        <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h3 className="text-lg font-semibold text-blue-700 flex items-center">
             <Users className="mr-2" size={20} />
             Misiones Colaborativas
           </h3>
-          <p className="missions-info-description">
+          <p className="text-blue-600 mt-1">
             ¡Trabajen juntos para completar misiones y desbloquear recompensas para todo el club!
           </p>
         </div>
         
-        <div className="missions-list">
+        <div className="space-y-6">
           {missions && missions.length > 0 ? missions.map(mission => (
-            <div key={mission.id} className="mission-card">
-              <div className="mission-header">
+            <div key={mission.id} className="bg-gray-50 p-5 rounded-lg shadow-inner border border-gray-300">
+              <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="mission-name">
+                  <h3 className="text-xl font-semibold text-blue-600 flex items-center">
                     <Target size={18} className="mr-2" />
                     {mission.name}
                   </h3>
-                  <p className="mission-description">{mission.description}</p>
-                  <p className="mission-type">
+                  <p className="text-gray-700 mt-1">{mission.description}</p>
+                  <p className="text-sm text-gray-500 mt-1">
                     Tipo: {mission.mission_type === 'daily' ? 'Diaria' : 
                           mission.mission_type === 'weekly' ? 'Semanal' : 'Mensual'}
                   </p>
                 </div>
                 {mission.completed && (
-                  <span className="mission-completed-badge">
+                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                     Completada
                   </span>
                 )}
@@ -93,10 +99,10 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
                 goal={mission.goal} 
               />
               
-              <div className="mission-footer">
-                <div className="mission-stats">
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-600">
                   <p><span className="font-medium">{mission.member_progress}</span> miembros han contribuido</p>
-                  <p className="mission-reward">
+                  <p className="mt-1 flex items-center">
                     <Gift size={14} className="mr-1" />
                     Recompensa: <span className="font-semibold ml-1">{mission.reward}</span>
                   </p>
@@ -105,7 +111,7 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
                 {!mission.completed && (
                   <ThemedButton 
                     onClick={() => handleContribute(mission.id)}
-                    className="contribute-button"
+                    className="bg-green-600 hover:bg-green-500"
                   >
                     Contribuir (+1)
                   </ThemedButton>
@@ -113,15 +119,14 @@ const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
               </div>
             </div>
           )) : (
-            <p className="no-missions">No hay misiones disponibles actualmente.</p>
+            <p className="text-center text-gray-500">No hay misiones disponibles actualmente.</p>
           )}
         </div>
         
-        <div className="back-button-container">
+        <div className="flex justify-center mt-8">
           <ThemedButton 
-            onClick={() => setView('club_details')} 
+            onClick={handleBackToClub}
             icon={<ChevronDown size={20} />}
-            className="back-button"
           >
             Volver al Club
           </ThemedButton>
