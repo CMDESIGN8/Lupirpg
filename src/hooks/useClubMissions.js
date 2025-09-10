@@ -1,6 +1,6 @@
 // src/hooks/useClubMissions.js
 import { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase'; // Importación corregida
+import { supabaseClient } from '../services/supabase'; // Importación corregida
 
 export const useClubMissions = (clubId) => {
   const [missions, setMissions] = useState([]);
@@ -12,7 +12,7 @@ export const useClubMissions = (clubId) => {
       setLoading(true);
       
       // Primero obtener las misiones del club
-      const { data: missionsData, error: missionsError } = await supabase
+      const { data: missionsData, error: missionsError } = await supabaseClient
         .from('club_missions')
         .select('*')
         .eq('club_id', clubId)
@@ -25,7 +25,7 @@ export const useClubMissions = (clubId) => {
       const missionsWithProgress = await Promise.all(
         missionsData.map(async (mission) => {
           try {
-            const { data: progressData, error: progressError } = await supabase
+            const { data: progressData, error: progressError } = await supabaseClient
               .rpc('get_club_mission_progress', { p_mission_id: mission.id });
             
             if (progressError) {
@@ -70,11 +70,11 @@ export const useClubMissions = (clubId) => {
 
   const contributeToMission = async (missionId, progressIncrement = 1) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
       // Obtener el player_id del usuario autenticado
-      const { data: playerData, error: playerError } = await supabase
+      const { data: playerData, error: playerError } = await supabaseClient
         .from('players')
         .select('id')
         .eq('id', user.id)
@@ -82,7 +82,7 @@ export const useClubMissions = (clubId) => {
 
       if (playerError) throw playerError;
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .rpc('contribute_to_mission', {
           p_mission_id: missionId,
           p_player_id: playerData.id,
@@ -103,7 +103,7 @@ export const useClubMissions = (clubId) => {
 
   const createMission = async (missionData) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('club_missions')
         .insert([{
           ...missionData,
@@ -126,7 +126,7 @@ export const useClubMissions = (clubId) => {
       fetchClubMissions();
       
       // Suscribirse a cambios en tiempo real
-      const subscription = supabase
+      const subscription = supabaseClient
         .channel('club_missions_changes')
         .on('postgres_changes', 
             { 

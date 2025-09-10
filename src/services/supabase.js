@@ -9,9 +9,3 @@ export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: false
   }
 })
-
-// También puedes exportar funciones específicas si las necesitas
-export const getSupabase = () => supabase;
-
-// Opcional: exportar por defecto también
-export default supabase;
