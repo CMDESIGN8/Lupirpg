@@ -12,7 +12,7 @@ const ClubsSystem = ({
   playerData,
   loading,
   message,
-  setView, // Función principal para cambiar entre dashboard, clubs, etc.
+  setView,
   handleViewClubDetails,
   handleJoinClub,
   handleLeaveClub,
@@ -23,26 +23,26 @@ const ClubsSystem = ({
   const [internalView, setInternalView] = useState('clubs_list');
   const [selectedClub, setSelectedClub] = useState(null);
 
-  // Actualizar el club seleccionado cuando currentClub cambie
   useEffect(() => {
     if (currentClub) {
       setSelectedClub(currentClub);
     }
   }, [currentClub]);
 
-  // Función para manejar la selección de un club
   const handleSelectClub = (club) => {
     setSelectedClub(club);
     handleViewClubDetails(club);
     setInternalView('club_details');
   };
 
-  // Función para volver a la lista de clubes
   const handleBackToClubsList = () => {
     setSelectedClub(null);
     setInternalView('clubs_list');
     if (fetchClubs) fetchClubs();
   };
+
+  console.log('ClubsSystem - internalView:', internalView);
+  console.log('ClubsSystem - selectedClub:', selectedClub);
 
   const renderView = () => {
     switch (internalView) {
@@ -68,6 +68,7 @@ const ClubsSystem = ({
         );
       
       case 'club_details':
+        console.log('Rendering ClubDetailsView with setInternalView');
         return (
           <ClubDetailsView
             currentClub={selectedClub}
@@ -78,16 +79,17 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setInternalView={setInternalView} // Pasar setInternalView con nombre diferente
+            setInternalView={setInternalView} // ✅ Asegúrate de que esta línea esté correcta
             onBackToClubs={handleBackToClubsList}
           />
         );
       
       case 'club_missions':
+        console.log('Rendering ClubMissionsView with setInternalView');
         return (
           <ClubMissionsView
             currentClub={selectedClub}
-            setInternalView={setInternalView} // Pasar setInternalView con nombre diferente
+            setInternalView={setInternalView} // ✅ Asegúrate de que esta línea esté correcta
             isLeader={playerData.club_id === selectedClub?.id && selectedClub?.owner_id === playerData.id}
             onBackToClubDetails={() => setInternalView('club_details')}
           />
