@@ -51,14 +51,6 @@ const ClubMissionsView = ({
   return (
   <div className="club-missions-container">
     <div className="club-missions-header">
-      <ThemedButton 
-        onClick={onBackToClubDetails || (() => setView('club_details'))}
-        icon={<ArrowLeft size={20} />}
-        className="club-missions-back-btn"
-      >
-        Volver al Club
-      </ThemedButton>
-      
       <h2 className="club-missions-title">Misiones de {currentClub?.name}</h2>
       
       {isLeader && (
@@ -120,6 +112,13 @@ const ClubMissionsView = ({
       onClose={() => setShowCreateModal(false)}
       onSubmit={handleCreateMission}
     />
+    <ThemedButton 
+        onClick={onBackToClubDetails || (() => setView('club_details'))}
+        icon={<ArrowLeft size={20} />}
+        className="club-missions-back-btn"
+      >
+        Volver al Club
+      </ThemedButton>
   </div>
 );
 };
