@@ -11,6 +11,7 @@ import SellItemView from './components/Views/SellItemView.jsx';
 import ChatView from './components/Views/ChatView.jsx';
 import ClubsView from './components/Views/ClubsView.jsx';
 import CreateClubView from './components/Views/CreateClubView.jsx';
+import ClubMissionsView from './components/Clubs/ClubMissionsView.jsx'
 import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
 import LoadingScreen from './components/UI/LoadingScreen.jsx';
 import React, { useState, useEffect, useRef } from 'react'; // Importación completa
