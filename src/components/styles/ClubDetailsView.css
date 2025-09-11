@@ -1,271 +1,283 @@
 /* src/styles/ClubDetailsView.css */
-.lupi-app-container {
-  max-width: 100%;
+.club-details-container {
   padding: 1rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  min-height: 100vh;
-  color: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.lupi-app-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-}
-
-.lupi-app-title h1 {
-  font-size: 2.5rem;
-  margin: 0;
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: 800;
-}
-
-.lupi-app-url {
-  color: #4ecdc4;
-  font-size: 0.9rem;
-  margin: 0.25rem 0;
-}
-
-.lupi-app-subtitles {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.lupi-subtitle {
-  font-size: 0.85rem;
-  color: #ff6b6b;
-  margin: 0;
-  padding: 0.25rem 0.5rem;
-  background: rgba(255, 107, 107, 0.1);
-  border-radius: 4px;
-}
-
-.lupi-app-content {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
-.lupi-main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.lupi-club-card,
-.lupi-members-card,
-.lupi-signature-card {
-  background: rgba(255, 255, 255, 0.1);
+.club-details-card {
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 1.5rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.club-header-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.club-badge {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.club-info {
-  flex: 1;
-}
-
-.club-name {
-  font-size: 1.5rem;
-  margin: 0;
-  font-weight: 700;
-}
-
-.club-tag {
-  color: #4ecdc4;
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.club-details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.club-detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.detail-label {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.detail-value {
-  font-weight: 600;
-}
-
-.detail-value.status.ok {
-  color: #4ecdc4;
-}
-
-.detail-value.status.not-ok {
-  color: #ff6b6b;
-}
-
-.detail-value.timer {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ffd166;
-}
-
-.save-token-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: rgba(78, 205, 196, 0.2);
-  border-radius: 8px;
-  color: #4ecdc4;
-  font-weight: 600;
-}
-
-.card-header {
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
-}
-
-.idle-header {
-  margin-bottom: 1rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.idle-members-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-}
-
-.idle-member-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.member-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-}
-
-.member-id {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.lupi-signature-card {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.signature-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ffd166;
-  font-weight: 600;
-}
-
-.lupi-actions {
-  display: flex;
-  justify-content: center;
-}
-
-.action-button {
-  min-width: 180px;
-  font-weight: 600;
-}
-
-.leave-button {
-  background: linear-gradient(45deg, #ff6b6b, #e63946);
-}
-
-.leave-button:hover {
-  background: linear-gradient(45deg, #e63946, #c1121f);
-}
-
-.join-button {
-  background: linear-gradient(45deg, #4ecdc4, #2a9d8f);
-}
-
-.join-button:hover {
-  background: linear-gradient(45deg, #2a9d8f, #1d7874);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .navigation-header {
   margin-bottom: 1.5rem;
 }
 
-.back-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.club-header {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-.back-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.club-title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .lupi-app-subtitles {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .club-details-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .idle-members-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .lupi-club-card,
-  .lupi-members-card,
-  .lupi-signature-card {
-    padding: 1rem;
-  }
+.level-badge {
+  background: var(--accent-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.club-description {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Clan Info Section */
+.clan-info-section {
+  margin-bottom: 2rem;
+}
+
+.clan-section-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.info-item:hover {
+  background: var(--accent-color);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.separator {
+  height: 1px;
+  background: var(--border-color);
+  margin: 1.5rem 0;
+}
+
+/* Clan Stats */
+.clan-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.clan-stat {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+
+.clan-stat.expert {
+  background: linear-gradient(135deg, #4a90e2, #2a5ca9);
+  color: white;
+}
+
+.clan-stat.elite {
+  background: linear-gradient(135deg, #b06ab3, #8a3c8d);
+  color: white;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Timer Section */
+.timer-section {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.timer {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  background: var(--bg-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+.timer-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.timer-unit {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Quest Section */
+.quest-section {
+  margin-bottom: 1.5rem;
+}
+
+.quest-item {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.quest-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.quest-reward {
+  font-weight: bold;
+  color: gold;
+}
+
+.quest-player {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.quest-description {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.quest-progress {
+  text-align: right;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Available Quest */
+.available-quest {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.available-quest-header {
+  margin-bottom: 0.5rem;
+}
+
+.quests-available {
+  font-weight: bold;
+}
+
+.take-quest-btn {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Members Section (mantenido de tu CSS original) */
+.members-section {
+  margin-bottom: 2rem;
+}
+
+.members-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.members-container {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.members-list {
+  list-style: none;
+  padding: 0;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.member-level {
+  color: var(--text-secondary);
+}
+
+.loading-text, .empty-members {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Club Actions */
+.club-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.action-button {
+  min-width: 150px;
+}
+
+.leave-button {
+  background: var(--error-color);
+}
+
+.leave-button:hover {
+  background: var(--error-color-dark);
+}
+
+.join-button {
+  background: var(--success-color);
+}
+
+.join-button:hover {
+  background: var(--success-color-dark);
 }
