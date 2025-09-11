@@ -1,145 +1,102 @@
-// src/components/Views/ClubMissionsView.jsx
-import { ChevronDown, Target, Users, Gift, Plus, ArrowLeft } from 'lucide-react';
-import ThemedButton from '../UI/ThemedButton';
-import MissionProgress from '../UI/MissionProgress';
+// src/components/Clubs/ClubMissionsView.jsx
+import React, { useState, useEffect } from 'react';
+import { supabaseClient } from '../../services/supabase'; 
+import { ArrowLeft, Target } from 'lucide-react';
 import { useClubMissions } from '../../hooks/useClubMissions';
-import CreateMissionModal from './CreateMissionModal';
-import ClubsSystem from '../Clubs/ClubsSystem';
-import { useState } from 'react';
+import ThemedButton from '../UI/ThemedButton';
+import MissionProgress from '../UI/MissionProgress'; 
+import CreateMissionModal from './CreateMissionModal'; // Añadir modal de creación
 
-const ClubMissionsView = ({ currentClub, setView, isLeader }) => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+const ClubMissionsView = ({ 
+  currentClub, 
+  setInternalView, 
+  isLeader, 
+  onBackToClubDetails 
+}) => {
   const { missions, loading, error, contributeToMission, createMission } = useClubMissions(currentClub?.id);
+  const [currentPlayerId, setCurrentPlayerId] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        setCurrentPlayerId(user.id);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleContribute = async (missionId) => {
-    const success = await contributeToMission(missionId, 1);
+    if (!currentPlayerId) {
+      alert("No se pudo identificar al jugador. Por favor, recarga la página.");
+      return;
+    }
+    const success = await contributeToMission(missionId, currentPlayerId);
     if (success) {
-      console.log('Contribución exitosa');
+      console.log('¡Contribución exitosa!');
     }
   };
 
   const handleCreateMission = async (missionData) => {
-    const success = await createMission(missionData);
-    if (success) {
-      setShowCreateModal(false);
-    }
+    if (!currentClub?.id) return false;
+    return await createMission(currentClub.id, missionData);
   };
 
-  const handleBackToClub = () => {
-    console.log('Navigating back to club details');
-    if (setView) {
-      setView('club_details');
-    } else {
-      console.error('setView function is not available');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
-        <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
-          <p className="text-center text-gray-500">Cargando misiones...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <p className="p-4">Cargando misiones...</p>;
+  if (error) return <p className="p-4 text-red-500">{error}</p>;
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
-      <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
-        <div className="flex justify-between items-center mb-6">
-          <ThemedButton 
-            onClick={handleBackToClub}
-            icon={<ArrowLeft size={20} />}
-            className="bg-gray-600 hover:bg-gray-500"
-          >
-            Volver al Club
-          </ThemedButton>
-          <h2 className="text-3xl font-bold text-center text-blue-600">Misiones del Club</h2>
-          <div style={{ width: '140px' }}></div>
-        </div>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+    <div className="p-4">
+      <ThemedButton 
+        onClick={onBackToClubDetails || (() => setInternalView('club_details'))} 
+        icon={<ArrowLeft size={20} />}
+      >
+        Volver al Club
+      </ThemedButton>
 
+      <div className="flex justify-between items-center my-4">
+        <h2 className="text-3xl font-bold">Misiones de {currentClub?.name}</h2>
         {isLeader && (
-          <div className="flex justify-end mb-6">
-            <ThemedButton 
-              onClick={() => setShowCreateModal(true)}
-              icon={<Plus size={16} />}
-              className="bg-green-600 hover:bg-green-500"
-            >
-              Crear Misión
-            </ThemedButton>
-          </div>
+          <ThemedButton onClick={() => setShowCreateModal(true)}>
+            Crear Misión
+          </ThemedButton>
         )}
-        
-        <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-700 flex items-center">
-            <Users className="mr-2" size={20} />
-            Misiones Colaborativas
-          </h3>
-          <p className="text-blue-600 mt-1">
-            ¡Trabajen juntos para completar misiones y desbloquear recompensas para todo el club!
-          </p>
-        </div>
-        
-        <div className="space-y-6">
-          {missions && missions.length > 0 ? missions.map(mission => (
-            <div key={mission.id} className="bg-gray-50 p-5 rounded-lg shadow-inner border border-gray-300">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-xl font-semibold text-blue-600 flex items-center">
-                    <Target size={18} className="mr-2" />
-                    {mission.name}
-                  </h3>
-                  <p className="text-gray-700 mt-1">{mission.description}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Tipo: {mission.mission_type === 'daily' ? 'Diaria' : 
-                          mission.mission_type === 'weekly' ? 'Semanal' : 'Mensual'}
-                  </p>
-                </div>
-                {mission.completed && (
-                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                    Completada
-                  </span>
-                )}
-              </div>
+      </div>
+      
+      <div className="space-y-6">
+        {missions && missions.length > 0 ? (
+          missions.map(mission => (
+            <div key={mission.id} className="bg-gray-800 p-5 rounded-lg shadow-lg border border-gray-700">
+              <h3 className="text-xl font-semibold text-cyan-400 flex items-center">
+                <Target size={18} className="mr-2" /> {mission.name}
+              </h3>
+              <p className="text-gray-400 mt-1">{mission.description}</p>
               
               <MissionProgress 
-                progress={mission.progress} 
+                progress={mission.total_progress || mission.progress || 0} 
                 goal={mission.goal} 
               />
               
               <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-gray-600">
-                  <p><span className="font-medium">{mission.member_progress}</span> miembros han contribuido</p>
-                  <p className="mt-1 flex items-center">
-                    <Gift size={14} className="mr-1" />
-                    Recompensa: <span className="font-semibold ml-1">{mission.reward}</span>
-                  </p>
-                </div>
+                <p className="text-sm text-gray-300">Recompensa: {mission.reward}</p>
                 
-                {!mission.completed && (
-                  <ThemedButton 
-                    onClick={() => handleContribute(mission.id)}
-                    className="bg-green-600 hover:bg-green-500"
-                  >
+                {mission.is_active ? (
+                  <ThemedButton onClick={() => handleContribute(mission.id)}>
                     Contribuir (+1)
                   </ThemedButton>
+                ) : (
+                  <span className="text-green-400 font-bold">¡Completada!</span>
                 )}
               </div>
             </div>
-          )) : (
-            <p className="text-center text-gray-500">No hay misiones disponibles actualmente.</p>
-          )}
-        </div>
+          ))
+        ) : (
+          <p className="text-gray-400">Este club no tiene misiones activas.</p>
+        )}
       </div>
 
-      <CreateMissionModal 
+      <CreateMissionModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateMission}

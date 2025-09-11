@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import ClubsView from '../Views/ClubsView';
 import CreateClubView from '../Views/CreateClubView';
 import ClubDetailsView from '../Views/ClubDetailsView';
-import ClubMissionsView from '../Views/ClubMissionsView';
+import ClubMissionsView from './ClubMissionsView'; // Cambia esta línea
+
 
 const ClubsSystem = ({
   clubs,
