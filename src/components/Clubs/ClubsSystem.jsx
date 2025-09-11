@@ -42,6 +42,8 @@ const ClubsSystem = ({
   };
 
   const renderView = () => {
+    console.log('ClubsSystem - currentView:', currentView); // ✅ Debug
+  console.log('ClubsSystem - selectedClub:', selectedClub); // ✅ Debug
     // Usar currentView en lugar de internalView
     switch (currentView) {
       case 'clubs':
@@ -82,6 +84,7 @@ const ClubsSystem = ({
         );
       
       case 'club_missions':
+        console.log('Rendering ClubMissionsView'); // ✅ Esto debería aparecer  
         return (
           <ClubMissionsView
             currentClub={selectedClub}

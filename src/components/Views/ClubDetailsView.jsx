@@ -35,7 +35,8 @@ const ClubDetailsView = ({
   }, [allMissions]);
 
   const handleViewMissions = () => {
-    console.log('Navigating to club missions');
+    console.log('handleViewMissions - setView:', typeof setView); // ✅ Debug
+  console.log('handleViewMissions - currentClub:', currentClub); // ✅ Debug
     if (setView) {
       setView('club_missions'); // Cambiar a 'club_missions'
     } else {

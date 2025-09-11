@@ -5,7 +5,7 @@ import { ArrowLeft, Target } from 'lucide-react';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress'; 
-import CreateMissionModal from './CreateMissionModal'; // Añadir modal de creación
+import CreateMissionModal from './CreateMissionModal';
 
 const ClubMissionsView = ({ 
   currentClub, 
@@ -46,10 +46,11 @@ const ClubMissionsView = ({
   if (loading) return <p className="p-4">Cargando misiones...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
 
-  eturn (
+  // ✅ CORRECCIÓN: Cambié "eturn" por "return"
+  return (
     <div className="p-4">
       <ThemedButton 
-        onClick={onBackToClubDetails || (() => setView('club_details'))} // Cambiar a 'club_details'
+        onClick={onBackToClubDetails || (() => setView('club_details'))}
         icon={<ArrowLeft size={20} />}
       >
         Volver al Club
@@ -74,9 +75,9 @@ const ClubMissionsView = ({
               <p className="text-gray-400 mt-1">{mission.description}</p>
               
               <MissionProgress 
-  progress={mission.total_progress || mission.progress || 0} 
-  goal={mission.goal} 
-/>
+                progress={mission.total_progress || mission.progress || 0} 
+                goal={mission.goal} 
+              />
               
               <div className="flex justify-between items-center mt-4">
                 <p className="text-sm text-gray-300">Recompensa: {mission.reward}</p>
