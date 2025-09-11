@@ -440,23 +440,20 @@
 }
 
 .back-button {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-md) var(--spacing-xl);
-  background: linear-gradient(135deg, #666, #444);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--border-radius);
-  color: var(--lupi-text);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--neon-dark-blue) 0%, var(--neon-blue) 100%);
+    border: 2px solid var(--neon-cyan);
+    color: #fff;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    transition: all .3s ease;
+    box-shadow: 0 0 10px var(--neon-blue);
 }
 
 .back-button:hover {
-  background: linear-gradient(135deg, #888, #666);
   transform: translateY(-2px);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 20px var(--neon-cyan);
+  background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-cyan) 100%);
 }
 
 /* Animations */
