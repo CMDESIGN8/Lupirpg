@@ -74,9 +74,9 @@ const ClubMissionsView = ({
               <p className="text-gray-400 mt-1">{mission.description}</p>
               
               <MissionProgress 
-                progress={mission.total_progress || mission.progress || 0} 
-                goal={mission.goal} 
-              />
+  progress={mission.total_progress || mission.progress || 0} 
+  goal={mission.goal} 
+/>
               
               <div className="flex justify-between items-center mt-4">
                 <p className="text-sm text-gray-300">Recompensa: {mission.reward}</p>

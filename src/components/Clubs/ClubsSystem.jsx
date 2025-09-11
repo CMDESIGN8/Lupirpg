@@ -66,20 +66,21 @@ const ClubsSystem = ({
         );
       
       case 'club_details':
-        return (
-          <ClubDetailsView
-            currentClub={selectedClub}
-            clubMembers={clubMembers}
-            handleLeaveClub={handleLeaveClub}
-            handleJoinClub={handleJoinClub}
-            playerData={playerData}
-            fetchClubs={fetchClubs}
-            loading={loading}
-            message={message}
-            setInternalView={setInternalView} // ✅ Pasar correctamente
-            onBackToClubs={handleBackToClubsList}
-          />
-        );
+  return (
+    <ClubDetailsView
+      currentClub={selectedClub}
+      clubMembers={clubMembers}
+      handleLeaveClub={handleLeaveClub}
+      handleJoinClub={handleJoinClub}
+      playerData={playerData}
+      fetchClubs={fetchClubs}
+      loading={loading}
+      message={message}
+      setInternalView={setInternalView}
+      onBackToClubs={handleBackToClubsList}
+      onViewMissions={() => setInternalView('club_missions')} // Prop alternativa
+    />
+  );
       
       case 'club_missions':
         return (

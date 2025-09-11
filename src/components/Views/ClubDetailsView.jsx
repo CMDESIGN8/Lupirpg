@@ -6,6 +6,11 @@ import '../styles/ClubDetailsView.css';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import { useState, useEffect } from 'react';
 
+console.log('ClubDetailsView props:', {
+  setInternalView: typeof setInternalView,
+  onBackToClubs: typeof onBackToClubs
+});
+
 const ClubDetailsView = ({ 
   currentClub, 
   clubMembers, 
@@ -16,7 +21,8 @@ const ClubDetailsView = ({
   loading, 
   message, 
   setInternalView, // Recibir setInternalView en lugar de setView
-  onBackToClubs 
+  onBackToClubs,
+  onViewMissions 
 }) => {
   const [activeMissions, setActiveMissions] = useState([]);
   const { missions: allMissions, loading: missionsLoading } = useClubMissions(currentClub?.id);
@@ -31,9 +37,11 @@ const ClubDetailsView = ({
   const handleViewMissions = () => {
     console.log('Navigating to club missions');
     if (setInternalView) {
-      setInternalView('club_missions'); // Usar setInternalView
+      setInternalView('club_missions');
+    } else if (onViewMissions) {
+      onViewMissions();
     } else {
-      console.error('setInternalView function is not available');
+      console.error('No navigation method available');
     }
   };
 
