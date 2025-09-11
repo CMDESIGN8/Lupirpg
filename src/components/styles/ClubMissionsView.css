@@ -1,3 +1,5 @@
+@import '../../styles/variables.css';
+
 /* Club Missions View Styles */
 .club-missions-container {
   max-width: 1200px;
