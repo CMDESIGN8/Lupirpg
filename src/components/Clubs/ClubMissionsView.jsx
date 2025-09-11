@@ -9,7 +9,7 @@ import CreateMissionModal from './CreateMissionModal'; // Añadir modal de creac
 
 const ClubMissionsView = ({ 
   currentClub, 
-  setInternalView, 
+  setView, 
   isLeader, 
   onBackToClubDetails 
 }) => {
@@ -46,10 +46,10 @@ const ClubMissionsView = ({
   if (loading) return <p className="p-4">Cargando misiones...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
 
-  return (
+  eturn (
     <div className="p-4">
       <ThemedButton 
-        onClick={onBackToClubDetails || (() => setInternalView('club_details'))} 
+        onClick={onBackToClubDetails || (() => setView('club_details'))} // Cambiar a 'club_details'
         icon={<ArrowLeft size={20} />}
       >
         Volver al Club

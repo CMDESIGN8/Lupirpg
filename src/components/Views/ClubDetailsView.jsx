@@ -20,7 +20,7 @@ const ClubDetailsView = ({
   fetchClubs, 
   loading, 
   message, 
-  setInternalView, // Recibir setInternalView en lugar de setView
+  setView, // Recibir setInternalView en lugar de setView
   onBackToClubs,
   onViewMissions 
 }) => {
@@ -36,20 +36,18 @@ const ClubDetailsView = ({
 
   const handleViewMissions = () => {
     console.log('Navigating to club missions');
-    if (setInternalView) {
-      setInternalView('club_missions');
-    } else if (onViewMissions) {
-      onViewMissions();
+    if (setView) {
+      setView('club_missions'); // Cambiar a 'club_missions'
     } else {
-      console.error('No navigation method available');
+      console.error('setView function is not available');
     }
   };
 
   const handleBackToClubs = () => {
     if (onBackToClubs) {
       onBackToClubs();
-    } else if (setInternalView) {
-      setInternalView('clubs_list');
+    } else if (setView) {
+      setView('clubs'); // Cambiar a 'clubs'
     }
   };
 

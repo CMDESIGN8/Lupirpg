@@ -1145,7 +1145,8 @@ case 'clubs': return <ClubsSystem
   playerData={playerData}
   loading={loading}
   message={message}
-  setView={setInternalView}
+  setView={setView}
+  currentView={view} // Pasar la vista actual
   handleViewClubDetails={handleViewClubDetails}
   handleJoinClub={handleJoinClub}
   handleLeaveClub={handleLeaveClub}

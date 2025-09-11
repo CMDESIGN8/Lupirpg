@@ -3,7 +3,7 @@ import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import '../styles/ClubsView.css';
 
-const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, loading, message, setInternalView }) => (
+const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, loading, message, setView  }) => (
   <div className="clubs-container">
     <div className="clubs-content">
       <div className="clubs-header">
