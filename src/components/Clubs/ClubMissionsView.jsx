@@ -79,7 +79,7 @@ const ClubMissionsView = ({
   return (
     <div className="club-rpg-container">
       <div className="club-rpg-header">
-        <h2 className="club-rpg-title">⚔️ Misiones de {currentClub?.name}</h2>
+        <h2 className="club-rpg-title">🛡️ Misiones de {currentClub?.name}</h2>
         
         {isLeader && (
           <ThemedButton 

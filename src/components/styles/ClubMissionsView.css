@@ -1,3 +1,4 @@
+
 /* CLUB RPG MISSIONS - Estilos completamente aislados */
 .club-rpg-container {
   max-width: 1200px;
@@ -16,9 +17,9 @@
   padding: 24px;
   background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%2313103a" width="100" height="100"/><path fill="%238a2be2" opacity="0.2" d="M0 0h100v100H0z"/></svg>');
   border-radius: 16px;
-  border: 2px solid #8a2be2;
-  box-shadow: 0 0 20px rgba(138, 43, 226, 0.4),
-              inset 0 0 30px rgba(138, 43, 226, 0.2);
+  border: 2px solid #2b90e2;
+  box-shadow: 0 0 20px rgba(43, 159, 226, 0.4),
+              inset 0 0 30px rgba(43, 159, 226, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -46,7 +47,7 @@
 }
 
 .club-rpg-back-btn {
-  background: linear-gradient(135deg, #5a2b9e 0%, #8a2be2 100%);
+  background: linear-gradient(135deg, #2b969e 0%, #2bdce2 100%);
   border: 2px solid #00ff88;
   color: white;
   padding: 12px 24px;
@@ -63,7 +64,7 @@
 .club-rpg-back-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 25px #00ff88;
-  background: linear-gradient(135deg, #8a2be2 0%, #9b4eff 100%);
+  background: linear-gradient(135deg, #2bdce2 0%, #4ef9ff 100%);
 }
 
 .club-rpg-content {
@@ -81,10 +82,10 @@
 
 .club-rpg-card {
   background: linear-gradient(135deg, #13103a 0%, #1e154f 100%);
-  border: 2px solid #8a2be2;
+  border: 2px solid #2bcde2;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(138, 43, 226, 0.2);
+  box-shadow: 0 8px 32px rgba(43, 226, 226, 0.2);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -118,7 +119,7 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(138, 43, 226, 0.5);
+  border-bottom: 2px solid rgba(43, 226, 217, 0.5);
   position: relative;
 }
 
@@ -149,7 +150,7 @@
 }
 
 .club-rpg-description {
-  color: #b3b3ff;
+  color: #b3ffff;
   margin-bottom: 24px;
   line-height: 1.6;
   font-size: 1.1rem;
@@ -162,20 +163,20 @@
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   padding: 12px;
-  border: 1px solid #8a2be2;
+  border: 1px solid #2bd6e2;
 }
 
 .club-rpg-progress-info {
   display: flex;
   justify-content: space-between;
-  color: #b3b3ff;
+  color: #b3faff;
   font-size: 0.9rem;
   margin-bottom: 8px;
 }
 
 .club-rpg-progress-bar {
   background: rgba(0, 0, 0, 0.5);
-  border: 2px solid #8a2be2;
+  border: 2px solid #2be2e2;
   border-radius: 10px;
   height: 20px;
   overflow: hidden;
@@ -183,7 +184,7 @@
 }
 
 .club-rpg-progress-fill {
-  background: linear-gradient(90deg, #8a2be2, #00ff88);
+  background: linear-gradient(90deg, #2be2e2, #00ff88);
   height: 100%;
   transition: width 0.5s ease;
   position: relative;
@@ -206,7 +207,7 @@
   justify-content: space-between;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 2px solid rgba(138, 43, 226, 0.3);
+  border-top: 2px solid rgba(43, 226, 226, 0.3);
 }
 
 .club-rpg-reward-text {
@@ -230,7 +231,7 @@
 }
 
 .club-rpg-contribute-btn {
-  background: linear-gradient(135deg, #8a2be2 0%, #ff00aa 100%);
+  background: linear-gradient(135deg, #2bd6e2 0%, #0066ff 100%);
   border: 2px solid #00ff88;
   color: white;
   padding: 12px 20px;
@@ -244,8 +245,8 @@
 
 .club-rpg-contribute-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 0 30px #ff00aa;
-  background: linear-gradient(135deg, #ff00aa 0%, #ff66cc 100%);
+  box-shadow: 0 0 30px #00fff2;
+  background: linear-gradient(135deg, #00f7ff 0%, #66c7ff 100%);
 }
 
 .club-rpg-completed {
@@ -263,13 +264,13 @@
   padding: 48px;
   background: linear-gradient(135deg, #13103a 0%, #1e154f 100%);
   border-radius: 16px;
-  border: 2px solid #8a2be2;
+  border: 2px solid #2be2d9;
   font-style: italic;
   text-shadow: 0 0 10px #b3b3ff;
 }
 
 .club-rpg-create-btn {
-  background: linear-gradient(135deg, #5a2b9e 0%, #8a2be2 100%);
+  background: linear-gradient(135deg, #2b9e9e 0%, #2baee2 100%);
   border: 2px solid #00ff88;
   color: white;
   padding: 16px 32px;
@@ -285,7 +286,7 @@
 .club-rpg-create-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 0 35px #00ff88;
-  background: linear-gradient(135deg, #8a2be2 0%, #9b4eff 100%);
+  background: linear-gradient(135deg, #2bdce2 0%, #4e95ff 100%);
 }
 
 .club-rpg-loading {
