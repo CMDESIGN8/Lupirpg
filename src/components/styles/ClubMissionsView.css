@@ -286,7 +286,7 @@
 .club-rpg-create-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 0 35px #00ff88;
-  background: linear-gradient(135deg, #2bdce2 0%, #4e95ff 100%);
+  background: linear-gradient(135deg, #2bdce2 0%, #9b4eff 100%);
 }
 
 .club-rpg-loading {
