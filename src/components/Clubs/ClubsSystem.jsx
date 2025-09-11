@@ -42,11 +42,12 @@ const ClubsSystem = ({
   };
 
   const renderView = () => {
-    console.log('ClubsSystem - currentView:', currentView); // ✅ Debug
-  console.log('ClubsSystem - selectedClub:', selectedClub); // ✅ Debug
+    console.log('CLUBSYSTEM - currentView:', currentView); // ✅ DEBUG CRÍTICO
+  console.log('CLUBSYSTEM - selectedClub:', selectedClub); // ✅ DEBUG
     // Usar currentView en lugar de internalView
     switch (currentView) {
       case 'clubs':
+        console.log('Rendering: ClubsView');
         return (
           <ClubsView
             clubs={clubs}
@@ -60,6 +61,7 @@ const ClubsSystem = ({
         );
       
       case 'create_club':
+        console.log('Rendering: CreateClubView');
         return (
           <CreateClubView
             setView={setView} // Pasar setView
@@ -68,6 +70,7 @@ const ClubsSystem = ({
         );
       
       case 'club_details':
+        console.log('Rendering: ClubDetailsView');
         return (
           <ClubDetailsView
             currentClub={selectedClub}
@@ -84,7 +87,7 @@ const ClubsSystem = ({
         );
       
       case 'club_missions':
-        console.log('Rendering ClubMissionsView'); // ✅ Esto debería aparecer  
+        console.log('Rendering: ClubMissionsView'); // ✅ Esto debe aparecer 
         return (
           <ClubMissionsView
             currentClub={selectedClub}
