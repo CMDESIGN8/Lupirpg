@@ -1,10 +1,9 @@
-
 /* CLUB RPG MISSIONS - Estilos completamente aislados */
 .club-rpg-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
-  background: linear-gradient(135deg, #0a0420 0%, #1a0630 100%);
+  background: linear-gradient(135deg, #051322 0%, #0a1a2f 100%);
   min-height: 100vh;
   font-family: 'Cinzel', 'Georgia', serif;
 }
@@ -15,11 +14,11 @@
   justify-content: space-between;
   margin-bottom: 32px;
   padding: 24px;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%2313103a" width="100" height="100"/><path fill="%238a2be2" opacity="0.2" d="M0 0h100v100H0z"/></svg>');
+  background: linear-gradient(135deg, var(--neon-bg-dark) 0%, var(--neon-bg-darker) 100%);
   border-radius: 16px;
-  border: 2px solid #2b90e2;
-  box-shadow: 0 0 20px rgba(43, 159, 226, 0.4),
-              inset 0 0 30px rgba(43, 159, 226, 0.2);
+  border: 2px solid var(--neon-blue);
+  box-shadow: var(--shadow-glow),
+              inset 0 0 30px rgba(0, 204, 255, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -31,152 +30,65 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #00ff88, transparent);
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
   animation: club-rpg-glow 3s ease-in-out infinite;
 }
 
 .club-rpg-title {
   font-size: 2.8rem;
   font-weight: bold;
-  color: #00ff88;
-  text-shadow: 0 0 10px #00ff88,
-               0 0 20px #00ff88,
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan),
+               0 0 20px var(--neon-cyan),
                2px 2px 0 #000;
   margin: 0;
   letter-spacing: 1px;
 }
 
+/* Botones con variables globales */
 .club-rpg-back-btn {
-  background: linear-gradient(135deg, #2b969e 0%, #2bdce2 100%);
-  border: 2px solid #00ff88;
+  background: linear-gradient(135deg, var(--neon-dark-blue) 0%, var(--neon-blue) 100%);
+  border: 2px solid var(--neon-cyan);
   color: white;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
 }
 
 .club-rpg-back-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 25px #00ff88;
-  background: linear-gradient(135deg, #2bdce2 0%, #4ef9ff 100%);
+  box-shadow: 0 0 25px var(--neon-cyan);
+  background: linear-gradient(135deg, var(--neon-blue) 0%, #4ef9ff 100%);
 }
 
-.club-rpg-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.club-rpg-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
+/* Tarjetas de misiones mejoradas */
 .club-rpg-card {
-  background: linear-gradient(135deg, #13103a 0%, #1e154f 100%);
-  border: 2px solid #2bcde2;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(43, 226, 226, 0.2);
+  background: linear-gradient(135deg, #0a1a2f 0%, #14294d 100%);
+  border: 2px solid var(--neon-blue);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: 0 8px 32px rgba(0, 204, 255, 0.2);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
 }
 
-.club-rpg-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.1), transparent);
-  transition: left 0.7s ease;
-}
-
-.club-rpg-card:hover::before {
-  left: 100%;
-}
-
 .club-rpg-card:hover {
   transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 12px 40px rgba(138, 43, 226, 0.4),
+  box-shadow: var(--shadow-glow-accent),
               0 0 30px rgba(0, 255, 136, 0.2);
-  border-color: #00ff88;
+  border-color: var(--neon-cyan);
 }
 
-.club-rpg-card-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid rgba(43, 226, 217, 0.5);
-  position: relative;
-}
-
-.club-rpg-card-header::after {
-  content: '⚔️';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.5rem;
-}
-
-.club-rpg-mission-icon {
-  color: #00ff88;
-  margin-right: 16px;
-  filter: drop-shadow(0 0 8px #00ff88);
-  width: 32px;
-  height: 32px;
-}
-
-.club-rpg-card-title {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: #00ff88;
-  margin: 0;
-  text-shadow: 0 0 8px #00ff88,
-               2px 2px 0 #000;
-}
-
-.club-rpg-description {
-  color: #b3ffff;
-  margin-bottom: 24px;
-  line-height: 1.6;
-  font-size: 1.1rem;
-  font-style: italic;
-}
-
-/* Progress Bar RPG personalizada */
-.club-rpg-progress-container {
-  margin-bottom: 24px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid #2bd6e2;
-}
-
-.club-rpg-progress-info {
-  display: flex;
-  justify-content: space-between;
-  color: #b3faff;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-}
-
+/* Progress Bar mejorada */
 .club-rpg-progress-bar {
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid #2be2e2;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--neon-blue);
   border-radius: 10px;
   height: 20px;
   overflow: hidden;
@@ -184,200 +96,133 @@
 }
 
 .club-rpg-progress-fill {
-  background: linear-gradient(90deg, #2be2e2, #00ff88);
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
   height: 100%;
   transition: width 0.5s ease;
-  position: relative;
 }
 
-.club-rpg-progress-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: club-rpg-shine 2s ease-in-out infinite;
-}
-
-.club-rpg-reward {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 2px solid rgba(43, 226, 226, 0.3);
-}
-
-.club-rpg-reward-text {
-  color: #b3b3ff;
-  font-size: 1rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.club-rpg-reward-value {
-  color: #00ff88;
-  font-weight: bold;
-  text-shadow: 0 0 8px #00ff88;
-  font-size: 1.2rem;
-}
-
-.club-rpg-actions {
-  margin-top: 20px;
-  text-align: center;
-}
-
+/* Botón de contribuir mejorado */
 .club-rpg-contribute-btn {
-  background: linear-gradient(135deg, #2bd6e2 0%, #0066ff 100%);
-  border: 2px solid #00ff88;
+  background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-dark-blue) 100%);
+  border: 2px solid var(--neon-cyan);
   color: white;
   padding: 12px 20px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(255, 0, 170, 0.3);
+  box-shadow: 0 0 20px rgba(0, 204, 255, 0.3);
 }
 
 .club-rpg-contribute-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 0 30px #00fff2;
-  background: linear-gradient(135deg, #00f7ff 0%, #66c7ff 100%);
+  box-shadow: 0 0 30px var(--neon-cyan);
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, #66c7ff 100%);
 }
 
+/* Estados de misión */
 .club-rpg-completed {
-  color: #00ff88;
+  color: var(--neon-cyan);
   font-weight: bold;
-  text-shadow: 0 0 15px #00ff88;
-  font-size: 1.3rem;
+  text-shadow: 0 0 15px var(--neon-cyan);
   animation: club-rpg-pulse 2s ease-in-out infinite;
 }
 
-.club-rpg-empty {
-  text-align: center;
-  color: #b3b3ff;
-  font-size: 1.3rem;
-  padding: 48px;
-  background: linear-gradient(135deg, #13103a 0%, #1e154f 100%);
-  border-radius: 16px;
-  border: 2px solid #2be2d9;
-  font-style: italic;
-  text-shadow: 0 0 10px #b3b3ff;
+/* Mejoras de texto y contraste */
+.club-rpg-description {
+  color: var(--lupi-text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.6;
+  font-size: 1.1rem;
 }
 
-.club-rpg-create-btn {
-  background: linear-gradient(135deg, #2b9e9e 0%, #2baee2 100%);
-  border: 2px solid #00ff88;
-  color: white;
-  padding: 16px 32px;
-  border-radius: 8px;
+.club-rpg-reward-text {
+  color: var(--lupi-text-secondary);
+  font-size: 1rem;
   font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
 }
 
-.club-rpg-create-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 35px #00ff88;
-  background: linear-gradient(135deg, #2bdce2 0%, #4e95ff 100%);
+.club-rpg-reward-value {
+  color: var(--neon-cyan);
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--neon-cyan);
 }
 
-.club-rpg-loading {
-  text-align: center;
-  color: #00ff88;
-  font-size: 1.4rem;
-  padding: 48px;
-  animation: club-rpg-pulse 1.5s ease-in-out infinite;
-  text-shadow: 0 0 10px #00ff88;
+/* Efectos de hover más suaves */
+.club-rpg-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+  transition: left 0.7s ease;
+  pointer-events: none;
 }
 
-.club-rpg-error {
-  text-align: center;
-  color: #ff6b6b;
-  font-size: 1.2rem;
-  padding: 24px;
-  background: rgba(255, 107, 107, 0.1);
-  border-radius: 12px;
-  border: 2px solid #ff6b6b;
+.club-rpg-card:hover::before {
+  left: 100%;
 }
 
-/* Animaciones RPG */
-@keyframes club-rpg-glow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+/* Mejoras de accesibilidad */
+.club-rpg-card:focus-within {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
 }
 
-@keyframes club-rpg-pulse {
-  0% { 
-    transform: scale(1);
-    text-shadow: 0 0 10px currentColor;
-  }
-  50% { 
-    transform: scale(1.05);
-    text-shadow: 0 0 20px currentColor;
-  }
-  100% { 
-    transform: scale(1);
-    text-shadow: 0 0 10px currentColor;
-  }
+.club-rpg-contribute-btn:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
+/* Mejoras de rendimiento */
+.club-rpg-container {
+  will-change: transform;
+}
+
+.club-rpg-card {
+  will-change: transform, box-shadow;
+}
+
+/* Animaciones optimizadas */
 @keyframes club-rpg-shine {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
 }
 
-/* Responsive design */
+/* Mejoras de responsive */
 @media (max-width: 768px) {
   .club-rpg-header {
     flex-direction: column;
-    gap: 20px;
+    gap: var(--spacing-md);
     text-align: center;
   }
   
   .club-rpg-title {
     font-size: 2.2rem;
+    margin-bottom: var(--spacing-md);
   }
   
   .club-rpg-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .club-rpg-card {
-    padding: 20px;
-  }
-  
-  .club-rpg-reward {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
+    gap: var(--spacing-md);
   }
 }
 
 @media (max-width: 480px) {
   .club-rpg-container {
-    padding: 12px;
+    padding: var(--spacing-sm);
   }
   
   .club-rpg-title {
     font-size: 1.8rem;
   }
   
-  .club-rpg-card-title {
-    font-size: 1.3rem;
+  .club-rpg-card {
+    padding: var(--spacing-md);
   }
   
-  .club-rpg-create-btn,
-  .club-rpg-back-btn,
-  .club-rpg-contribute-btn {
-    padding: 10px 20px;
-    font-size: 0.9rem;
+  .club-rpg-card-title {
+    font-size: 1.3rem;
   }
 }
