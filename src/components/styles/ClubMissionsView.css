@@ -1,0 +1,262 @@
+/* Club Missions View Styles */
+.club-missions-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+.club-missions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--lupi-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--neon-blue);
+  box-shadow: var(--shadow-glow);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.club-missions-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan);
+  margin: 0;
+}
+
+.club-missions-back-btn {
+  background: linear-gradient(135deg, var(--neon-dark-blue) 0%, var(--neon-blue) 100%);
+  border: 2px solid var(--neon-cyan);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px var(--neon-blue);
+}
+
+.club-missions-back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px var(--neon-cyan);
+  background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-cyan) 100%);
+}
+
+.club-missions-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.missions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.mission-card {
+  background: var(--lupi-card);
+  border: 1px solid var(--neon-blue);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: 0 4px 20px rgba(0, 204, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 204, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.mission-card:hover::before {
+  left: 100%;
+}
+
+.mission-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--neon-cyan);
+}
+
+.mission-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.mission-icon {
+  color: var(--neon-cyan);
+  margin-right: var(--spacing-sm);
+  filter: drop-shadow(0 0 5px var(--neon-cyan));
+}
+
+.mission-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--neon-cyan);
+  margin: 0;
+  text-shadow: 0 0 5px var(--neon-cyan);
+}
+
+.mission-description {
+  color: var(--lupi-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.mission-progress-container {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mission-reward {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(0, 204, 255, 0.2);
+}
+
+.reward-text {
+  color: var(--lupi-text-secondary);
+  font-size: 0.9rem;
+}
+
+.reward-value {
+  color: var(--neon-cyan);
+  font-weight: bold;
+  text-shadow: 0 0 5px var(--neon-cyan);
+}
+
+.contribute-btn {
+  background: linear-gradient(135deg, var(--lupi-primary) 0%, var(--lupi-accent) 100%);
+  border: 2px solid var(--lupi-accent);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 0, 170, 0.3);
+}
+
+.contribute-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px var(--lupi-accent);
+  background: linear-gradient(135deg, var(--lupi-accent) 0%, #ff66cc 100%);
+}
+
+.mission-completed {
+  color: var(--neon-cyan);
+  font-weight: bold;
+  text-shadow: 0 0 10px var(--neon-cyan);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.empty-missions {
+  text-align: center;
+  color: var(--lupi-text-secondary);
+  font-size: 1.1rem;
+  padding: var(--spacing-xl);
+  background: var(--lupi-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--neon-blue);
+}
+
+.create-mission-section {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--lupi-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--neon-blue);
+}
+
+.create-mission-btn {
+  background: linear-gradient(135deg, var(--neon-dark-blue) 0%, var(--neon-cyan) 100%);
+  border: 2px solid var(--neon-cyan);
+  color: white;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--border-radius);
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-glow);
+}
+
+.create-mission-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-accent);
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, #00ffaa 100%);
+}
+
+/* Loading states */
+.loading-missions {
+  text-align: center;
+  color: var(--neon-cyan);
+  font-size: 1.2rem;
+  padding: var(--spacing-xl);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.error-message {
+  text-align: center;
+  color: #ff6b6b;
+  font-size: 1.1rem;
+  padding: var(--spacing-lg);
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid #ff6b6b;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .club-missions-header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+  
+  .club-missions-title {
+    font-size: 2rem;
+  }
+  
+  .missions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mission-card {
+    padding: var(--spacing-md);
+  }
+  
+  .mission-reward {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .club-missions-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .club-missions-title {
+    font-size: 1.5rem;
+  }
+  
+  .mission-name {
+    font-size: 1.2rem;
+  }
+}

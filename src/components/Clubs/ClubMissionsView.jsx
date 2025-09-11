@@ -6,6 +6,7 @@ import { useClubMissions } from '../../hooks/useClubMissions';
 import ThemedButton from '../UI/ThemedButton';
 import MissionProgress from '../UI/MissionProgress'; 
 import CreateMissionModal from './CreateMissionModal';
+import '../styles/ClubMissionsView.css'; // ← Importa el CSS
 
 const ClubMissionsView = ({ 
   currentClub, 
@@ -48,62 +49,79 @@ const ClubMissionsView = ({
 
   // ✅ CORRECCIÓN: Cambié "eturn" por "return"
   return (
-    <div className="p-4">
+  <div className="club-missions-container">
+    <div className="club-missions-header">
       <ThemedButton 
         onClick={onBackToClubDetails || (() => setView('club_details'))}
         icon={<ArrowLeft size={20} />}
+        className="club-missions-back-btn"
       >
         Volver al Club
       </ThemedButton>
-
-      <div className="flex justify-between items-center my-4">
-        <h2 className="text-3xl font-bold">Misiones de {currentClub?.name}</h2>
-        {isLeader && (
-          <ThemedButton onClick={() => setShowCreateModal(true)}>
-            Crear Misión
-          </ThemedButton>
-        )}
-      </div>
       
-      <div className="space-y-6">
+      <h2 className="club-missions-title">Misiones de {currentClub?.name}</h2>
+      
+      {isLeader && (
+        <ThemedButton 
+          onClick={() => setShowCreateModal(true)}
+          className="create-mission-btn"
+        >
+          Crear Misión
+        </ThemedButton>
+      )}
+    </div>
+    
+    <div className="club-missions-content">
+      <div className="missions-grid">
         {missions && missions.length > 0 ? (
           missions.map(mission => (
-            <div key={mission.id} className="bg-gray-800 p-5 rounded-lg shadow-lg border border-gray-700">
-              <h3 className="text-xl font-semibold text-cyan-400 flex items-center">
-                <Target size={18} className="mr-2" /> {mission.name}
-              </h3>
-              <p className="text-gray-400 mt-1">{mission.description}</p>
+            <div key={mission.id} className="mission-card">
+              <div className="mission-header">
+                <Target size={24} className="mission-icon" />
+                <h3 className="mission-name">{mission.name}</h3>
+              </div>
               
-              <MissionProgress 
-                progress={mission.total_progress || mission.progress || 0} 
-                goal={mission.goal} 
-              />
+              <p className="mission-description">{mission.description}</p>
               
-              <div className="flex justify-between items-center mt-4">
-                <p className="text-sm text-gray-300">Recompensa: {mission.reward}</p>
-                
+              <div className="mission-progress-container">
+                <MissionProgress 
+                  progress={mission.total_progress || mission.progress || 0} 
+                  goal={mission.goal} 
+                />
+              </div>
+              
+              <div className="mission-reward">
+                <span className="reward-text">Recompensa:</span>
+                <span className="reward-value">{mission.reward}</span>
+              </div>
+              
+              <div className="mission-actions">
                 {mission.is_active ? (
-                  <ThemedButton onClick={() => handleContribute(mission.id)}>
+                  <ThemedButton 
+                    onClick={() => handleContribute(mission.id)}
+                    className="contribute-btn"
+                  >
                     Contribuir (+1)
                   </ThemedButton>
                 ) : (
-                  <span className="text-green-400 font-bold">¡Completada!</span>
+                  <span className="mission-completed">¡Completada!</span>
                 )}
               </div>
             </div>
           ))
         ) : (
-          <p className="text-gray-400">Este club no tiene misiones activas.</p>
+          <p className="empty-missions">Este club no tiene misiones activas.</p>
         )}
       </div>
-
-      <CreateMissionModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateMission}
-      />
     </div>
-  );
+
+    <CreateMissionModal
+      isOpen={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      onSubmit={handleCreateMission}
+    />
+  </div>
+);
 };
 
 export default ClubMissionsView;
