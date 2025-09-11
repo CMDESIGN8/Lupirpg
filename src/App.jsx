@@ -1103,7 +1103,6 @@ const handleCompleteMission = async (mission) => {
 };
 
   const renderContent = () => {
-     console.log('APP - Current view:', view); // ✅ AGREGAR ESTE LOG
     if (loading && !isSupabaseReady) return <LoadingScreen />;
 
     const props = {

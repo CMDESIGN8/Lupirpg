@@ -402,13 +402,6 @@
   gap: 1.5rem;
 }
 
-.mission-card {
-  background-color: #f9fafb;
-  padding: 1.25rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-}
-
 .mission-header {
   display: flex;
   align-items: flex-start;

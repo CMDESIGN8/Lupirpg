@@ -756,25 +756,9 @@
   margin-bottom: 30px;
 }
 
-.mission-card {
-  background: rgba(19, 16, 58, 0.7);
-  border: 1px solid rgba(0, 170, 255, 极速3);
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
 
-.mission-card:hover {
-  border-color: var(--neon-blue);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 170, 255, 0.2);
-}
 
-.mission-card.locked {
-  opacity: 0.7;
-  background: rgba(58, 16, 16, 0.7);
-}
+
 
 .mission-header {
   display: flex;
