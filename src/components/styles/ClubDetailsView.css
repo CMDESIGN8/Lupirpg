@@ -376,7 +376,7 @@
 }
 
 .missions-info {
-  background-color: #dbeafe;
+  background: var(--lupi-card);
   padding: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #93c5fd;
