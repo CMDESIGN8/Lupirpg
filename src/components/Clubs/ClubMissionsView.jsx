@@ -107,11 +107,6 @@ const ClubMissionsView = ({
       </div>
     </div>
 
-    <CreateMissionModal
-      isOpen={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
-      onSubmit={handleCreateMission}
-    />
     <ThemedButton 
         onClick={onBackToClubDetails || (() => setView('club_details'))}
         icon={<ArrowLeft size={20} />}
@@ -119,6 +114,12 @@ const ClubMissionsView = ({
       >
         Volver al Club
       </ThemedButton>
+
+    <CreateMissionModal
+      isOpen={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      onSubmit={handleCreateMission}
+    />
   </div>
 );
 };
