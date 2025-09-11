@@ -1,10 +1,11 @@
+@import '../../styles/variables.css';
 
 /* CLUB RPG MISSIONS - Estilos completamente aislados */
 .club-rpg-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
-  background: linear-gradient(135deg, #0a0420 0%, #1a0630 100%);
+  background: linear-gradient(135deg, var(--neon-bg-darker) 0%, var(--neon-bg-dark) 100%);
   min-height: 100vh;
   font-family: 'Cinzel', 'Georgia', serif;
 }
