@@ -1,10 +1,15 @@
 // src/components/Views/ClubDetailsView.jsx
-import { LogIn, LogOut, Users, ArrowLeft, Target, Star, Trophy, ShoppingCart, ScrollText, Crown, Award } from 'lucide-react';
+import { LogIn, LogOut, Users, ArrowLeft, Target, Users as UsersIcon, Star } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
 import MessageDisplay from '../UI/MessageDisplay';
 import '../styles/ClubDetailsView.css';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import { useState, useEffect } from 'react';
+
+console.log('ClubDetailsView props:', {
+  setView: typeof setView,
+  onBackToClubs: typeof onBackToClubs
+});
 
 const ClubDetailsView = ({ 
   currentClub, 
@@ -15,7 +20,7 @@ const ClubDetailsView = ({
   fetchClubs, 
   loading, 
   message, 
-  setView,
+  setView, // Recibir setView en lugar de setView
   onBackToClubs,
   onViewMissions 
 }) => {
@@ -30,8 +35,10 @@ const ClubDetailsView = ({
   }, [allMissions]);
 
   const handleViewMissions = () => {
+    console.log('handleViewMissions - setView:', typeof setView); // ✅ Debug
+  console.log('handleViewMissions - currentClub:', currentClub); // ✅ Debug
     if (setView) {
-      setView('club_missions');
+      setView('club_missions'); // Cambiar a 'club_missions'
     } else {
       console.error('setView function is not available');
     }
@@ -41,19 +48,8 @@ const ClubDetailsView = ({
     if (onBackToClubs) {
       onBackToClubs();
     } else if (setView) {
-      setView('clubs');
+      setView('clubs'); // Cambiar a 'clubs'
     }
-  };
-
-  // Datos de ejemplo para las secciones (deberías reemplazarlos con datos reales)
-  const clanStats = {
-    basic: 28,
-    expert: 30,
-    elite: 30,
-    questsAvailable: 2,
-    questTitle: "Get 10 Rare Champions",
-    questProgress: "0/10",
-    questReward: 100
   };
 
   return (
@@ -83,119 +79,53 @@ const ClubDetailsView = ({
               <p className="club-description">{currentClub.description}</p>
             </div>
 
-            {/* Sección Info (como en la imagen) */}
-            <div className="clan-info-section">
-              <h2 className="clan-section-title">Clan</h2>
-              
-              <div className="info-grid">
-                <div className="info-item">
-                  <Users size={18} />
-                  <span>Members</span>
-                </div>
-                <div className="info-item">
-                  <Trophy size={18} />
-                  <span>Rankings</span>
-                </div>
-                <div className="info-item">
-                  <ScrollText size={18} />
-                  <span>Clan Quests</span>
-                </div>
-                <div className="info-item">
-                  <ShoppingCart size={18} />
-                  <span>Clan Shop</span>
-                </div>
-                <div className="info-item">
-                  <Crown size={18} />
-                  <span>Clan League</span>
-                </div>
-              </div>
-              
-              <div className="separator"></div>
-              
-              {/* Stats Section */}
-              <div className="clan-stats-grid">
-                <div className="clan-stat">
-                  <span className="stat-value">{clanStats.basic}</span>
-                  <span className="stat-label">Basic</span>
-                </div>
-                <div className="clan-stat expert">
-                  <span className="stat-value">{clanStats.expert}</span>
-                  <span className="stat-label">Expert</span>
-                </div>
-                <div className="clan-stat elite">
-                  <span className="stat-value">{clanStats.elite}</span>
-                  <span className="stat-label">Elite</span>
-                </div>
-              </div>
-              
-              <div className="separator"></div>
-              
-              {/* Timer Section */}
-              <div className="timer-section">
-                <div className="timer">
-                  <span className="timer-value">60</span>
-                  <span className="timer-unit">22h</span>
-                </div>
-              </div>
-              
-              <div className="separator"></div>
-              
-              {/* Quest Section */}
-              <div className="quest-section">
-                <div className="quest-item">
-                  <div className="quest-header">
-                    <span className="quest-reward">50</span>
-                    <span className="quest-player">Player 123809</span>
-                  </div>
-                  <p className="quest-description">Win a total of ten Rank 5 or Rank 6 Accessories from the Spider's Den</p>
-                  <div className="quest-progress">
-                    <span>110/10</span>
+            {currentClub.average_level && (
+              <div className="club-stats">
+                <div className="stat-item">
+                  <div className="stat-value">{currentClub.average_level}</div>
+                  <div className="stat-label">
+                    <Target size={16} style={{ display: 'inline', marginRight: '5px' }} />
+                    Nivel Promedio
                   </div>
                 </div>
                 
-                <div className="quest-item">
-                  <div className="quest-header">
-                    <span className="quest-reward">50</span>
-                    <span className="quest-player">Player 123809</span>
-                  </div>
-                  <p className="quest-description">Upgrade a Rank 3 or higher Amulet Accessory to Level 16</p>
-                  <div className="quest-progress">
-                    <span>0/1</span>
+                <div className="stat-item">
+                  <div className="stat-value">{currentClub.member_count || 0}</div>
+                  <div className="stat-label">
+                    <UsersIcon size={16} style={{ display: 'inline', marginRight: '5px' }} />
+                    Miembros
                   </div>
                 </div>
                 
-                <div className="quest-item">
-                  <div className="quest-header">
-                    <span className="quest-reward">50</span>
-                    <span className="quest-player">Player 123809</span>
+                <div className="stat-item">
+                  <div className="stat-value">
+                    {currentClub.total_experience ? Math.floor(currentClub.total_experience / 1000) : 0}K
                   </div>
-                  <p className="quest-description">Fill the Turn Meters of all allies 20 times in Classic Arena Offense Battles (wins only)</p>
-                  <div className="quest-progress">
-                    <span>0/20</span>
+                  <div className="stat-label">
+                    <Star size={16} style={{ display: 'inline', marginRight: '5px' }} />
+                    EXP Total
                   </div>
                 </div>
               </div>
-              
-              <div className="separator"></div>
-              
-              {/* Available Quest */}
-              <div className="available-quest">
-                <div className="available-quest-header">
-                  <span className="quests-available">{clanStats.questsAvailable} Quest Available</span>
-                </div>
-                <p className="quest-description">{clanStats.questTitle}</p>
-                <div className="quest-progress">
-                  <span>{clanStats.questProgress}</span>
-                </div>
-                
-                <ThemedButton className="take-quest-btn">
-                  <Award size={16} />
-                  Take Quest ({clanStats.questReward})
-                </ThemedButton>
-              </div>
-            </div>
+            )}
 
-            {/* Sección de miembros (mantenida de tu código original) */}
+            {currentClub.average_level && (
+              <div className="level-progress">
+                <div className="progress-header">
+                  <span>Progreso del Club</span>
+                  <span>{currentClub.average_level} / 100</span>
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${Math.min(currentClub.average_level, 100)}%` }}
+                  >
+                    <div className="progress-glow"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="members-section">
               <h2 className="members-title">
                 <Users size={20} style={{ display: 'inline', marginRight: '10px' }} />
@@ -219,7 +149,50 @@ const ClubDetailsView = ({
               </div>
             </div>
 
-            {/* Botones de acción (mantenidos de tu código original) */}
+            <div className="missions-preview">
+              <h3 className="missions-preview-title">
+                <Target className="mr-2" size={24} />
+                Misiones Activas
+              </h3>
+              
+              {missionsLoading ? (
+                <p className="loading-missions">Cargando misiones...</p>
+              ) : activeMissions && activeMissions.length > 0 ? (
+                <>
+                  {activeMissions.slice(0, 2).map(mission => (
+                    <div key={mission.id} className="mission-preview-item">
+                      <div className="mission-preview-header">
+                        <span className="mission-preview-name">{mission.name}</span>
+                        <span>{mission.progress}/{mission.goal}</span>
+                      </div>
+                      <div className="mission-preview-bar">
+                        <div 
+                          className="mission-preview-progress" 
+                          style={{ width: `${Math.max(5, (mission.progress / mission.goal) * 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                  <ThemedButton 
+                    onClick={handleViewMissions}
+                    className="view-all-missions-btn"
+                  >
+                    Ver Todas las Misiones
+                  </ThemedButton>
+                </>
+              ) : (
+                <>
+                  <p className="no-missions-text">No hay misiones activas actualmente.</p>
+                  <ThemedButton 
+                    onClick={handleViewMissions}
+                    className="view-missions-btn"
+                  >
+                    Ver Misiones del Club
+                  </ThemedButton>
+                </>
+              )}
+            </div>
+
             <div className="club-actions">
               {playerData.club_id === currentClub.id ? (
                 <ThemedButton 
