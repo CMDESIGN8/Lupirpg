@@ -1,12 +1,31 @@
-// src/components/Clubs/ClubMissionsView.jsx
 import React, { useState, useEffect } from 'react';
 import { supabaseClient } from '../../services/supabase'; 
-import { ArrowLeft, Target } from 'lucide-react';
+import { ArrowLeft, Target, Sword, Shield, Zap, Crown } from 'lucide-react';
 import { useClubMissions } from '../../hooks/useClubMissions';
 import ThemedButton from '../UI/ThemedButton';
-import MissionProgress from '../UI/MissionProgress'; 
 import CreateMissionModal from './CreateMissionModal';
-import '../styles/ClubMissionsView.css'; // ← Importa el CSS
+import '../styles/ClubMissionsView.css'; // ← CSS con prefijos únicos
+
+// Progress Bar RPG personalizada para no usar el componente principal
+const ClubMissionProgress = ({ progress, goal }) => {
+  const percentage = Math.min(100, (progress / goal) * 100);
+  
+  return (
+    <div className="club-rpg-progress-container">
+      <div className="club-rpg-progress-info">
+        <span>Progreso: {progress}/{goal}</span>
+        <span>{Math.round(percentage)}%</span>
+      </div>
+      
+      <div className="club-rpg-progress-bar">
+        <div 
+          className="club-rpg-progress-fill"
+          style={{ width: `${percentage}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
 
 const ClubMissionsView = ({ 
   currentClub, 
@@ -30,7 +49,7 @@ const ClubMissionsView = ({
 
   const handleContribute = async (missionId) => {
     if (!currentPlayerId) {
-      alert("No se pudo identificar al jugador. Por favor, recarga la página.");
+      alert("¡Se requiere identificación de guerrero! Por favor, recarga la página.");
       return;
     }
     const success = await contributeToMission(missionId, currentPlayerId);
@@ -44,83 +63,92 @@ const ClubMissionsView = ({
     return await createMission(currentClub.id, missionData);
   };
 
-  if (loading) return <p className="p-4">Cargando misiones...</p>;
-  if (error) return <p className="p-4 text-red-500">{error}</p>;
+  const getMissionIcon = (missionType) => {
+    switch (missionType) {
+      case 'combat': return <Sword className="club-rpg-mission-icon" />;
+      case 'defense': return <Shield className="club-rpg-mission-icon" />;
+      case 'speed': return <Zap className="club-rpg-mission-icon" />;
+      case 'royal': return <Crown className="club-rpg-mission-icon" />;
+      default: return <Target className="club-rpg-mission-icon" />;
+    }
+  };
 
-  // ✅ CORRECCIÓN: Cambié "eturn" por "return"
+  if (loading) return <p className="club-rpg-loading">🛡️ Cargando misiones épicas...</p>;
+  if (error) return <p className="club-rpg-error">⚡ {error}</p>;
+
   return (
-  <div className="club-missions-container">
-    <div className="club-missions-header">
-      <h2 className="club-missions-title">Misiones de {currentClub?.name}</h2>
+    <div className="club-rpg-container">
+      <div className="club-rpg-header">
+        <h2 className="club-rpg-title">⚔️ Misiones de {currentClub?.name}</h2>
+        
+        {isLeader && (
+          <ThemedButton 
+            onClick={() => setShowCreateModal(true)}
+            className="club-rpg-create-btn"
+          >
+            🎯 Crear Misión Épica
+          </ThemedButton>
+        )}
+      </div>
       
-      {isLeader && (
-        <ThemedButton 
-          onClick={() => setShowCreateModal(true)}
-          className="create-mission-btn"
-        >
-          Crear Misión
-        </ThemedButton>
-      )}
-    </div>
-    
-    <div className="club-missions-content">
-      <div className="missions-grid">
-        {missions && missions.length > 0 ? (
-          missions.map(mission => (
-            <div key={mission.id} className="mission-card">
-              <div className="mission-header">
-                <Target size={24} className="mission-icon" />
-                <h3 className="mission-name">{mission.name}</h3>
-              </div>
-              
-              <p className="mission-description">{mission.description}</p>
-              
-              <div className="mission-progress-container">
-                <MissionProgress 
+      <div className="club-rpg-content">
+        <div className="club-rpg-grid">
+          {missions && missions.length > 0 ? (
+            missions.map(mission => (
+              <div key={mission.id} className="club-rpg-card">
+                <div className="club-rpg-card-header">
+                  {getMissionIcon(mission.mission_type)}
+                  <h3 className="club-rpg-card-title">{mission.name}</h3>
+                </div>
+                
+                <p className="club-rpg-description">"{mission.description}"</p>
+                
+                <ClubMissionProgress 
                   progress={mission.total_progress || mission.progress || 0} 
                   goal={mission.goal} 
                 />
+                
+                <div className="club-rpg-reward">
+                  <span className="club-rpg-reward-text">Recompensa:</span>
+                  <span className="club-rpg-reward-value">🏆 {mission.reward}</span>
+                </div>
+                
+                <div className="club-rpg-actions">
+                  {mission.is_active ? (
+                    <ThemedButton 
+                      onClick={() => handleContribute(mission.id)}
+                      className="club-rpg-contribute-btn"
+                    >
+                      ⚔️ Contribuir (+1)
+                    </ThemedButton>
+                  ) : (
+                    <span className="club-rpg-completed">✅ ¡Misión Completada!</span>
+                  )}
+                </div>
               </div>
-              
-              <div className="mission-reward">
-                <span className="reward-text">Recompensa:</span>
-                <span className="reward-value">{mission.reward}</span>
-              </div>
-              
-              <div className="mission-actions">
-                {mission.is_active ? (
-                  <ThemedButton 
-                    onClick={() => handleContribute(mission.id)}
-                    className="contribute-btn"
-                  >
-                    Contribuir (+1)
-                  </ThemedButton>
-                ) : (
-                  <span className="mission-completed">¡Completada!</span>
-                )}
-              </div>
+            ))
+          ) : (
+            <div className="club-rpg-empty">
+              🏰 Este clan no tiene misiones activas. ¡Sé el primero en crear una!
             </div>
-          ))
-        ) : (
-          <p className="empty-missions">Este club no tiene misiones activas.</p>
-        )}
+          )}
+        </div>
       </div>
-    </div>
 
-    <CreateMissionModal
-      isOpen={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
-      onSubmit={handleCreateMission}
-    />
-    <ThemedButton 
+      <ThemedButton 
         onClick={onBackToClubDetails || (() => setView('club_details'))}
-        icon={<ArrowLeft size={20} />}
-        className="club-missions-back-btn"
+        className="club-rpg-back-btn"
       >
-        Volver al Club
+        🏠 Volver al Club
       </ThemedButton>
-  </div>
-);
+
+      <CreateMissionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateMission}
+      />
+    </div>
+  );
 };
 
 export default ClubMissionsView;
