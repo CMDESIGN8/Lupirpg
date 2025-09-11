@@ -1154,6 +1154,7 @@ case 'clubs': return <ClubsSystem
   showMessage={showMessage}
   setLoading={setLoading}
 />;
+      case 'club_missions': // ✅ Asegúrate de que esté incluido
       case 'create_club': return <CreateClubView {...props} />;
       case 'club_details': return <ClubDetailsView {...props} />;
       default: return <DashboardView {...props} />;
