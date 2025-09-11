@@ -1,154 +1,253 @@
-import React, { useState, useEffect } from 'react';
-import { supabaseClient } from '../../services/supabase'; 
-import { ArrowLeft, Target, Sword, Shield, Zap, Crown } from 'lucide-react';
-import { useClubMissions } from '../../hooks/useClubMissions';
+// src/components/Views/ClubDetailsView.jsx
+import { LogIn, LogOut, Users, ArrowLeft, Target, Star, Trophy, ShoppingCart, ScrollText, Crown, Award } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
-import CreateMissionModal from './CreateMissionModal';
-import '../styles/ClubMissionsView.css'; // ← CSS con prefijos únicos
+import MessageDisplay from '../UI/MessageDisplay';
+import '../styles/ClubDetailsView.css';
+import { useClubMissions } from '../../hooks/useClubMissions';
+import { useState, useEffect } from 'react';
 
-// Progress Bar RPG personalizada para no usar el componente principal
-const ClubMissionProgress = ({ progress, goal }) => {
-  const percentage = Math.min(100, (progress / goal) * 100);
-  
-  return (
-    <div className="club-rpg-progress-container">
-      <div className="club-rpg-progress-info">
-        <span>Progreso: {progress}/{goal}</span>
-        <span>{Math.round(percentage)}%</span>
-      </div>
-      
-      <div className="club-rpg-progress-bar">
-        <div 
-          className="club-rpg-progress-fill"
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-    </div>
-  );
-};
-
-const ClubMissionsView = ({ 
+const ClubDetailsView = ({ 
   currentClub, 
-  setView, 
-  isLeader, 
-  onBackToClubDetails 
+  clubMembers, 
+  handleLeaveClub, 
+  handleJoinClub, 
+  playerData, 
+  fetchClubs, 
+  loading, 
+  message, 
+  setView,
+  onBackToClubs,
+  onViewMissions 
 }) => {
-  const { missions, loading, error, contributeToMission, createMission } = useClubMissions(currentClub?.id);
-  const [currentPlayerId, setCurrentPlayerId] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeMissions, setActiveMissions] = useState([]);
+  const { missions: allMissions, loading: missionsLoading } = useClubMissions(currentClub?.id);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (user) {
-        setCurrentPlayerId(user.id);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  const handleContribute = async (missionId) => {
-    if (!currentPlayerId) {
-      alert("¡Se requiere identificación de guerrero! Por favor, recarga la página.");
-      return;
+    if (allMissions && allMissions.length > 0) {
+      const active = allMissions.filter(mission => !mission.completed);
+      setActiveMissions(active);
     }
-    const success = await contributeToMission(missionId, currentPlayerId);
-    if (success) {
-      console.log('¡Contribución exitosa!');
+  }, [allMissions]);
+
+  const handleViewMissions = () => {
+    if (setView) {
+      setView('club_missions');
+    } else {
+      console.error('setView function is not available');
     }
   };
 
-  const handleCreateMission = async (missionData) => {
-    if (!currentClub?.id) return false;
-    return await createMission(currentClub.id, missionData);
-  };
-
-  const getMissionIcon = (missionType) => {
-    switch (missionType) {
-      case 'combat': return <Sword className="club-rpg-mission-icon" />;
-      case 'defense': return <Shield className="club-rpg-mission-icon" />;
-      case 'speed': return <Zap className="club-rpg-mission-icon" />;
-      case 'royal': return <Crown className="club-rpg-mission-icon" />;
-      default: return <Target className="club-rpg-mission-icon" />;
+  const handleBackToClubs = () => {
+    if (onBackToClubs) {
+      onBackToClubs();
+    } else if (setView) {
+      setView('clubs');
     }
   };
 
-  if (loading) return <p className="club-rpg-loading">🛡️ Cargando misiones épicas...</p>;
-  if (error) return <p className="club-rpg-error">⚡ {error}</p>;
+  // Datos de ejemplo para las secciones (deberías reemplazarlos con datos reales)
+  const clanStats = {
+    basic: 28,
+    expert: 30,
+    elite: 30,
+    questsAvailable: 2,
+    questTitle: "Get 10 Rare Champions",
+    questProgress: "0/10",
+    questReward: 100
+  };
 
   return (
-    <div className="club-rpg-container">
-      <div className="club-rpg-header">
-        <h2 className="club-rpg-title">🛡️ Misiones de {currentClub?.name}</h2>
-        
-        {isLeader && (
+    <div className="club-details-container">
+      <div className="club-details-card">
+        <div className="navigation-header">
           <ThemedButton 
-            onClick={() => setShowCreateModal(true)}
-            className="club-rpg-create-btn"
+            onClick={handleBackToClubs}
+            icon={<ArrowLeft size={20} />}
+            className="back-button"
           >
-            🎯 Crear Misión Épica
+            Volver a Clubes
           </ThemedButton>
-        )}
-      </div>
-      
-      <div className="club-rpg-content">
-        <div className="club-rpg-grid">
-          {missions && missions.length > 0 ? (
-            missions.map(mission => (
-              <div key={mission.id} className="club-rpg-card">
-                <div className="club-rpg-card-header">
-                  {getMissionIcon(mission.mission_type)}
-                  <h3 className="club-rpg-card-title">{mission.name}</h3>
+        </div>
+        
+        <MessageDisplay message={message} />
+        
+        {currentClub ? (
+          <>
+            <div className="club-header">
+              <h1 className="club-title">
+                {currentClub.name}
+                {currentClub.average_level && (
+                  <span className="level-badge">Nvl {currentClub.average_level}</span>
+                )}
+              </h1>
+              <p className="club-description">{currentClub.description}</p>
+            </div>
+
+            {/* Sección Info (como en la imagen) */}
+            <div className="clan-info-section">
+              <h2 className="clan-section-title">Clan</h2>
+              
+              <div className="info-grid">
+                <div className="info-item">
+                  <Users size={18} />
+                  <span>Members</span>
                 </div>
-                
-                <p className="club-rpg-description">"{mission.description}"</p>
-                
-                <ClubMissionProgress 
-                  progress={mission.total_progress || mission.progress || 0} 
-                  goal={mission.goal} 
-                />
-                
-                <div className="club-rpg-reward">
-                  <span className="club-rpg-reward-text">Recompensa:</span>
-                  <span className="club-rpg-reward-value">🏆 {mission.reward}</span>
+                <div className="info-item">
+                  <Trophy size={18} />
+                  <span>Rankings</span>
                 </div>
-                
-                <div className="club-rpg-actions">
-                  {mission.is_active ? (
-                    <ThemedButton 
-                      onClick={() => handleContribute(mission.id)}
-                      className="club-rpg-contribute-btn"
-                    >
-                      ⚔️ Contribuir (+1)
-                    </ThemedButton>
-                  ) : (
-                    <span className="club-rpg-completed">✅ ¡Misión Completada!</span>
-                  )}
+                <div className="info-item">
+                  <ScrollText size={18} />
+                  <span>Clan Quests</span>
+                </div>
+                <div className="info-item">
+                  <ShoppingCart size={18} />
+                  <span>Clan Shop</span>
+                </div>
+                <div className="info-item">
+                  <Crown size={18} />
+                  <span>Clan League</span>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="club-rpg-empty">
-              🏰 Este clan no tiene misiones activas. ¡Sé el primero en crear una!
+              
+              <div className="separator"></div>
+              
+              {/* Stats Section */}
+              <div className="clan-stats-grid">
+                <div className="clan-stat">
+                  <span className="stat-value">{clanStats.basic}</span>
+                  <span className="stat-label">Basic</span>
+                </div>
+                <div className="clan-stat expert">
+                  <span className="stat-value">{clanStats.expert}</span>
+                  <span className="stat-label">Expert</span>
+                </div>
+                <div className="clan-stat elite">
+                  <span className="stat-value">{clanStats.elite}</span>
+                  <span className="stat-label">Elite</span>
+                </div>
+              </div>
+              
+              <div className="separator"></div>
+              
+              {/* Timer Section */}
+              <div className="timer-section">
+                <div className="timer">
+                  <span className="timer-value">60</span>
+                  <span className="timer-unit">22h</span>
+                </div>
+              </div>
+              
+              <div className="separator"></div>
+              
+              {/* Quest Section */}
+              <div className="quest-section">
+                <div className="quest-item">
+                  <div className="quest-header">
+                    <span className="quest-reward">50</span>
+                    <span className="quest-player">Player 123809</span>
+                  </div>
+                  <p className="quest-description">Win a total of ten Rank 5 or Rank 6 Accessories from the Spider's Den</p>
+                  <div className="quest-progress">
+                    <span>110/10</span>
+                  </div>
+                </div>
+                
+                <div className="quest-item">
+                  <div className="quest-header">
+                    <span className="quest-reward">50</span>
+                    <span className="quest-player">Player 123809</span>
+                  </div>
+                  <p className="quest-description">Upgrade a Rank 3 or higher Amulet Accessory to Level 16</p>
+                  <div className="quest-progress">
+                    <span>0/1</span>
+                  </div>
+                </div>
+                
+                <div className="quest-item">
+                  <div className="quest-header">
+                    <span className="quest-reward">50</span>
+                    <span className="quest-player">Player 123809</span>
+                  </div>
+                  <p className="quest-description">Fill the Turn Meters of all allies 20 times in Classic Arena Offense Battles (wins only)</p>
+                  <div className="quest-progress">
+                    <span>0/20</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="separator"></div>
+              
+              {/* Available Quest */}
+              <div className="available-quest">
+                <div className="available-quest-header">
+                  <span className="quests-available">{clanStats.questsAvailable} Quest Available</span>
+                </div>
+                <p className="quest-description">{clanStats.questTitle}</p>
+                <div className="quest-progress">
+                  <span>{clanStats.questProgress}</span>
+                </div>
+                
+                <ThemedButton className="take-quest-btn">
+                  <Award size={16} />
+                  Take Quest ({clanStats.questReward})
+                </ThemedButton>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Sección de miembros (mantenida de tu código original) */}
+            <div className="members-section">
+              <h2 className="members-title">
+                <Users size={20} style={{ display: 'inline', marginRight: '10px' }} />
+                Miembros del Club ({clubMembers.length})
+              </h2>
+              <div className="members-container">
+                {loading ? (
+                  <p className="loading-text">Cargando miembros...</p>
+                ) : clubMembers.length > 0 ? (
+                  <ul className="members-list">
+                    {clubMembers.map(member => (
+                      <li key={member.username} className="member-item">
+                        <span className="member-name">{member.username}</span>
+                        <span className="member-level">Nivel {member.level}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-members">No hay miembros en este club</p>
+                )}
+              </div>
+            </div>
+
+            {/* Botones de acción (mantenidos de tu código original) */}
+            <div className="club-actions">
+              {playerData.club_id === currentClub.id ? (
+                <ThemedButton 
+                  onClick={handleLeaveClub} 
+                  disabled={loading} 
+                  icon={<LogOut size={20} />} 
+                  className="action-button leave-button"
+                >
+                  Abandonar Club
+                </ThemedButton>
+              ) : (
+                <ThemedButton 
+                  onClick={() => handleJoinClub(currentClub.id)} 
+                  disabled={loading} 
+                  icon={<LogIn size={20} />} 
+                  className="action-button join-button"
+                >
+                  Unirse al Club
+                </ThemedButton>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="loading-text">Cargando detalles del club...</p>
+        )}
       </div>
-
-      <ThemedButton 
-        onClick={onBackToClubDetails || (() => setView('club_details'))}
-        className="club-rpg-back-btn"
-      >
-        🏠 Volver al Club
-      </ThemedButton>
-
-      <CreateMissionModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateMission}
-      />
     </div>
   );
 };
 
-export default ClubMissionsView;
+export default ClubDetailsView;
