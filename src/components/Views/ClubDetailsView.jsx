@@ -7,7 +7,7 @@ import { useClubMissions } from '../../hooks/useClubMissions';
 import { useState, useEffect } from 'react';
 
 console.log('ClubDetailsView props:', {
-  setInternalView: typeof setInternalView,
+  setView: typeof setView,
   onBackToClubs: typeof onBackToClubs
 });
 
@@ -20,7 +20,7 @@ const ClubDetailsView = ({
   fetchClubs, 
   loading, 
   message, 
-  setView, // Recibir setInternalView en lugar de setView
+  setView, // Recibir setView en lugar de setView
   onBackToClubs,
   onViewMissions 
 }) => {

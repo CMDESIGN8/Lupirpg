@@ -15,7 +15,7 @@ const ClubsView = ({ clubs, handleViewClubDetails, handleJoinClub, playerData, l
       {!playerData.club_id && (
         <div className="create-club-header">
           <ThemedButton 
-            onClick={() => setInternalView('create_club')}
+            onClick={() => setView('create_club')}
             icon={<UserPlus size={16} />} 
             className="create-club-button"
           >

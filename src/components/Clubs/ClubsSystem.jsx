@@ -76,7 +76,7 @@ const ClubsSystem = ({
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setView={setView} // Pasar setView en lugar de setInternalView
+            setView={setView} // Pasar setView en lugar de setView
             onBackToClubs={handleBackToClubsList}
           />
         );
