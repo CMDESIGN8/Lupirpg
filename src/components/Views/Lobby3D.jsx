@@ -3,7 +3,7 @@ import React, { Suspense, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
-import './Lobby3D.css';
+import '../styles/Lobby3D.css';
 
 // Componente para cada jugador en 3D
 function PlayerAvatar({ player, position, onClick }) {

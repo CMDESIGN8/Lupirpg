@@ -1,6 +1,6 @@
 // LobbyDashboard.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import './LobbyDashboard.css';
+import '../styles/LobbyDashboard.css';
 
 export default function LobbyDashboard({
   user,
