@@ -1,7 +1,7 @@
 // CommonRoomModal.jsx
 import React, { useState } from "react";
 import CommonRoom3D from "../game/CommonRoom.jsx"; // Tu componente 3D
-import "./CommonRoom.css"; // Tus estilos del dashboard
+import "../styles/CommonRoom.css"; // Tus estilos del dashboard
 
 export default function CommonRoomModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState("chat");
