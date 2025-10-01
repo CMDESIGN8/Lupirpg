@@ -10,6 +10,7 @@ import CommonRoom from '../game/CommonRoom.jsx';
 import ClubChat from '../Clubs/ClubChat.jsx';
 import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
+import LobbyOnline from '../Views/LobbyOnline.jsx';
 import CommonRoomModal from "./CommonRoomModal";
 
 
@@ -41,6 +42,14 @@ const DashboardView = ({
   const [activeGame, setActiveGame] = useState(false);
   const [reward, setReward] = useState(null);
   const [gameLoading, setGameLoading] = useState(false);
+
+  const [showLobby, setShowLobby] = useState(false);
+    const [user] = useState({
+      id: 'user-id',
+      username: 'TuUsuario',
+      color: '#2E8B57',
+      sport: 'fútbol'
+    });
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
@@ -404,19 +413,19 @@ const handleBuyItem = async (listing) => {
               <span>Misiones</span>
             </button>
 
-           <button 
+          <button 
         className="action-btn secondary" 
-        onClick={() => setShowCommonRoom(true)} 
-        disabled={loading}
+        onClick={() => setShowLobby(true)}
       >
         <span className="nav-icon">🏠</span>
-        <span>SALA COMUN</span>
+        <span>LOBBY ONLINE</span>
       </button>
 
-      {/* Modal de Sala Común */}
-      <CommonRoomModal 
-        isOpen={showCommonRoom} 
-        onClose={() => setShowCommonRoom(false)} 
+      {/* Lobby Online */}
+      <LobbyOnline 
+        isOpen={showLobby}
+        onClose={() => setShowLobby(false)}
+        user={user}
       />
 
 <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>

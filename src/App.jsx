@@ -20,6 +20,7 @@ import { supabaseClient } from './services/supabase'; // Importación correcta
 import LupiMiniGame from "./components/game/LupiMiniGame";
 import RewardChest from "./components/game/RewardChest";
 import ClubsSystem from './components/Clubs/ClubsSystem';
+import LobbyOnline from './components/Views/LobbyOnline.jsx';
 
 
 const App = () => {
@@ -54,6 +55,14 @@ const App = () => {
   const [clubMembers, setClubMembers] = useState([]);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDescription, setNewClubDescription] = useState('');
+
+  const [showLobby, setShowLobby] = useState(false);
+  const [user] = useState({
+    id: 'user-id',
+    username: 'TuUsuario',
+    color: '#2E8B57',
+    sport: 'fútbol'
+  });
 
   const showMessage = (text) => {
     setMessage(text);
