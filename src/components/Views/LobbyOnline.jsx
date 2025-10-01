@@ -29,7 +29,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
   };
 
   const loadActivePlayers = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('room_users')
       .select('*')
       .eq('is_online', true)
@@ -39,7 +39,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
   };
 
   const loadClubFeed = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('club_feed')
       .select(`
         *,
@@ -55,12 +55,12 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
 
   const loadClubStats = async () => {
     // Estadísticas del club
-    const { count: onlineCount } = await supabase
+    const { count: onlineCount } = await supabaseClient
       .from('players')
       .select('*', { count: 'exact', head: true })
       .eq('online_status', true);
 
-    const { data: nextMatches } = await supabase
+    const { data: nextMatches } = await supabaseClient
       .from('club_missions')
       .select('*')
       .eq('is_active', true)
@@ -77,7 +77,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
   };
 
   const loadRoomMessages = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('room_messages')
       .select(`
         *,
@@ -93,7 +93,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
 
   const setupRealtimeSubscriptions = () => {
     // Suscripción a jugadores en sala
-    const roomPlayersSubscription = supabase
+    const roomPlayersSubscription = supabaseClient
       .channel('room_players')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'room_users' },
@@ -104,7 +104,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
       .subscribe();
 
     // Suscripción a mensajes de sala
-    const messagesSubscription = supabase
+    const messagesSubscription = supabaseClient
       .channel('room_messages')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'room_messages' },
@@ -123,7 +123,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
   const sendMessage = async (content) => {
     if (!user || !content.trim()) return;
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('room_messages')
       .insert({
         user_id: user.id,
@@ -136,7 +136,7 @@ export default function LobbyOnline({ isOpen, onClose, user }) {
   const createFeedPost = async (content, imageUrl = null) => {
     if (!user || !content.trim()) return;
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('club_feed')
       .insert({
         user_id: user.id,
