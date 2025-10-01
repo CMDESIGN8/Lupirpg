@@ -10,6 +10,8 @@ import CommonRoom from '../game/CommonRoom.jsx';
 import ClubChat from '../Clubs/ClubChat.jsx';
 import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
+import CommonRoomModal from "./CommonRoomModal";
+
 
 
 const DashboardView = ({ 
