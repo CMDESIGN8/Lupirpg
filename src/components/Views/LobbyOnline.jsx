@@ -1,6 +1,6 @@
 // LobbyOnline.jsx
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabaseClient } from '../../services/supabase'; 
 import Lobby3D from './Lobby3D';
 import LobbyDashboard from './LobbyDashboard';
 import './LobbyOnline.css';
