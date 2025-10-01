@@ -402,10 +402,20 @@ const handleBuyItem = async (listing) => {
               <span>Misiones</span>
             </button>
 
-           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
-  <span className="nav-icon">🏠</span>
-  <span>SALA COMUN</span>
-</button>
+           <button 
+        className="action-btn secondary" 
+        onClick={() => setShowCommonRoom(true)} 
+        disabled={loading}
+      >
+        <span className="nav-icon">🏠</span>
+        <span>SALA COMUN</span>
+      </button>
+
+      {/* Modal de Sala Común */}
+      <CommonRoomModal 
+        isOpen={showCommonRoom} 
+        onClose={() => setShowCommonRoom(false)} 
+      />
 
 <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
             <span className="nav-icon">➡️</span>
