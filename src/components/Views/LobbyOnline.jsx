@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabaseClient } from '../../services/supabase'; 
 import Lobby3D from './Lobby3D';
 import LobbyDashboard from './LobbyDashboard';
-import './LobbyOnline.css';
+import '../styles/LobbyOnline.css';
 
 export default function LobbyOnline({ isOpen, onClose, user }) {
   const [activePlayers, setActivePlayers] = useState([]);
