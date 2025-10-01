@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment, Html } from "@react-three/drei";
 import LupiModel from "./LupiModel";
-import "../style/CommonRoom3D.css";
+import "../styles/CommonRoom3D.css";
 
 export default function CommonRoom3D() {
   return (
