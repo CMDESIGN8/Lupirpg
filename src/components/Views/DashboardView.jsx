@@ -482,7 +482,11 @@ const handleBuyItem = async (listing) => {
       </div>
     </div>
     <div class="salacomun">
-    <button className="action" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+    <button 
+  className="action-btn secondary" 
+  onClick={() => window.open('/club-dashboard', '_blank', 'width=1400,height=900')}
+  disabled={loading}
+>
   <span className="nav-icon">🏠</span>
   <span>INGRESAR A LA SALA DE EQUIPO</span>
 </button>
