@@ -4,7 +4,7 @@ import { OrbitControls, Environment, Html } from "@react-three/drei";
 import LupiModel from "./LupiModel";
 import "../styles/CommonRoom3D.css";
 
-export default function CommonRoom3D() {
+export default function CommonRoom() {
   return (
     <div className="commonroom-3d-container">
       <Canvas camera={{ position: [0, 2, 5], fov: 50 }}>
