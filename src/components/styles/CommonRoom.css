@@ -1,45 +1,48 @@
-/* 🎮 styles/CommonRoom.css - Estilo Deportivo RPG con Canvas Grande */
-.common-room-modal {
+/* 🎮 styles/CommonRoom.css - Estilo Pokémon 3DS */
+.common-room-modal.pokemon-style {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, #0a3d62, #1e5799, #3a7bd5);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  font-family: 'Roboto Condensed', 'Arial', sans-serif;
+  font-family: 'Press Start 2P', 'Roboto Condensed', Arial, sans-serif;
   overflow: hidden;
   padding: 20px;
 }
 
 .common-room-content {
-  background: rgba(10, 25, 47, 0.95);
-  border-radius: 15px;
+  background: #2d3047;
+  border-radius: 20px;
   padding: 20px;
   width: 95%;
   height: 95vh;
   display: flex;
   flex-direction: column;
   box-shadow: 
-    0 0 30px rgba(0, 150, 255, 0.7),
-    inset 0 0 50px rgba(0, 0, 0, 0.3);
-  border: 3px solid #ffd700;
+    0 0 50px rgba(0, 0, 0, 0.8),
+    inset 0 0 100px rgba(255, 255, 255, 0.1);
+  border: 8px solid #ffd700;
   overflow: hidden;
   position: relative;
 }
 
-.common-room-content::after {
+.common-room-content::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: linear-gradient(to right, #ff6b6b, #ffd700, #4ecdc4, #1dd1a1);
-  border-radius: 5px 5px 0 0;
+  bottom: 0;
+  background: 
+    linear-gradient(90deg, transparent 49%, rgba(255, 215, 0, 0.1) 50%, transparent 51%),
+    linear-gradient(transparent 49%, rgba(255, 215, 0, 0.1) 50%, transparent 51%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .common-room-header {
@@ -48,271 +51,384 @@
   align-items: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #ffd700;
+  border-bottom: 3px solid #ffd700;
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
-.common-room-header::after {
-  content: '⚽';
-  position: absolute;
-  right: 50px;
-  font-size: 24px;
-  opacity: 0.7;
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .common-room-header h2 {
   color: #ffd700;
   margin: 0;
-  text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
-  font-size: 28px;
+  text-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.8),
+    2px 2px 0 #000,
+    -1px -1px 0 #000;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: 1px;
-  text-transform: uppercase;
-  background: linear-gradient(to right, #ff6b6b, #ffd700, #4ecdc4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+}
+
+.online-counter {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 2px solid #4ecdc4;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.online-dot {
+  color: #4ecdc4;
+  font-size: 16px;
+  animation: pulse 2s infinite;
 }
 
 .close-btn {
   background: linear-gradient(to bottom, #e74c3c, #c0392b);
   color: white;
   border: none;
-  border-radius: 8px;
-  width: 40px;
-  height: 40px;
+  border-radius: 10px;
+  width: 45px;
+  height: 45px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 20px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid #fff;
+  z-index: 2;
 }
 
 .close-btn:hover {
-  transform: scale(1.1) translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* ==============================
-   🔹 Contenedor principal - Layout mejorado
+   🎮 Pantalla Pokémon 3DS
    ============================== */
-.room-container {
+.pokemon-screen {
   display: flex;
-  gap: 20px;
+  flex-direction: column;
   height: calc(100% - 70px);
   flex: 1;
   min-height: 0;
+  gap: 15px;
+  position: relative;
+  z-index: 2;
 }
 
-/* 🎨 Canvas de juego - MUCHO MÁS GRANDE */
-.canvas-container {
-  flex: 3;
-  background: #1e3a5f;
-  border-radius: 12px;
+.game-screen {
+  flex: 2;
+  background: #1a1a2e;
+  border-radius: 15px;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
   box-shadow: 
-    inset 0 0 30px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(0, 150, 255, 0.5);
-  border: 3px solid #ffd700;
+    inset 0 0 50px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(255, 215, 0, 0.3);
+  border: 4px solid #ffd700;
   position: relative;
   min-height: 0;
 }
 
-.canvas-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.2) 50%, transparent 51%),
-    linear-gradient(transparent 49%, rgba(255, 255, 255, 0.2) 50%, transparent 51%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.canvas-container canvas {
-  border-radius: 10px;
-  background: linear-gradient(to bottom, #2a9d8f, #264653);
+.pokemon-canvas {
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2a9d8f 0%, #264653 100%);
   cursor: crosshair;
-  position: relative;
-  z-index: 2;
   width: 100% !important;
   height: 100% !important;
   max-width: 100%;
   max-height: 100%;
 }
 
-/* 💬 Chat lateral - Compacto pero funcional */
-.chat-container {
+/* Panel inferior estilo Pokémon */
+.pokemon-panel {
+  flex: 1;
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  border-radius: 15px;
+  border: 4px solid #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  overflow: hidden;
+  display: flex;
+  min-height: 200px;
+}
+
+/* Menú de navegación */
+.pokemon-menu {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px;
+  gap: 8px;
+  min-width: 180px;
+  border-right: 3px solid #ffd700;
+}
+
+.menu-option {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #fff;
+  border-radius: 10px;
+  padding: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Press Start 2P', Arial, sans-serif;
+  font-size: 10px;
+  text-align: left;
+}
+
+.menu-option:hover {
+  transform: translateX(5px);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.menu-option.active {
+  background: linear-gradient(135deg, #ffd700 0%, #f39c12 100%);
+  color: #000;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  transform: translateX(8px);
+}
+
+.menu-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.menu-label {
+  flex: 1;
+}
+
+/* Contenido del menú */
+.pokemon-content {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a2a6c, #1e3a5f);
-  border-radius: 12px;
   overflow: hidden;
-  border: 3px solid #ffd700;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-  position: relative;
-  min-width: 300px;
-  max-width: 350px;
 }
 
-.chat-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><rect fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="1" x="2" y="2" width="46" height="46" rx="5" ry="5"/></svg>');
-  pointer-events: none;
+.menu-content h3 {
+  color: #2d3047;
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  text-align: center;
+  border-bottom: 2px solid #ffd700;
+  padding-bottom: 8px;
 }
 
+/* Chat mejorado */
 .messages {
   flex: 1;
-  padding: 12px;
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.3);
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 2px solid #4ecdc4;
 }
 
 .message {
   margin-bottom: 10px;
-  text-align: left;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
-  border-left: 4px solid #f1c40f;
+  border-left: 4px solid #667eea;
   transition: all 0.3s;
-  position: relative;
-  backdrop-filter: blur(5px);
+  font-size: 12px;
 }
 
 .message:hover {
   transform: translateX(3px);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.message::before {
-  content: '💬';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.5;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
 .user-name {
   font-weight: bold;
-  color: #f1c40f;
+  color: #e74c3c;
   margin-right: 5px;
-  text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .message-content {
-  color: #ecf0f1;
-  font-size: 13px;
+  color: #2d3047;
+  font-size: 12px;
 }
 
-/* Formulario de mensajes compacto */
 .message-form {
   display: flex;
-  padding: 12px;
-  border-top: 3px solid #f1c40f;
-  background: linear-gradient(to right, #e74c3c, #c0392b);
-  gap: 8px;
+  gap: 10px;
 }
 
 .message-form input {
   flex: 1;
-  padding: 10px 12px;
-  border: 2px solid #f39c12;
+  padding: 12px;
+  border: 2px solid #4ecdc4;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  font-size: 13px;
+  background: white;
+  font-size: 12px;
+  font-family: 'Press Start 2P', Arial, sans-serif;
 }
 
 .message-form input:focus {
   outline: none;
-  box-shadow: 0 0 8px #f39c12, inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px #4ecdc4;
 }
 
 .message-form button {
-  padding: 10px 15px;
-  background: linear-gradient(to bottom, #2ecc71, #27ae60);
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
   color: white;
-  border: 2px solid #f39c12;
+  border: 2px solid #fff;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 13px;
-  white-space: nowrap;
+  font-size: 12px;
+  font-family: 'Press Start 2P', Arial, sans-serif;
   transition: all 0.2s;
 }
 
-.message-form button:hover:not(:disabled) {
-  background: linear-gradient(to bottom, #27ae60, #219653);
+.message-form button:hover {
   transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
 }
 
-.message-form button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Elementos deportivos */
-.sport-elements {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+/* Lista de usuarios */
+.users-list {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  z-index: 5;
 }
 
-.sport-icon {
-  width: 25px;
-  height: 25px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+.user-item {
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-size: 14px;
-  animation: bounce 2s infinite;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  border: 2px solid #667eea;
 }
 
-.sport-icon:nth-child(1) { animation-delay: 0s; }
-.sport-icon:nth-child(2) { animation-delay: 0.5s; }
-.sport-icon:nth-child(3) { animation-delay: 1s; }
+.user-avatar {
+  font-size: 16px;
+}
 
-/* Estadísticas RPG */
-.rpg-stats {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 8px 12px;
+.user-name {
+  flex: 1;
+  color: #2d3047;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.user-status {
+  color: #2ecc71;
+  font-size: 16px;
+}
+
+/* Feed y misiones */
+.feed-item, .mission-item {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
   border-radius: 8px;
   border: 2px solid #ffd700;
-  font-size: 11px;
-  color: #fff;
-  backdrop-filter: blur(5px);
+  margin-bottom: 10px;
 }
 
-.rpg-stats div {
-  margin: 4px 0;
+.feed-header {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+
+.feed-author {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.feed-time {
+  color: #7f8c8d;
+}
+
+.feed-content {
+  color: #2d3047;
+  font-size: 12px;
+}
+
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.mission-icon {
+  font-size: 24px;
+}
+
+.mission-info {
+  flex: 1;
+}
+
+.mission-title {
+  font-weight: bold;
+  color: #2d3047;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.mission-progress {
+  color: #7f8c8d;
+  font-size: 10px;
+}
+
+/* Stats RPG mejorados */
+.pokemon-stats {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 3px solid #ffd700;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  font-size: 11px;
+}
+
+.stat-item {
+  margin: 6px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stat-label {
+  color: #4ecdc4;
 }
 
 .stat-value {
@@ -322,65 +438,71 @@
 
 /* Scrollbar personalizado */
 .messages::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 
 .messages::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #f1c40f, #f39c12);
-  border-radius: 3px;
+  background: linear-gradient(135deg, #4ecdc4, #44a08d);
+  border-radius: 4px;
 }
 
 .messages::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #f39c12, #e67e22);
+  background: linear-gradient(135deg, #44a08d, #4ecdc4);
 }
 
 /* Animaciones */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
 
-/* Responsive para pantallas grandes */
-@media (min-width: 1600px) {
-  .common-room-content {
-    max-width: 1800px;
-  }
-  
-  .canvas-container {
-    flex: 4;
-  }
-  
-  .chat-container {
-    max-width: 400px;
-  }
-}
-
-/* Layout para pantallas más pequeñas */
+/* Responsive */
 @media (max-width: 1200px) {
-  .room-container {
-    flex-direction: column;
+  .pokemon-menu {
+    min-width: 150px;
   }
   
-  .canvas-container {
-    flex: 2;
-    min-height: 60vh;
-  }
-  
-  .chat-container {
-    max-width: 100%;
-    min-height: 30vh;
+  .menu-option {
+    font-size: 9px;
+    padding: 10px;
   }
   
   .common-room-header h2 {
-    font-size: 22px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pokemon-panel {
+    flex-direction: column;
   }
   
-  .message::before {
-    display: none;
+  .pokemon-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 3px solid #ffd700;
+  }
+  
+  .menu-option {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .common-room-content {
+    padding: 10px;
   }
 }

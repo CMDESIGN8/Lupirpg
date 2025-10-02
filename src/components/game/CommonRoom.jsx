@@ -9,17 +9,19 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [activeMenu, setActiveMenu] = useState("chat"); // chat, users, feed, missions, etc.
+  const [onlineCount, setOnlineCount] = useState(0);
   const canvasRef = useRef(null);
   const requestRef = useRef();
   const channelRef = useRef(null);
   const lastUpdateRef = useRef(0);
   const keysPressed = useRef({});
-  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
+  const animationData = useRef({});
 
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
+  const animationSpeed = 120;
 
   // Mapeo de direcciones a filas en el spritesheet
   const directionMap = {
@@ -28,6 +30,16 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     right: 2,
     up: 3
   };
+
+  // Menú options estilo Pokémon
+  const menuOptions = [
+    { id: "chat", label: "Chat", icon: "💬" },
+    { id: "users", label: "Usuarios", icon: "👥" },
+    { id: "feed", label: "Feed Club", icon: "📰" },
+    { id: "missions", label: "Misiones", icon: "🎯" },
+    { id: "inventory", label: "Inventario", icon: "🎒" },
+    { id: "settings", label: "Opciones", icon: "⚙️" }
+  ];
 
   // ========================
   // 🔥 Supabase Presence
@@ -42,6 +54,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
         const allUsers = Object.values(state).map((u) => u[0]);
+        setOnlineCount(allUsers.length);
         
         // Inicializar datos de animación para cada usuario
         allUsers.forEach(user => {
@@ -61,7 +74,6 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           const x = Math.round(Math.random() * 700 + 50);
           const y = Math.round(Math.random() * 400 + 50);
 
-          // Inicializar datos de animación para el usuario actual
           animationData.current[currentUser.id] = {
             frameIndex: 0,
             lastUpdate: Date.now(),
@@ -87,10 +99,21 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "room_messages" },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
+          setMessages((prev) => [...prev.slice(-49), payload.new]); // Mantener últimos 50 mensajes
         }
       )
       .subscribe();
+
+    // Cargar mensajes existentes
+    const loadMessages = async () => {
+      const { data } = await supabaseClient
+        .from("room_messages")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .limit(50);
+      if (data) setMessages(data);
+    };
+    loadMessages();
 
     return () => {
       channel.unsubscribe();
@@ -100,7 +123,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [supabaseClient, currentUser]);
 
   // ========================
-  // 🎮 Render Canvas
+  // 🎮 Render Canvas - Estilo Pokémon 3DS
   // ========================
   const spriteImage = useRef(new Image());
   const mapImage = useRef(new Image());
@@ -113,31 +136,39 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const drawAvatar = (ctx, user) => {
     const { x, y, name, direction = "down", id } = user;
     
-    // Obtener datos de animación desde la referencia
     const animData = animationData.current[id] || { frameIndex: 0 };
     const frameIndex = animData.frameIndex || 0;
     
-    // Calcular la posición en el spritesheet
     const spriteX = frameIndex * spriteWidth;
     const spriteY = directionMap[direction] * spriteHeight;
 
-    // Dibujar el frame correcto del spritesheet
+    // Dibujar sombra del avatar
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 40, 20, 8, 0, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Dibujar el avatar
     ctx.drawImage(
       spriteImage.current,
       spriteX,
       spriteY,
       spriteWidth,
       spriteHeight,
-       x - 32,             // Posición X (centrado en 64px)
-  y - 32,             // Posición Y (centrado en 64px)
-  64,                 // Nuevo ancho de visualización
-  64                  // Nuevo alto de visualización
-);
-    // Dibujar nombre de usuario
+      x - 32,
+      y - 32,
+      64,
+      64
+    );
+
+    // Dibujar nombre de usuario con estilo Pokémon
     ctx.fillStyle = "#fff";
-    ctx.font = "14px Arial";
+    ctx.font = "bold 12px 'Press Start 2P', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(name, x, y - spriteHeight/2 - 10);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 3;
+    ctx.strokeText(name, x, y - spriteHeight/2 - 5);
+    ctx.fillText(name, x, y - spriteHeight/2 - 5);
   };
 
   const drawRoom = (ctx) => {
@@ -146,7 +177,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
 
     ctx.clearRect(0, 0, width, height);
 
-    // Fondo con mapa
+    // Fondo con mapa estilo Pokémon
     if (mapImage.current.complete) {
       ctx.drawImage(mapImage.current, 0, 0, width, height);
     } else {
@@ -165,14 +196,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     const ctx = canvas.getContext("2d");
     const now = Date.now();
     
-    // Actualizar animaciones para todos los usuarios
     users.forEach(user => {
       const animData = animationData.current[user.id];
       if (animData && animData.moving && now - animData.lastUpdate > animationSpeed) {
         animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
         animData.lastUpdate = now;
         
-        // Solo actualizar estado para el usuario actual (para enviar a Supabase)
         if (user.id === currentUser.id) {
           setUsers(prevUsers => 
             prevUsers.map(u => 
@@ -198,7 +227,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   useEffect(() => {
     const handleKeyDown = async (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault(); // Prevenir scroll de la página
+        e.preventDefault();
         keysPressed.current[e.key] = true;
         
         const user = users.find((u) => u.id === currentUser.id);
@@ -228,17 +257,14 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
             return;
         }
 
-        // Limitar movimiento dentro del canvas
         x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
         y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
 
-        // Actualizar datos de animación
         if (animationData.current[currentUser.id]) {
           animationData.current[currentUser.id].moving = true;
           animationData.current[currentUser.id].direction = direction;
         }
 
-        // Actualizar usuario
         const updatedUser = {
           ...user,
           x,
@@ -247,12 +273,10 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
           lastFrameUpdate: Date.now()
         };
 
-        // Estado local
         setUsers((prev) =>
           prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
         );
 
-        // Estado remoto
         if (channelRef.current) {
           await channelRef.current.track(updatedUser);
         }
@@ -263,15 +287,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         keysPressed.current[e.key] = false;
         
-        // Verificar si todas las teclas de dirección están liberadas
         const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
         
         if (noKeysPressed && animationData.current[currentUser.id]) {
-          // Cuando se sueltan todas las teclas, resetear a frame 0
           animationData.current[currentUser.id].moving = false;
           animationData.current[currentUser.id].frameIndex = 0;
           
-          // Actualizar estado para forzar re-render
           setUsers(prevUsers => 
             prevUsers.map(user => 
               user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
@@ -291,7 +312,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   }, [users, currentUser]);
 
   // ========================
-  // 💬 Chat
+  // 💬 Chat y Funciones
   // ========================
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -300,6 +321,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     try {
       const { error } = await supabaseClient.from("room_messages").insert({
         user_id: currentUser.id,
+        username: currentUser.username || "Usuario",
         content: newMessage.trim(),
       });
 
@@ -310,55 +332,152 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
-  return (
-    <div className="common-room-modal">
-      <div className="common-room-content">
-        <div className="common-room-header">
-          <h2>Arena Deportiva Lupi</h2>
-          <button className="close-btn" onClick={onClose}>
-            X
-          </button>
-        </div>
-
-        <div className="room-container">
-          <div className="canvas-container">
-            <canvas 
-              ref={canvasRef} 
-              width={1200} 
-              height={800}
-              style={{ width: '100%', height: '100%' }}
-            />
-            <div className="sport-elements">
-              <div className="sport-icon">⚽</div>
-              <div className="sport-icon">🏀</div>
-              <div className="sport-icon">🏈</div>
-            </div>
-            <div className="rpg-stats">
-              <div>Nivel: <span className="stat-value">15</span></div>
-              <div>EXP: <span className="stat-value">1200/2000</span></div>
-              <div>Oro: <span className="stat-value">5,430</span></div>
-            </div>
-          </div>
-
-          <div className="chat-container">
+  // Renderizar contenido según el menú activo
+  const renderMenuContent = () => {
+    switch (activeMenu) {
+      case "chat":
+        return (
+          <div className="menu-content">
             <div className="messages">
               {messages.map((msg) => (
                 <div key={msg.id} className="message">
-                  <span className="user-name">{msg.user_id}:</span>
+                  <span className="user-name">{msg.username || msg.user_id}:</span>
                   <span className="message-content">{msg.content}</span>
                 </div>
               ))}
             </div>
-
             <form onSubmit={sendMessage} className="message-form">
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Escribe un mensaje..."
+                maxLength={200}
               />
               <button type="submit">Enviar</button>
             </form>
+          </div>
+        );
+      
+      case "users":
+        return (
+          <div className="menu-content">
+            <h3>Usuarios Conectados ({onlineCount})</h3>
+            <div className="users-list">
+              {users.map(user => (
+                <div key={user.id} className="user-item">
+                  <span className="user-avatar">🎮</span>
+                  <span className="user-name">{user.name}</span>
+                  <span className="user-status online">●</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case "feed":
+        return (
+          <div className="menu-content">
+            <h3>Feed del Club</h3>
+            <div className="feed-item">
+              <div className="feed-header">
+                <span className="feed-author">Lupi Club</span>
+                <span className="feed-time">Hace 2h</span>
+              </div>
+              <div className="feed-content">
+                ¡Bienvenidos a la nueva arena deportiva! Completad misiones para ganar recompensas.
+              </div>
+            </div>
+          </div>
+        );
+      
+      case "missions":
+        return (
+          <div className="menu-content">
+            <h3>Misiones Activas</h3>
+            <div className="mission-item">
+              <span className="mission-icon">⚽</span>
+              <div className="mission-info">
+                <div className="mission-title">Primeros Pasos</div>
+                <div className="mission-progress">0/3 mensajes enviados</div>
+              </div>
+            </div>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="menu-content">
+            <h3>{menuOptions.find(opt => opt.id === activeMenu)?.label}</h3>
+            <p>Contenido en desarrollo...</p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="common-room-modal pokemon-style">
+      <div className="common-room-content">
+        <div className="common-room-header">
+          <div className="header-info">
+            <h2>Arena Deportiva Lupi</h2>
+            <div className="online-counter">
+              <span className="online-dot">●</span>
+              {onlineCount} en línea
+            </div>
+          </div>
+          <button className="close-btn" onClick={onClose}>
+            X
+          </button>
+        </div>
+
+        {/* Pantalla principal estilo Pokémon 3DS */}
+        <div className="pokemon-screen">
+          <div className="game-screen">
+            <canvas 
+              ref={canvasRef} 
+              width={1200} 
+              height={800}
+              className="pokemon-canvas"
+            />
+            
+            {/* Stats RPG en esquina */}
+            <div className="rpg-stats pokemon-stats">
+              <div className="stat-item">
+                <span className="stat-label">Nivel:</span>
+                <span className="stat-value">15</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">EXP:</span>
+                <span className="stat-value">1200/2000</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Oro:</span>
+                <span className="stat-value">5,430</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel inferior estilo Pokémon */}
+          <div className="pokemon-panel">
+            {/* Menú de navegación */}
+            <div className="pokemon-menu">
+              {menuOptions.map((option) => (
+                <button
+                  key={option.id}
+                  className={`menu-option ${activeMenu === option.id ? 'active' : ''}`}
+                  onClick={() => setActiveMenu(option.id)}
+                >
+                  <span className="menu-icon">{option.icon}</span>
+                  <span className="menu-label">{option.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Contenido del menú */}
+            <div className="pokemon-content">
+              {renderMenuContent()}
+            </div>
           </div>
         </div>
       </div>
