@@ -12,14 +12,13 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   const canvasRef = useRef(null);
   const requestRef = useRef();
   const channelRef = useRef(null);
-  const lastUpdateRef = useRef(0);
   const keysPressed = useRef({});
-  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
+  const animationData = useRef({});
 
   const spriteWidth = 32;
   const spriteHeight = 48;
   const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
+  const animationSpeed = 120;
 
   // Mapeo de direcciones a filas en el spritesheet
   const directionMap = {
@@ -128,11 +127,12 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
       spriteY,
       spriteWidth,
       spriteHeight,
-       x - 32,             // Posición X (centrado en 64px)
-  y - 32,             // Posición Y (centrado en 64px)
-  64,                 // Nuevo ancho de visualización
-  64                  // Nuevo alto de visualización
-);
+      x - 32,
+      y - 32,
+      64,
+      64
+    );
+
     // Dibujar nombre de usuario
     ctx.fillStyle = "#fff";
     ctx.font = "14px Arial";
@@ -198,7 +198,7 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
   useEffect(() => {
     const handleKeyDown = async (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault(); // Prevenir scroll de la página
+        e.preventDefault();
         keysPressed.current[e.key] = true;
         
         const user = users.find((u) => u.id === currentUser.id);
@@ -229,8 +229,8 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         }
 
         // Limitar movimiento dentro del canvas
-        x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
-        y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
+        x = Math.max(spriteWidth/2, Math.min(x, canvasRef.current.width - spriteWidth/2));
+        y = Math.max(spriteHeight/2, Math.min(y, canvasRef.current.height - spriteHeight/2));
 
         // Actualizar datos de animación
         if (animationData.current[currentUser.id]) {
@@ -267,11 +267,9 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
         const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
         
         if (noKeysPressed && animationData.current[currentUser.id]) {
-          // Cuando se sueltan todas las teclas, resetear a frame 0
           animationData.current[currentUser.id].moving = false;
           animationData.current[currentUser.id].frameIndex = 0;
           
-          // Actualizar estado para forzar re-render
           setUsers(prevUsers => 
             prevUsers.map(user => 
               user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
@@ -310,56 +308,75 @@ const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
     }
   };
 
+  // Ajustar tamaño del canvas cuando se redimensiona la ventana
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth - 400; // Restar espacio del chat
+        canvasRef.current.height = window.innerHeight - 100; // Restar espacio del header
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="common-room-modal">
-      <div className="common-room-content">
-        <div className="common-room-header">
-          <h2>Arena Deportiva Lupi</h2>
-          <button className="close-btn" onClick={onClose}>
-            X
-          </button>
+    <div className="common-room-fullscreen">
+      <div className="common-room-header">
+        <h2>🏟️ Arena Deportiva Lupi - Sala Común</h2>
+        <button className="close-btn" onClick={onClose}>
+          ✕ Salir
+        </button>
+      </div>
+
+      <div className="room-container">
+        <div className="canvas-container">
+          <canvas 
+            ref={canvasRef} 
+            width={window.innerWidth - 400} 
+            height={window.innerHeight - 100}
+          />
+          <div className="sport-elements">
+            <div className="sport-icon">⚽</div>
+            <div className="sport-icon">🏀</div>
+            <div className="sport-icon">🏈</div>
+          </div>
+          <div className="rpg-stats">
+            <div>Jugador: <span className="stat-value">{currentUser.username}</span></div>
+            <div>Nivel: <span className="stat-value">{currentUser.level || 1}</span></div>
+            <div>Deporte: <span className="stat-value">{currentUser.sport}</span></div>
+          </div>
+          <div className="controls-info">
+            <p>🕹️ Usa las flechas del teclado para moverte</p>
+          </div>
         </div>
 
-        <div className="room-container">
-          <div className="canvas-container">
-            <canvas 
-              ref={canvasRef} 
-              width={1200} 
-              height={800}
-              style={{ width: '100%', height: '100%' }}
+        <div className="chat-container">
+          <div className="chat-header">
+            <h3>💬 Chat Global</h3>
+            <span className="online-count">{users.length} jugadores online</span>
+          </div>
+          <div className="messages">
+            {messages.map((msg) => (
+              <div key={msg.id} className="message">
+                <span className="user-name">{msg.user_id}:</span>
+                <span className="message-content">{msg.content}</span>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={sendMessage} className="message-form">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Escribe un mensaje a la comunidad..."
             />
-            <div className="sport-elements">
-              <div className="sport-icon">⚽</div>
-              <div className="sport-icon">🏀</div>
-              <div className="sport-icon">🏈</div>
-            </div>
-            <div className="rpg-stats">
-              <div>Nivel: <span className="stat-value">15</span></div>
-              <div>EXP: <span className="stat-value">1200/2000</span></div>
-              <div>Oro: <span className="stat-value">5,430</span></div>
-            </div>
-          </div>
-
-          <div className="chat-container">
-            <div className="messages">
-              {messages.map((msg) => (
-                <div key={msg.id} className="message">
-                  <span className="user-name">{msg.user_id}:</span>
-                  <span className="message-content">{msg.content}</span>
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={sendMessage} className="message-form">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje..."
-              />
-              <button type="submit">Enviar</button>
-            </form>
-          </div>
+            <button type="submit">Enviar</button>
+          </form>
         </div>
       </div>
     </div>
