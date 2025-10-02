@@ -413,20 +413,10 @@ const handleBuyItem = async (listing) => {
               <span>Misiones</span>
             </button>
 
-          <button 
-        className="action-btn secondary" 
-        onClick={() => setShowLobby(true)}
-      >
-        <span className="nav-icon">🏠</span>
-        <span>LOBBY ONLINE</span>
-      </button>
-
-      {/* Lobby Online */}
-      <LobbyOnline 
-        isOpen={showLobby}
-        onClose={() => setShowLobby(false)}
-        user={user}
-      />
+          <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+  <span className="nav-icon">🏠</span>
+  <span>SALA COMUN</span>
+</button>
 
 <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
             <span className="nav-icon">➡️</span>
@@ -505,7 +495,7 @@ const handleBuyItem = async (listing) => {
     <div class="salacomun">
     <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
   <span className="nav-icon">🏠</span>
-  <span>INGRESAR A LA SALA DE EQUIPO</span>
+  <span>SALA COMUN</span>
 </button>
 </div>
   </section>
