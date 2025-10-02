@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {   } from '../../services/supabase';
+import { supabaseClient } from '../../services/supabase';
 import '../styles/CommonRoom.css';
 
 const CommonRoom = () => {
@@ -7,10 +7,11 @@ const CommonRoom = () => {
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
-  const [user] = useState(supabase.auth.getUser());
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const movementRef = useRef({ x: 0, y: 0 });
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     initializeGame();
@@ -18,131 +19,204 @@ const CommonRoom = () => {
   }, []);
 
   const initializeGame = async () => {
-    // 1. Crear o obtener jugador actual
-    await setupCurrentPlayer();
-    
-    // 2. Cargar jugadores existentes
-    await loadExistingPlayers();
-    
-    // 3. Suscribirse a cambios en tiempo real
-    setupRealtimeSubscription();
-    
-    // 4. Iniciar loop del juego
-    initGameLoop();
+    try {
+      // 1. Crear o obtener jugador actual
+      await setupCurrentPlayer();
+      
+      // 2. Cargar jugadores existentes
+      await loadExistingPlayers();
+      
+      // 3. Suscribirse a cambios en tiempo real
+      setupRealtimeSubscription();
+      
+      // 4. Cargar y suscribirse al chat
+      await loadChatMessages();
+      setupChatSubscription();
+      
+      // 5. Iniciar loop del juego
+      initGameLoop();
+    } catch (error) {
+      console.error('Error initializing game:', error);
+    }
   };
 
   const setupCurrentPlayer = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        createGuestPlayer();
+        return;
+      }
       
       if (!user) {
-        // Usuario anónimo para demo
-        const guestId = 'guest_' + Date.now();
-        const playerData = {
-          id: guestId,
-          username: `Jugador${Math.floor(Math.random() * 1000)}`,
-          x: 200,
-          y: 150,
-          sprite: 'player1',
-          direction: 'down',
-          user_id: guestId,
-          is_online: true
-        };
-        
-        setCurrentPlayer(playerData);
+        createGuestPlayer();
         return;
       }
 
-      // Buscar jugador existente
-      const { data: existingPlayer } = await supabaseClient
-        .from('players')
+      // Buscar jugador existente en room_users
+      const { data: existingPlayer, error: fetchError } = await supabaseClient
+        .from('room_users')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching player:', fetchError);
+        createGuestPlayer();
+        return;
+      }
+
       if (existingPlayer) {
         // Actualizar como online
-        await supabaseClient
-          .from('players')
+        const { error: updateError } = await supabaseClient
+          .from('room_users')
           .update({ 
             is_online: true,
             x: 200,
             y: 150,
-            last_updated: new Date()
+            last_activity: new Date().toISOString(),
+            last_heartbeat: new Date().toISOString()
           })
           .eq('id', existingPlayer.id);
         
-        setCurrentPlayer(existingPlayer);
+        if (updateError) {
+          console.error('Error updating player:', updateError);
+          createGuestPlayer();
+          return;
+        }
+        
+        setCurrentPlayer({ ...existingPlayer, is_online: true });
       } else {
-        // Crear nuevo jugador
+        // Crear nuevo jugador en room_users
+        const { data: playerProfile } = await supabaseClient
+          .from('players')
+          .select('username, sport, position')
+          .eq('id', user.id)
+          .single();
+
         const newPlayer = {
           user_id: user.id,
-          username: user.email?.split('@')[0] || `Jugador${Math.floor(Math.random() * 1000)}`,
+          name: playerProfile?.username || user.email?.split('@')[0] || `Jugador${Math.floor(Math.random() * 1000)}`,
+          sport: playerProfile?.sport || 'fútbol',
           x: 200,
           y: 150,
-          sprite: 'player1',
-          direction: 'down',
-          is_online: true
+          color: getRandomColor(),
+          is_online: true,
+          last_activity: new Date().toISOString(),
+          last_heartbeat: new Date().toISOString()
         };
 
-        const { data: createdPlayer } = await supabaseClient
-          .from('players')
+        const { data: createdPlayer, error: insertError } = await supabaseClient
+          .from('room_users')
           .insert([newPlayer])
           .select()
           .single();
+
+        if (insertError) {
+          console.error('Error creating player:', insertError);
+          createGuestPlayer();
+          return;
+        }
 
         setCurrentPlayer(createdPlayer);
       }
     } catch (error) {
       console.error('Error setting up player:', error);
+      createGuestPlayer();
     }
   };
 
-  const loadExistingPlayers = async () => {
-    const { data: onlinePlayers } = await supabaseClient
-      .from('players')
-      .select('*')
-      .eq('is_online', true)
-      .eq('room_id', 'common-room');
+  const getRandomColor = () => {
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98FB98', '#FFD700'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
 
-    if (onlinePlayers) {
-      setPlayers(onlinePlayers);
+  const createGuestPlayer = () => {
+    const guestId = 'guest_' + Date.now();
+    const playerData = {
+      id: guestId,
+      user_id: guestId,
+      name: `Invitado${Math.floor(Math.random() * 1000)}`,
+      x: 200,
+      y: 150,
+      color: getRandomColor(),
+      sport: 'fútbol',
+      is_online: true,
+      last_activity: new Date().toISOString()
+    };
+    
+    setCurrentPlayer(playerData);
+  };
+
+  const loadExistingPlayers = async () => {
+    try {
+      const { data: onlinePlayers, error } = await supabaseClient
+        .from('room_users')
+        .select('*')
+        .eq('is_online', true);
+
+      if (error) {
+        console.error('Error loading players:', error);
+        return;
+      }
+
+      if (onlinePlayers) {
+        setPlayers(onlinePlayers);
+      }
+    } catch (error) {
+      console.error('Error in loadExistingPlayers:', error);
     }
   };
 
   const setupRealtimeSubscription = () => {
-    // Suscribirse a cambios en la tabla de jugadores
-    const subscription = supabaseClient
-      .channel('room-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'players',
-          filter: 'room_id=eq.common-room'
-        },
-        (payload) => {
-          handlePlayerUpdate(payload);
-        }
-      )
-      .subscribe();
+    try {
+      const subscription = supabaseClient
+        .channel('room-users-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'room_users'
+          },
+          (payload) => {
+            handlePlayerUpdate(payload);
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Connected to room_users realtime');
+          }
+        });
 
-    return subscription;
+      return subscription;
+    } catch (error) {
+      console.error('Error setting up realtime subscription:', error);
+    }
   };
 
   const handlePlayerUpdate = (payload) => {
     switch (payload.eventType) {
       case 'INSERT':
-        setPlayers(prev => [...prev, payload.new]);
+        if (payload.new.is_online) {
+          setPlayers(prev => [...prev.filter(p => p.id !== payload.new.id), payload.new]);
+        }
         break;
       
       case 'UPDATE':
-        setPlayers(prev => 
-          prev.map(player => 
-            player.id === payload.new.id ? payload.new : player
-          )
-        );
+        if (payload.new.is_online) {
+          setPlayers(prev => 
+            prev.map(player => 
+              player.id === payload.new.id ? { ...player, ...payload.new } : player
+            )
+          );
+        } else {
+          setPlayers(prev => 
+            prev.filter(player => player.id !== payload.new.id)
+          );
+        }
         break;
       
       case 'DELETE':
@@ -150,14 +224,21 @@ const CommonRoom = () => {
           prev.filter(player => player.id !== payload.old.id)
         );
         break;
+      
+      default:
+        break;
     }
   };
 
   const initGameLoop = () => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
     
     const gameLoop = () => {
+      if (!ctx) return;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawMap(ctx);
       
@@ -188,21 +269,31 @@ const CommonRoom = () => {
       ...currentPlayer,
       x: clampedX,
       y: clampedY,
-      last_updated: new Date()
+      last_activity: new Date().toISOString(),
+      last_heartbeat: new Date().toISOString()
     };
 
     setCurrentPlayer(updatedPlayer);
 
-    // Actualizar en Supabase
+    // Actualizar en Supabase solo si no es guest
     if (currentPlayer.id && !currentPlayer.id.startsWith('guest_')) {
-      await supabaseClient
-        .from('players')
-        .update({
-          x: clampedX,
-          y: clampedY,
-          last_updated: new Date()
-        })
-        .eq('id', currentPlayer.id);
+      try {
+        const { error } = await supabaseClient
+          .from('room_users')
+          .update({
+            x: clampedX,
+            y: clampedY,
+            last_activity: new Date().toISOString(),
+            last_heartbeat: new Date().toISOString()
+          })
+          .eq('id', currentPlayer.id);
+
+        if (error) {
+          console.error('Error updating position:', error);
+        }
+      } catch (error) {
+        console.error('Error in updatePlayerPosition:', error);
+      }
     }
   };
 
@@ -228,7 +319,7 @@ const CommonRoom = () => {
       if (movementRef.current.x !== 0 || movementRef.current.y !== 0) {
         movePlayer(movementRef.current.x, movementRef.current.y);
       }
-    }, 50); // Actualizar cada 50ms para movimiento suave
+    }, 50);
 
     return () => clearInterval(movementInterval);
   }, [currentPlayer]);
@@ -236,10 +327,17 @@ const CommonRoom = () => {
   const cleanupGame = async () => {
     // Marcar jugador como offline al salir
     if (currentPlayer && currentPlayer.id && !currentPlayer.id.startsWith('guest_')) {
-      await supabaseClient
-        .from('players')
-        .update({ is_online: false })
-        .eq('id', currentPlayer.id);
+      try {
+        await supabaseClient
+          .from('room_users')
+          .update({ 
+            is_online: false,
+            last_activity: new Date().toISOString()
+          })
+          .eq('id', currentPlayer.id);
+      } catch (error) {
+        console.error('Error cleaning up player:', error);
+      }
     }
 
     if (animationRef.current) {
@@ -247,66 +345,109 @@ const CommonRoom = () => {
     }
   };
 
-  // Sistema de Chat con Supabase
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-
-  useEffect(() => {
-    loadChatMessages();
-    setupChatSubscription();
-  }, []);
-
+  // Sistema de Chat usando room_messages
   const loadChatMessages = async () => {
-    const { data: chatMessages } = await supabaseClient
-      .from('chat_messages')
-      .select('*')
-      .eq('room_id', 'common-room')
-      .order('created_at', { ascending: true })
-      .limit(50);
+    try {
+      const { data: chatMessages, error } = await supabaseClient
+        .from('room_messages')
+        .select(`
+          *,
+          user:user_id (
+            id,
+            email
+          )
+        `)
+        .order('created_at', { ascending: true })
+        .limit(50);
 
-    if (chatMessages) setMessages(chatMessages);
+      if (error) {
+        console.error('Error loading chat messages:', error);
+        return;
+      }
+
+      if (chatMessages) {
+        // Formatear mensajes para mostrar
+        const formattedMessages = chatMessages.map(msg => ({
+          id: msg.id,
+          username: msg.user?.email?.split('@')[0] || 'Usuario',
+          message: msg.content,
+          created_at: msg.created_at
+        }));
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error('Error in loadChatMessages:', error);
+    }
   };
 
   const setupChatSubscription = () => {
-    supabaseClient
-      .channel('chat-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: 'room_id=eq.common-room'
-        },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
+    try {
+      supabaseClient
+        .channel('room-messages-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'room_messages'
+          },
+          async (payload) => {
+            // Obtener información del usuario para el nuevo mensaje
+            const { data: userData } = await supabaseClient
+              .from('auth.users')
+              .select('email')
+              .eq('id', payload.new.user_id)
+              .single();
+
+            const newMessage = {
+              id: payload.new.id,
+              username: userData?.email?.split('@')[0] || 'Usuario',
+              message: payload.new.content,
+              created_at: payload.new.created_at
+            };
+
+            setMessages(prev => [...prev, newMessage]);
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Connected to room_messages realtime');
+          }
+        });
+    } catch (error) {
+      console.error('Error setting up chat subscription:', error);
+    }
   };
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentPlayer) return;
 
-    await supabaseClient
-      .from('chat_messages')
-      .insert([{
-        room_id: 'common-room',
-        username: currentPlayer.username,
-        message: newMessage,
-        user_id: currentPlayer.user_id
-      }]);
+    try {
+      const { error } = await supabaseClient
+        .from('room_messages')
+        .insert([{
+          user_id: currentPlayer.user_id.startsWith('guest_') ? null : currentPlayer.user_id,
+          content: newMessage
+        }]);
 
-    setNewMessage('');
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+    }
   };
 
-  // Renderizado del chat actualizado
+  // Renderizado del chat
   const renderChat = () => (
     <div className="menu-content">
       <h3>Chat Global</h3>
       <div className="chat-messages">
         {messages.map((msg, index) => (
-          <div key={index} className="message">
+          <div key={msg.id || index} className="message">
             <strong>{msg.username}:</strong> {msg.message}
           </div>
         ))}
@@ -324,29 +465,158 @@ const CommonRoom = () => {
     </div>
   );
 
-  // Resto del componente se mantiene igual...
+  // Funciones de dibujo
   const drawMap = (ctx) => {
+    // Fondo del mapa
     ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, 800, 600);
+    
+    // Suelo
     ctx.fillStyle = '#7CFC00';
     ctx.fillRect(0, 400, 800, 200);
+    
+    // Caminos
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(200, 0, 100, 600);
     ctx.fillRect(0, 250, 800, 100);
+    
+    // Edificios o áreas especiales
+    ctx.fillStyle = '#A52A2A';
+    ctx.fillRect(50, 50, 100, 80); // Casa izquierda
+    ctx.fillRect(650, 50, 100, 80); // Casa derecha
+    ctx.fillRect(350, 500, 100, 80); // Edificio central
   };
 
   const drawPlayer = (ctx, player) => {
-    ctx.fillStyle = getPlayerColor(player.id);
+    // Cuerpo del jugador
+    ctx.fillStyle = player.color || '#FF6B6B';
     ctx.fillRect(player.x - 10, player.y - 20, 20, 40);
+    
+    // Cabeza
     ctx.fillStyle = '#FFB6C1';
     ctx.fillRect(player.x - 8, player.y - 25, 16, 16);
+    
+    // Nombre del jugador
+    ctx.fillStyle = '#000';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(player.name, player.x, player.y - 35);
+    
+    // Indicador deporte
+    const sportEmoji = getSportEmoji(player.sport);
+    ctx.font = '16px Arial';
+    ctx.fillText(sportEmoji, player.x, player.y + 30);
+  };
+
+  const getSportEmoji = (sport) => {
+    const emojis = {
+      'fútbol': '⚽',
+      'baloncesto': '🏀',
+      'tenis': '🎾',
+      'natación': '🏊',
+      'atletismo': '🏃'
+    };
+    return emojis[sport] || '🎯';
   };
 
   const getPlayerColor = (playerId) => {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
-    const index = playerId.split('_').reduce((acc, val) => acc + val.charCodeAt(0), 0) % colors.length;
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98FB98'];
+    const index = String(playerId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
     return colors[index];
   };
+
+  // Renderizar otras pestañas del menú
+  const renderOnlineUsers = () => (
+    <div className="menu-content">
+      <h3>Usuarios Online: {players.length}</h3>
+      <div className="users-list">
+        {players.map(player => (
+          <div key={player.id} className="user-item">
+            <span 
+              className="user-dot" 
+              style={{backgroundColor: player.color || getPlayerColor(player.id)}}
+            ></span>
+            <div className="user-info">
+              <div className="user-name">{player.name}</div>
+              <div className="user-sport">{getSportEmoji(player.sport)} {player.sport}</div>
+            </div>
+            {player.id === currentPlayer?.id && <span className="you-badge">(Tú)</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderClubMissions = () => (
+    <div className="menu-content">
+      <h3>Misiones del Club</h3>
+      <div className="missions-list">
+        <div className="mission active">
+          <span className="mission-icon">🎯</span>
+          <div className="mission-info">
+            <div className="mission-name">Reunir 10 miembros</div>
+            <div className="mission-progress">Progreso: 5/10</div>
+          </div>
+        </div>
+        <div className="mission">
+          <span className="mission-icon">⚔️</span>
+          <div className="mission-info">
+            <div className="mission-name">Derrotar al jefe del área</div>
+            <div className="mission-progress">Progreso: 0/1</div>
+          </div>
+        </div>
+        <div className="mission">
+          <span className="mission-icon">📚</span>
+          <div className="mission-info">
+            <div className="mission-name">Completar tutorial</div>
+            <div className="mission-progress">Progreso: 3/5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderClubFeed = () => (
+    <div className="menu-content">
+      <h3>Feed del Club</h3>
+      <div className="feed-items">
+        <div className="feed-item">
+          <span className="feed-icon">🎉</span>
+          <div className="feed-content">Nuevo evento comenzado!</div>
+        </div>
+        <div className="feed-item">
+          <span className="feed-icon">🏆</span>
+          <div className="feed-content">Juan completó una misión difícil</div>
+        </div>
+        <div className="feed-item">
+          <span className="feed-icon">🆕</span>
+          <div className="feed-content">María se unió al club</div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderActiveEvents = () => (
+    <div className="menu-content">
+      <h3>Eventos Activos</h3>
+      <div className="events-list">
+        <div className="event active">
+          <span className="event-icon">🏅</span>
+          <div className="event-info">
+            <div className="event-name">Torneo Semanal</div>
+            <div className="event-time">3 días restantes</div>
+          </div>
+        </div>
+        <div className="event">
+          <span className="event-icon">🎁</span>
+          <div className="event-info">
+            <div className="event-name">Evento de Bienvenida</div>
+            <div className="event-time">Nuevos jugadores</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="common-room">
@@ -405,7 +675,7 @@ const CommonRoom = () => {
         </button>
       </div>
 
-      {/* Menú lateral (se mantiene igual) */}
+      {/* Menú lateral */}
       <div className={`game-menu ${menuOpen ? 'open' : ''}`}>
         <div className="menu-tabs">
           <button onClick={() => setActiveTab('chat')} className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}>
@@ -427,21 +697,10 @@ const CommonRoom = () => {
 
         <div className="menu-panel">
           {activeTab === 'chat' && renderChat()}
-          {activeTab === 'users' && (
-            <div className="menu-content">
-              <h3>Usuarios Online: {players.length}</h3>
-              <div className="users-list">
-                {players.map(player => (
-                  <div key={player.id} className="user-item">
-                    <span className="user-dot" style={{backgroundColor: getPlayerColor(player.id)}}></span>
-                    {player.username}
-                    {player.id === currentPlayer?.id && ' (Tú)'}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Resto de pestañas... */}
+          {activeTab === 'users' && renderOnlineUsers()}
+          {activeTab === 'missions' && renderClubMissions()}
+          {activeTab === 'feed' && renderClubFeed()}
+          {activeTab === 'events' && renderActiveEvents()}
         </div>
       </div>
     </div>
