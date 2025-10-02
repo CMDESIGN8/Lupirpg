@@ -1,365 +1,258 @@
-import React, { useState, useEffect, useRef } from "react";
-import "../styles/CommonRoom.css";
+import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
+import './CommonRoom.css';
 
-// Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
-import playerSprite from "../assets/player.png";
-import mapBackground from "../assets/map.png";
-
-const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
-  const [users, setUsers] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+const CommonRoom = () => {
+  const [players, setPlayers] = useState([]);
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat');
+  const socketRef = useRef(null);
   const canvasRef = useRef(null);
-  const requestRef = useRef();
-  const channelRef = useRef(null);
-  const lastUpdateRef = useRef(0);
-  const keysPressed = useRef({});
-  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
+  const animationRef = useRef(null);
 
-  const spriteWidth = 32;
-  const spriteHeight = 48;
-  const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
-
-  // Mapeo de direcciones a filas en el spritesheet
-  const directionMap = {
-    down: 0,
-    left: 1,
-    right: 2,
-    up: 3
-  };
-
-  // ========================
-  // 🔥 Supabase Presence
-  // ========================
   useEffect(() => {
-    const channel = supabaseClient.channel("lupi_common_room", {
-      config: { presence: { key: currentUser.id } },
+    // Conectar al servidor Socket.io
+    socketRef.current = io('http://localhost:3001');
+    
+    // Obtener ID del jugador actual (en una app real, esto vendría del auth)
+    const playerId = 'player_' + Date.now();
+    const playerData = {
+      id: playerId,
+      name: `Jugador${Math.floor(Math.random() * 1000)}`,
+      x: 200,
+      y: 150,
+      sprite: 'player1', // Para diferentes sprites
+      direction: 'down'
+    };
+
+    setCurrentPlayer(playerData);
+
+    // Unirse a la sala
+    socketRef.current.emit('join-room', playerData);
+
+    // Escuchar actualizaciones de otros jugadores
+    socketRef.current.on('players-update', (playersList) => {
+      setPlayers(playersList);
     });
-    channelRef.current = channel;
 
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        const allUsers = Object.values(state).map((u) => u[0]);
-        
-        // Inicializar datos de animación para cada usuario
-        allUsers.forEach(user => {
-          if (!animationData.current[user.id]) {
-            animationData.current[user.id] = {
-              frameIndex: 0,
-              lastUpdate: Date.now(),
-              moving: false
-            };
-          }
-        });
-        
-        setUsers(allUsers);
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          const x = Math.round(Math.random() * 700 + 50);
-          const y = Math.round(Math.random() * 400 + 50);
-
-          // Inicializar datos de animación para el usuario actual
-          animationData.current[currentUser.id] = {
-            frameIndex: 0,
-            lastUpdate: Date.now(),
-            moving: false
-          };
-
-          await channel.track({
-            id: currentUser.id,
-            name: currentUser.username || "Usuario",
-            x,
-            y,
-            direction: "down",
-            frameIndex: 0,
-            lastFrameUpdate: Date.now()
-          });
-        }
-      });
-
-    // 📩 Mensajes
-    const messageChannel = supabaseClient
-      .channel("room_messages")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "room_messages" },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
+    // Inicializar el juego
+    initGame();
 
     return () => {
-      channel.unsubscribe();
-      messageChannel.unsubscribe();
-      cancelAnimationFrame(requestRef.current);
+      socketRef.current.disconnect();
+      cancelAnimationFrame(animationRef.current);
     };
-  }, [supabaseClient, currentUser]);
-
-  // ========================
-  // 🎮 Render Canvas
-  // ========================
-  const spriteImage = useRef(new Image());
-  const mapImage = useRef(new Image());
-
-  useEffect(() => {
-    spriteImage.current.src = playerSprite;
-    mapImage.current.src = mapBackground;
   }, []);
 
-  const drawAvatar = (ctx, user) => {
-    const { x, y, name, direction = "down", id } = user;
-    
-    // Obtener datos de animación desde la referencia
-    const animData = animationData.current[id] || { frameIndex: 0 };
-    const frameIndex = animData.frameIndex || 0;
-    
-    // Calcular la posición en el spritesheet
-    const spriteX = frameIndex * spriteWidth;
-    const spriteY = directionMap[direction] * spriteHeight;
-
-    // Dibujar el frame correcto del spritesheet
-    ctx.drawImage(
-      spriteImage.current,
-      spriteX,
-      spriteY,
-      spriteWidth,
-      spriteHeight,
-       x - 32,             // Posición X (centrado en 64px)
-  y - 32,             // Posición Y (centrado en 64px)
-  64,                 // Nuevo ancho de visualización
-  64                  // Nuevo alto de visualización
-);
-    // Dibujar nombre de usuario
-    ctx.fillStyle = "#fff";
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(name, x, y - spriteHeight/2 - 10);
-  };
-
-  const drawRoom = (ctx) => {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Fondo con mapa
-    if (mapImage.current.complete) {
-      ctx.drawImage(mapImage.current, 0, 0, width, height);
-    } else {
-      ctx.fillStyle = "#222";
-      ctx.fillRect(0, 0, width, height);
-    }
-
-    // Dibujar usuarios
-    users.forEach((user) => drawAvatar(ctx, user));
-  };
-
-  const animate = () => {
+  const initGame = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     
-    const ctx = canvas.getContext("2d");
-    const now = Date.now();
-    
-    // Actualizar animaciones para todos los usuarios
-    users.forEach(user => {
-      const animData = animationData.current[user.id];
-      if (animData && animData.moving && now - animData.lastUpdate > animationSpeed) {
-        animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
-        animData.lastUpdate = now;
-        
-        // Solo actualizar estado para el usuario actual (para enviar a Supabase)
-        if (user.id === currentUser.id) {
-          setUsers(prevUsers => 
-            prevUsers.map(u => 
-              u.id === currentUser.id ? { ...u, frameIndex: animData.frameIndex } : u
-            )
-          );
-        }
+    const gameLoop = () => {
+      // Limpiar canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Dibujar mapa de fondo (pixel art)
+      drawMap(ctx);
+      
+      // Dibujar todos los jugadores
+      players.forEach(player => {
+        drawPlayer(ctx, player);
+      });
+      
+      // Dibujar jugador actual
+      if (currentPlayer) {
+        drawPlayer(ctx, currentPlayer);
       }
-    });
+      
+      animationRef.current = requestAnimationFrame(gameLoop);
+    };
     
-    drawRoom(ctx);
-    requestRef.current = requestAnimationFrame(animate);
+    gameLoop();
   };
 
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [users]);
-
-  // ========================
-  // 🕹️ Movimiento
-  // ========================
-  useEffect(() => {
-    const handleKeyDown = async (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault(); // Prevenir scroll de la página
-        keysPressed.current[e.key] = true;
-        
-        const user = users.find((u) => u.id === currentUser.id);
-        if (!user) return;
-
-        let { x, y } = user;
-        let direction = user.direction;
-
-        switch (e.key) {
-          case "ArrowUp":
-            y -= 4;
-            direction = "up";
-            break;
-          case "ArrowDown":
-            y += 4;
-            direction = "down";
-            break;
-          case "ArrowLeft":
-            x -= 4;
-            direction = "left";
-            break;
-          case "ArrowRight":
-            x += 4;
-            direction = "right";
-            break;
-          default:
-            return;
-        }
-
-        // Limitar movimiento dentro del canvas
-        x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
-        y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
-
-        // Actualizar datos de animación
-        if (animationData.current[currentUser.id]) {
-          animationData.current[currentUser.id].moving = true;
-          animationData.current[currentUser.id].direction = direction;
-        }
-
-        // Actualizar usuario
-        const updatedUser = {
-          ...user,
-          x,
-          y,
-          direction,
-          lastFrameUpdate: Date.now()
-        };
-
-        // Estado local
-        setUsers((prev) =>
-          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-        );
-
-        // Estado remoto
-        if (channelRef.current) {
-          await channelRef.current.track(updatedUser);
-        }
-      }
-    };
-
-    const handleKeyUp = (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        keysPressed.current[e.key] = false;
-        
-        // Verificar si todas las teclas de dirección están liberadas
-        const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
-        
-        if (noKeysPressed && animationData.current[currentUser.id]) {
-          // Cuando se sueltan todas las teclas, resetear a frame 0
-          animationData.current[currentUser.id].moving = false;
-          animationData.current[currentUser.id].frameIndex = 0;
-          
-          // Actualizar estado para forzar re-render
-          setUsers(prevUsers => 
-            prevUsers.map(user => 
-              user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
-            )
-          );
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+  const drawMap = (ctx) => {
+    // Fondo simple - en un juego real sería un tilemap
+    ctx.fillStyle = '#87CEEB'; // Cielo azul
+    ctx.fillRect(0, 0, 800, 600);
     
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [users, currentUser]);
+    ctx.fillStyle = '#7CFC00'; // Pasto verde
+    ctx.fillRect(0, 400, 800, 200);
+    
+    // Dibujar caminos y elementos del mapa
+    ctx.fillStyle = '#8B4513'; // Camino marrón
+    ctx.fillRect(200, 0, 100, 600);
+    ctx.fillRect(0, 250, 800, 100);
+  };
 
-  // ========================
-  // 💬 Chat
-  // ========================
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  const drawPlayer = (ctx, player) => {
+    // Sprite simple - en un juego real cargarías imágenes
+    ctx.fillStyle = getPlayerColor(player.id);
+    ctx.fillRect(player.x - 10, player.y - 20, 20, 40); // Cuerpo
+    
+    // Cabeza
+    ctx.fillStyle = '#FFB6C1';
+    ctx.fillRect(player.x - 8, player.y - 25, 16, 16);
+  };
 
-    try {
-      const { error } = await supabaseClient.from("room_messages").insert({
-        user_id: currentUser.id,
-        content: newMessage.trim(),
-      });
+  const getPlayerColor = (playerId) => {
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    const index = playerId.split('_')[1] % colors.length;
+    return colors[index];
+  };
 
-      if (error) console.error("Error sending message:", error);
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
+  const movePlayer = (dx, dy) => {
+    if (!currentPlayer) return;
+
+    const newX = currentPlayer.x + dx;
+    const newY = currentPlayer.y + dy;
+
+    // Limitar movimiento dentro del mapa
+    if (newX >= 20 && newX <= 780 && newY >= 20 && newY <= 580) {
+      const updatedPlayer = {
+        ...currentPlayer,
+        x: newX,
+        y: newY
+      };
+      
+      setCurrentPlayer(updatedPlayer);
+      socketRef.current.emit('player-move', updatedPlayer);
     }
   };
+
+  // Renderizar componentes del menú
+  const renderChat = () => (
+    <div className="menu-content">
+      <h3>Chat Global</h3>
+      <div className="chat-messages">
+        <div className="message">Bienvenido a la sala común!</div>
+      </div>
+      <div className="chat-input">
+        <input type="text" placeholder="Escribe un mensaje..." />
+        <button>Enviar</button>
+      </div>
+    </div>
+  );
+
+  const renderOnlineUsers = () => (
+    <div className="menu-content">
+      <h3>Usuarios Online: {players.length}</h3>
+      <div className="users-list">
+        {players.map(player => (
+          <div key={player.id} className="user-item">
+            <span className="user-dot" style={{backgroundColor: getPlayerColor(player.id)}}></span>
+            {player.name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderClubMissions = () => (
+    <div className="menu-content">
+      <h3>Misiones del Club</h3>
+      <div className="missions-list">
+        <div className="mission active">🎯 Reunir 10 miembros</div>
+        <div className="mission">⚔️ Derrotar al jefe del área</div>
+        <div className="mission">📚 Completar tutorial</div>
+      </div>
+    </div>
+  );
+
+  const renderClubFeed = () => (
+    <div className="menu-content">
+      <h3>Feed del Club</h3>
+      <div className="feed-items">
+        <div className="feed-item">🎉 Nuevo evento comenzado!</div>
+        <div className="feed-item">🏆 Juan completó una misión</div>
+        <div className="feed-item">🆕 María se unió al club</div>
+      </div>
+    </div>
+  );
+
+  const renderActiveEvents = () => (
+    <div className="menu-content">
+      <h3>Eventos Activos</h3>
+      <div className="events-list">
+        <div className="event active">🏅 Torneo Semanal (3 días restantes)</div>
+        <div className="event">🎁 Evento de Bienvenida</div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="common-room-modal">
-      <div className="common-room-content">
-        <div className="common-room-header">
-          <h2>Arena Deportiva Lupi</h2>
-          <button className="close-btn" onClick={onClose}>
-            X
+    <div className="common-room">
+      {/* Área del juego */}
+      <div className="game-area">
+        <canvas 
+          ref={canvasRef}
+          width={800}
+          height={600}
+          className="game-canvas"
+        />
+        
+        {/* Joystick estilo Nintendo 3DS */}
+        <div className="joystick-container">
+          <div className="joystick">
+            <button className="joy-btn up" onClick={() => movePlayer(0, -10)}>↑</button>
+            <button className="joy-btn down" onClick={() => movePlayer(0, 10)}>↓</button>
+            <button className="joy-btn left" onClick={() => movePlayer(-10, 0)}>←</button>
+            <button className="joy-btn right" onClick={() => movePlayer(10, 0)}>→</button>
+            <div className="joy-center"></div>
+          </div>
+        </div>
+
+        {/* Botón del menú */}
+        <button 
+          className="menu-toggle"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? '▶' : '◀'}
+        </button>
+      </div>
+
+      {/* Menú lateral */}
+      <div className={`game-menu ${menuOpen ? 'open' : ''}`}>
+        <div className="menu-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
+            onClick={() => setActiveTab('chat')}
+          >
+            💬 Chat
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            👥 Online
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'missions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('missions')}
+          >
+            🎯 Misiones
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'feed' ? 'active' : ''}`}
+            onClick={() => setActiveTab('feed')}
+          >
+            📰 Feed
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'events' ? 'active' : ''}`}
+            onClick={() => setActiveTab('events')}
+          >
+            🎪 Eventos
           </button>
         </div>
 
-        <div className="room-container">
-          <div className="canvas-container">
-            <canvas 
-              ref={canvasRef} 
-              width={1200} 
-              height={800}
-              style={{ width: '100%', height: '100%' }}
-            />
-            <div className="sport-elements">
-              <div className="sport-icon">⚽</div>
-              <div className="sport-icon">🏀</div>
-              <div className="sport-icon">🏈</div>
-            </div>
-            <div className="rpg-stats">
-              <div>Nivel: <span className="stat-value">15</span></div>
-              <div>EXP: <span className="stat-value">1200/2000</span></div>
-              <div>Oro: <span className="stat-value">5,430</span></div>
-            </div>
-          </div>
-
-          <div className="chat-container">
-            <div className="messages">
-              {messages.map((msg) => (
-                <div key={msg.id} className="message">
-                  <span className="user-name">{msg.user_id}:</span>
-                  <span className="message-content">{msg.content}</span>
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={sendMessage} className="message-form">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje..."
-              />
-              <button type="submit">Enviar</button>
-            </form>
-          </div>
+        <div className="menu-panel">
+          {activeTab === 'chat' && renderChat()}
+          {activeTab === 'users' && renderOnlineUsers()}
+          {activeTab === 'missions' && renderClubMissions()}
+          {activeTab === 'feed' && renderClubFeed()}
+          {activeTab === 'events' && renderActiveEvents()}
         </div>
       </div>
     </div>
