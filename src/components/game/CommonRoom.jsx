@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 // ❗️ Cambia la ruta a tu nuevo archivo CSS
-import "../styles/CommonRoom3DS.css"; 
+import "../styles/CommonRoom.css"; 
 
 // Spritesheet y mapa (sin cambios)
 import playerSprite from "../assets/player.png";
