@@ -1,366 +1,156 @@
-import React, { useState, useEffect, useRef } from "react";
-import "../styles/CommonRoom.css";
-
-// Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
-import playerSprite from "../assets/player.png";
-import mapBackground from "../assets/map.png";
+// src/components/game/CommonRoom.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import '../styles/CommonRoom.css'; // Crearemos este archivo de estilos a continuación
 
 const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
-  const [users, setUsers] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const canvasRef = useRef(null);
-  const requestRef = useRef();
-  const channelRef = useRef(null);
-  const lastUpdateRef = useRef(0);
-  const keysPressed = useRef({});
-  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
+  // Estado para manejar la lista de jugadores en la sala
+  const [players, setPlayers] = useState({});
+  // Ref para la posición del jugador actual, para evitar re-renders en cada movimiento
+  const playerPositionRef = useRef({ x: 0, y: 0 });
 
-  const spriteWidth = 32;
-  const spriteHeight = 48;
-  const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
-
-  // Mapeo de direcciones a filas en el spritesheet
-  const directionMap = {
-    down: 0,
-    left: 1,
-    right: 2,
-    up: 3
-  };
-
-  // ========================
-  // 🔥 Supabase Presence
-  // ========================
+  // ✨ Efecto principal para unirse, escuchar cambios y salir de la sala
   useEffect(() => {
-    const channel = supabaseClient.channel("lupi_common_room", {
-      config: { presence: { key: currentUser.id } },
-    });
-    channelRef.current = channel;
+    // Si no hay usuario, no hacemos nada.
+    if (!currentUser) return;
 
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        const allUsers = Object.values(state).map((u) => u[0]);
-        
-        // Inicializar datos de animación para cada usuario
-        allUsers.forEach(user => {
-          if (!animationData.current[user.id]) {
-            animationData.current[user.id] = {
-              frameIndex: 0,
-              lastUpdate: Date.now(),
-              moving: false
-            };
-          }
-        });
-        
-        setUsers(allUsers);
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          const x = Math.round(Math.random() * 700 + 50);
-          const y = Math.round(Math.random() * 400 + 50);
+    let channel;
 
-          // Inicializar datos de animación para el usuario actual
-          animationData.current[currentUser.id] = {
-            frameIndex: 0,
-            lastUpdate: Date.now(),
-            moving: false
+    const setupRoom = async () => {
+      // 1. Obtener el avatar equipado del usuario actual
+      const { data: avatarData, error } = await supabaseClient
+        .from('player_avatars')
+        .select('avatars(image_url)')
+        .eq('player_id', currentUser.id)
+        .eq('is_equipped', true)
+        .single();
+      
+      if (error) console.error("Error fetching equipped avatar:", error);
+      const avatarUrl = avatarData?.avatars?.image_url || '/default-avatar.png';
+
+      // 2. Crear un canal de Supabase Realtime con Presence
+      channel = supabaseClient.channel(`sala-comun:${currentUser.id}`, {
+        config: {
+          presence: { key: currentUser.id },
+        },
+      });
+
+      // 3. Escuchar cambios de presencia (quién entra y sale)
+      channel.on('presence', { event: 'sync' }, () => {
+        const presenceState = channel.presenceState();
+        setPlayers(presenceState);
+      });
+      
+      // 4. Escuchar cambios en la base de datos (actualizaciones de posición)
+      channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_users' },
+        (payload) => {
+          setPlayers((prev) => ({
+            ...prev,
+            [payload.new.user_id]: [{
+              ...prev[payload.new.user_id]?.[0], // Mantiene datos de presence
+              x: payload.new.x,
+              y: payload.new.y,
+              direction: payload.new.direction,
+            }],
+          }));
+        }
+      );
+
+      // 5. Suscribirse al canal
+      channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Posición inicial aleatoria
+          const initialX = Math.floor(Math.random() * 20);
+          const initialY = Math.floor(Math.random() * 15);
+          playerPositionRef.current = { x: initialX, y: initialY };
+
+          // Datos a compartir con los demás
+          const presenceTrackStatus = {
+            user_id: currentUser.id,
+            username: currentUser.username,
+            avatar_url: avatarUrl,
+            x: initialX,
+            y: initialY,
+            direction: 'down',
           };
 
-          await channel.track({
-            id: currentUser.id,
-            name: currentUser.username || "Usuario",
-            x,
-            y,
-            direction: "down",
-            frameIndex: 0,
-            lastFrameUpdate: Date.now()
-          });
+          // Actualizar la tabla y rastrear la presencia
+          await supabaseClient.from('room_users').upsert({ user_id: currentUser.id, ...presenceTrackStatus }, { onConflict: 'user_id' });
+          await channel.track(presenceTrackStatus);
         }
       });
+    };
 
-    // 📩 Mensajes
-    const messageChannel = supabaseClient
-      .channel("room_messages")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "room_messages" },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
+    setupRoom();
 
+    // 6. Función de limpieza al desmontar (cuando el usuario cierra el modal)
     return () => {
-      channel.unsubscribe();
-      messageChannel.unsubscribe();
-      cancelAnimationFrame(requestRef.current);
-    };
-  }, [supabaseClient, currentUser]);
-
-  // ========================
-  // 🎮 Render Canvas
-  // ========================
-  const spriteImage = useRef(new Image());
-  const mapImage = useRef(new Image());
-
-  useEffect(() => {
-    spriteImage.current.src = playerSprite;
-    mapImage.current.src = mapBackground;
-  }, []);
-
-  const drawAvatar = (ctx, user) => {
-    const { x, y, name, direction = "down", id } = user;
-    
-    // Obtener datos de animación desde la referencia
-    const animData = animationData.current[id] || { frameIndex: 0 };
-    const frameIndex = animData.frameIndex || 0;
-    
-    // Calcular la posición en el spritesheet
-    const spriteX = frameIndex * spriteWidth;
-    const spriteY = directionMap[direction] * spriteHeight;
-
-    // Dibujar el frame correcto del spritesheet
-    ctx.drawImage(
-      spriteImage.current,
-      spriteX,
-      spriteY,
-      spriteWidth,
-      spriteHeight,
-       x - 32,             // Posición X (centrado en 64px)
-  y - 32,             // Posición Y (centrado en 64px)
-  64,                 // Nuevo ancho de visualización
-  64                  // Nuevo alto de visualización
-);
-    // Dibujar nombre de usuario
-    ctx.fillStyle = "#fff";
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(name, x, y - spriteHeight/2 - 10);
-  };
-
-  const drawRoom = (ctx) => {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Fondo con mapa
-    if (mapImage.current.complete) {
-      ctx.drawImage(mapImage.current, 0, 0, width, height);
-    } else {
-      ctx.fillStyle = "#222";
-      ctx.fillRect(0, 0, width, height);
-    }
-
-    // Dibujar usuarios
-    users.forEach((user) => drawAvatar(ctx, user));
-  };
-
-  const animate = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext("2d");
-    const now = Date.now();
-    
-    // Actualizar animaciones para todos los usuarios
-    users.forEach(user => {
-      const animData = animationData.current[user.id];
-      if (animData && animData.moving && now - animData.lastUpdate > animationSpeed) {
-        animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
-        animData.lastUpdate = now;
-        
-        // Solo actualizar estado para el usuario actual (para enviar a Supabase)
-        if (user.id === currentUser.id) {
-          setUsers(prevUsers => 
-            prevUsers.map(u => 
-              u.id === currentUser.id ? { ...u, frameIndex: animData.frameIndex } : u
-            )
-          );
-        }
-      }
-    });
-    
-    drawRoom(ctx);
-    requestRef.current = requestAnimationFrame(animate);
-  };
-
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [users]);
-
-  // ========================
-  // 🕹️ Movimiento
-  // ========================
-  useEffect(() => {
-    const handleKeyDown = async (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault(); // Prevenir scroll de la página
-        keysPressed.current[e.key] = true;
-        
-        const user = users.find((u) => u.id === currentUser.id);
-        if (!user) return;
-
-        let { x, y } = user;
-        let direction = user.direction;
-
-        switch (e.key) {
-          case "ArrowUp":
-            y -= 4;
-            direction = "up";
-            break;
-          case "ArrowDown":
-            y += 4;
-            direction = "down";
-            break;
-          case "ArrowLeft":
-            x -= 4;
-            direction = "left";
-            break;
-          case "ArrowRight":
-            x += 4;
-            direction = "right";
-            break;
-          default:
-            return;
-        }
-
-        // Limitar movimiento dentro del canvas
-        x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
-        y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
-
-        // Actualizar datos de animación
-        if (animationData.current[currentUser.id]) {
-          animationData.current[currentUser.id].moving = true;
-          animationData.current[currentUser.id].direction = direction;
-        }
-
-        // Actualizar usuario
-        const updatedUser = {
-          ...user,
-          x,
-          y,
-          direction,
-          lastFrameUpdate: Date.now()
-        };
-
-        // Estado local
-        setUsers((prev) =>
-          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-        );
-
-        // Estado remoto
-        if (channelRef.current) {
-          await channelRef.current.track(updatedUser);
-        }
+      if (channel) {
+        // Eliminar al usuario de la tabla y desuscribirse
+        supabaseClient.from('room_users').delete().eq('user_id', currentUser.id).then();
+        supabaseClient.removeChannel(channel);
       }
     };
+  }, [currentUser, supabaseClient]); // Dependencias del efecto
 
-    const handleKeyUp = (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        keysPressed.current[e.key] = false;
-        
-        // Verificar si todas las teclas de dirección están liberadas
-        const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
-        
-        if (noKeysPressed && animationData.current[currentUser.id]) {
-          // Cuando se sueltan todas las teclas, resetear a frame 0
-          animationData.current[currentUser.id].moving = false;
-          animationData.current[currentUser.id].frameIndex = 0;
-          
-          // Actualizar estado para forzar re-render
-          setUsers(prevUsers => 
-            prevUsers.map(user => 
-              user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
-            )
-          );
-        }
+  // ✨ Efecto para manejar el movimiento del jugador con el teclado
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      e.preventDefault();
+
+      let { x, y } = playerPositionRef.current;
+      let direction = 'down';
+
+      switch (e.key) {
+        case 'ArrowUp':    y = Math.max(0, y - 1); direction = 'up'; break;
+        case 'ArrowDown':  y = Math.min(17, y + 1); direction = 'down'; break; // Limites del mapa
+        case 'ArrowLeft':  x = Math.max(0, x - 1); direction = 'left'; break;
+        case 'ArrowRight': x = Math.min(24, x + 1); direction = 'right'; break;
       }
+      
+      // Actualiza la referencia local inmediatamente para fluidez
+      playerPositionRef.current = { x, y };
+
+      // Actualiza el estado global para que React renderice el cambio
+      setPlayers(prev => ({
+        ...prev,
+        [currentUser.id]: [{ ...prev[currentUser.id]?.[0], x, y, direction }]
+      }));
+      
+      // Envía la actualización a Supabase (sin 'await' para no bloquear)
+      supabaseClient
+        .from('room_users')
+        .update({ x, y, direction })
+        .eq('user_id', currentUser.id)
+        .then();
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [users, currentUser]);
-
-  // ========================
-  // 💬 Chat
-  // ========================
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    try {
-      const { error } = await supabaseClient.from("room_messages").insert({
-        user_id: currentUser.id,
-        content: newMessage.trim(),
-      });
-
-      if (error) console.error("Error sending message:", error);
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentUser.id, supabaseClient]);
 
   return (
-    <div className="common-room-modal">
-      <div className="common-room-content">
-        <div className="common-room-header">
-          <h2>Arena Deportiva Lupi</h2>
-          <button className="close-btn" onClick={onClose}>
-            X
-          </button>
-        </div>
+    <div className="common-room-overlay">
+      <div className="map-container">
+        <button className="close-button" onClick={onClose}>×</button>
+        {Object.entries(players).map(([key, presenceInfos]) => {
+          const player = presenceInfos[0];
+          if (!player) return null;
 
-        <div className="room-container">
-          <div className="canvas-container">
-            <canvas 
-              ref={canvasRef} 
-              width={1200} 
-              height={800}
-              style={{ width: '100%', height: '100%' }}
-            />
-            <div className="sport-elements">
-              <div className="sport-icon">⚽</div>
-              <div className="sport-icon">🏀</div>
-              <div className="sport-icon">🏈</div>
+          return (
+            <div
+              key={key}
+              className="player"
+              style={{
+                left: `${player.x * 32}px`, // Grid de 32x32px
+                top: `${player.y * 32}px`,
+              }}
+            >
+              <img src={player.avatar_url} alt={player.username} />
+              <span className="player-name">{player.username}</span>
             </div>
-            <div className="rpg-stats">
-              <div>Nivel: <span className="stat-value">15</span></div>
-              <div>EXP: <span className="stat-value">1200/2000</span></div>
-              <div>Oro: <span className="stat-value">5,430</span></div>
-            </div>
-          </div>
-
-          <div className="chat-container">
-            <div className="messages">
-              {messages.map((msg) => (
-                <div key={msg.id} className="message">
-                  <span className="user-name">{msg.user_id}:</span>
-                  <span className="message-content">{msg.content}</span>
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={sendMessage} className="message-form">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje..."
-              />
-              <button type="submit">Enviar</button>
-            </form>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );
