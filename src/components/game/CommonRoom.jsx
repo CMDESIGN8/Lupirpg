@@ -1,6 +1,6 @@
 // src/game/CommonRoom.jsx
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { supabaseClient } from "../components/services/supabase";
+import { supabaseClient } from "../../services/supabase";
 import "../styles/CommonRoom.css";
 
 /**
