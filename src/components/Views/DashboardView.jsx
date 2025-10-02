@@ -595,11 +595,15 @@ const handleBuyItem = async (listing) => {
   </div>
 )}
 {showCommonRoom && (
-  <CommonRoom 
-    currentUser={playerData} 
-    onClose={() => setShowCommonRoom(false)}
-    supabaseClient={supabaseClient}
-  />
+  <div className="common-room-modal-overlay">
+    <div className="common-room-modal">
+      <CommonRoom 
+        currentUser={playerData} 
+        onClose={() => setShowCommonRoom(false)}
+        supabaseClient={supabaseClient}
+      />
+    </div>
+  </div>
 )}
       {/* Loading durante el juego */}
       {gameLoading && (
