@@ -1,7 +1,7 @@
 // components/CommonRoom/CommonRoom.jsx
 import React, { useState, useEffect, useRef } from 'react'
 import { useRoom } from '../../hooks/useRoom'
-import './CommonRoom.css'
+import '../styles/CommonRoom.css'
 
 const CommonRoom = ({ user, onClose }) => {
   const {
