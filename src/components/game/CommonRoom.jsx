@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { usePresence } from "./hooks/usePresence";
-import { useChat } from "./hooks/useChat";
-import { useGameLoop } from "./hooks/useGameLoop";
+import { usePresence } from "../../hooks/usePresence";
+import { useChat } from "../../hooks/useChat";
+import { useGameLoop } from "../../hooks/useGameLoop";
 
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_KEY);
 
