@@ -10,7 +10,6 @@ import CommonRoom from '../game/CommonRoom.jsx';
 import ClubChat from '../Clubs/ClubChat.jsx';
 import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
-import LobbyOnline from '../Views/LobbyOnline.jsx';
 import CommonRoomModal from "./CommonRoomModal";
 
 
