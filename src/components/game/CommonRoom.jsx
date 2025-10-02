@@ -1,369 +1,292 @@
-import React, { useState, useEffect, useRef } from "react";
+// src/game/CommonRoom.jsx
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { supabaseClient } from "../components/services/supabase";
 import "../styles/CommonRoom.css";
 
-// Spritesheet: 32x48 px, 4 direcciones (abajo, izquierda, derecha, arriba), 3 frames cada una
-import playerSprite from "../assets/player.png";
-import mapBackground from "../assets/map.png";
+/**
+ * CommonRoom: sala común con avatares movibles y presencia en tiempo real.
+ * Requisitos: tabla `room_users` en Supabase (schema que compartiste).
+ *
+ * Comportamiento:
+ * - Al montar: obtiene user, upsert en room_users con posición inicial.
+ * - Se subscribe a cambios en room_users (INSERT/UPDATE/DELETE) y mantiene players state.
+ * - Movimiento optimista local + debounce update a Supabase.
+ * - Heartbeat cada 10s para last_heartbeat/is_online.
+ * - Al desmontar: borra row de room_users.
+ */
 
-const CommonRoom = ({ currentUser, onClose, supabaseClient }) => {
-  const [users, setUsers] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const canvasRef = useRef(null);
-  const requestRef = useRef();
+const CELL_SIZE = 48;       // px por celda
+const MAP_WIDTH = 20;       // celdas
+const MAP_HEIGHT = 12;      // celdas
+const DEBOUNCE_MS = 300;    // cuánto esperar antes de persistir pos
+
+export default function CommonRoom() {
+  const [players, setPlayers] = useState([]); // lista de room_users
+  const [me, setMe] = useState(null);         // mi user (supabase auth)
+  const [loading, setLoading] = useState(true);
+  const localPosRef = useRef({ x: 1, y: 1 }); // posición optimista local
+  const saveTimerRef = useRef(null);
   const channelRef = useRef(null);
-  const lastUpdateRef = useRef(0);
-  const keysPressed = useRef({});
-  const animationData = useRef({}); // Para almacenar datos de animación sin usar estado
+  const heartbeatRef = useRef(null);
 
-  const spriteWidth = 32;
-  const spriteHeight = 48;
-  const framesPerDirection = 3;
-  const animationSpeed = 120; // ms entre cambios de frame (reducido para mayor fluidez)
-
-  // Mapeo de direcciones a filas en el spritesheet
-  const directionMap = {
-    down: 0,
-    left: 1,
-    right: 2,
-    up: 3
-  };
-
-  // ========================
-  // 🔥 Supabase Presence
-  // ========================
-  useEffect(() => {
-    const channel = supabaseClient.channel("lupi_common_room", {
-      config: { presence: { key: currentUser.id } },
-    });
-    channelRef.current = channel;
-
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        const allUsers = Object.values(state).map((u) => u[0]);
-        
-        // Inicializar datos de animación para cada usuario
-        allUsers.forEach(user => {
-          if (!animationData.current[user.id]) {
-            animationData.current[user.id] = {
-              frameIndex: 0,
-              lastUpdate: Date.now(),
-              moving: false
-            };
-          }
-        });
-        
-        setUsers(allUsers);
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          const x = Math.round(Math.random() * 700 + 50);
-          const y = Math.round(Math.random() * 400 + 50);
-
-          // Inicializar datos de animación para el usuario actual
-          animationData.current[currentUser.id] = {
-            frameIndex: 0,
-            lastUpdate: Date.now(),
-            moving: false
-          };
-
-          await channel.track({
-            id: currentUser.id,
-            name: currentUser.username || "Usuario",
-            x,
-            y,
-            direction: "down",
-            frameIndex: 0,
-            lastFrameUpdate: Date.now()
-          });
-        }
-      });
-
-    // 📩 Mensajes
-    const messageChannel = supabaseClient
-      .channel("room_messages")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "room_messages" },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-      messageChannel.unsubscribe();
-      cancelAnimationFrame(requestRef.current);
+  // helper: upsert my row
+  const upsertMe = useCallback(async (user, pos = null) => {
+    if (!user) return;
+    const payload = {
+      user_id: user.id,
+      name: user.user_metadata?.full_name || user.email || "Anon",
+      username: user.user_metadata?.username || user.email?.split("@")[0],
+      avatar_url: user.user_metadata?.avatar_url || null,
+      x: pos?.x ?? localPosRef.current.x,
+      y: pos?.y ?? localPosRef.current.y,
+      is_online: true,
+      last_activity: new Date().toISOString(),
+      last_heartbeat: new Date().toISOString(),
+      connection_id: Math.random().toString(36).slice(2, 9)
     };
-  }, [supabaseClient, currentUser]);
 
-  // ========================
-  // 🎮 Render Canvas
-  // ========================
-  const spriteImage = useRef(new Image());
-  const mapImage = useRef(new Image());
-
-  useEffect(() => {
-    spriteImage.current.src = playerSprite;
-    mapImage.current.src = mapBackground;
+    // Upsert (insert or update)
+    await supabaseClient
+      .from("room_users")
+      .upsert(payload, { onConflict: "user_id" })
+      .select();
   }, []);
 
-  const drawAvatar = (ctx, user) => {
-    const { x, y, name, direction = "down", id } = user;
-    
-    // Obtener datos de animación desde la referencia
-    const animData = animationData.current[id] || { frameIndex: 0 };
-    const frameIndex = animData.frameIndex || 0;
-    
-    // Calcular la posición en el spritesheet
-    const spriteX = frameIndex * spriteWidth;
-    const spriteY = directionMap[direction] * spriteHeight;
-
-    // Dibujar el frame correcto del spritesheet
-    ctx.drawImage(
-      spriteImage.current,
-      spriteX,
-      spriteY,
-      spriteWidth,
-      spriteHeight,
-       x - 32,             // Posición X (centrado en 64px)
-  y - 32,             // Posición Y (centrado en 64px)
-  64,                 // Nuevo ancho de visualización
-  64                  // Nuevo alto de visualización
-);
-    // Dibujar nombre de usuario
-    ctx.fillStyle = "#fff";
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(name, x, y - spriteHeight/2 - 10);
-  };
-
-  const drawRoom = (ctx) => {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Fondo con mapa
-    if (mapImage.current.complete) {
-      ctx.drawImage(mapImage.current, 0, 0, width, height);
-    } else {
-      ctx.fillStyle = "#222";
-      ctx.fillRect(0, 0, width, height);
-    }
-
-    // Dibujar usuarios
-    users.forEach((user) => drawAvatar(ctx, user));
-  };
-
-  const animate = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext("2d");
-    const now = Date.now();
-    
-    // Actualizar animaciones para todos los usuarios
-    users.forEach(user => {
-      const animData = animationData.current[user.id];
-      if (animData && animData.moving && now - animData.lastUpdate > animationSpeed) {
-        animData.frameIndex = (animData.frameIndex + 1) % framesPerDirection;
-        animData.lastUpdate = now;
-        
-        // Solo actualizar estado para el usuario actual (para enviar a Supabase)
-        if (user.id === currentUser.id) {
-          setUsers(prevUsers => 
-            prevUsers.map(u => 
-              u.id === currentUser.id ? { ...u, frameIndex: animData.frameIndex } : u
-            )
-          );
-        }
-      }
-    });
-    
-    drawRoom(ctx);
-    requestRef.current = requestAnimationFrame(animate);
-  };
-
+  // init: get user, upsert, subscribe
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [users]);
-
-  // ========================
-  // 🕹️ Movimiento
-  // ========================
-  useEffect(() => {
-    const handleKeyDown = async (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault(); // Prevenir scroll de la página
-        keysPressed.current[e.key] = true;
-        
-        const user = users.find((u) => u.id === currentUser.id);
-        if (!user) return;
-
-        let { x, y } = user;
-        let direction = user.direction;
-
-        switch (e.key) {
-          case "ArrowUp":
-            y -= 4;
-            direction = "up";
-            break;
-          case "ArrowDown":
-            y += 4;
-            direction = "down";
-            break;
-          case "ArrowLeft":
-            x -= 4;
-            direction = "left";
-            break;
-          case "ArrowRight":
-            x += 4;
-            direction = "right";
-            break;
-          default:
-            return;
-        }
-
-        // Limitar movimiento dentro del canvas
-        x = Math.max(spriteWidth/2, Math.min(x, 800 - spriteWidth/2));
-        y = Math.max(spriteHeight/2, Math.min(y, 500 - spriteHeight/2));
-
-        // Actualizar datos de animación
-        if (animationData.current[currentUser.id]) {
-          animationData.current[currentUser.id].moving = true;
-          animationData.current[currentUser.id].direction = direction;
-        }
-
-        // Actualizar usuario
-        const updatedUser = {
-          ...user,
-          x,
-          y,
-          direction,
-          lastFrameUpdate: Date.now()
-        };
-
-        // Estado local
-        setUsers((prev) =>
-          prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-        );
-
-        // Estado remoto
-        if (channelRef.current) {
-          await channelRef.current.track(updatedUser);
-        }
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      const { data: authData } = await supabaseClient.auth.getUser();
+      const user = authData?.user;
+      if (!user) {
+        setLoading(false);
+        return;
       }
-    };
+      if (!mounted) return;
 
-    const handleKeyUp = (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        keysPressed.current[e.key] = false;
-        
-        // Verificar si todas las teclas de dirección están liberadas
-        const noKeysPressed = !Object.values(keysPressed.current).some(val => val);
-        
-        if (noKeysPressed && animationData.current[currentUser.id]) {
-          // Cuando se sueltan todas las teclas, resetear a frame 0
-          animationData.current[currentUser.id].moving = false;
-          animationData.current[currentUser.id].frameIndex = 0;
-          
-          // Actualizar estado para forzar re-render
-          setUsers(prevUsers => 
-            prevUsers.map(user => 
-              user.id === currentUser.id ? { ...user, frameIndex: 0 } : user
-            )
-          );
-        }
-      }
-    };
+      setMe(user);
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    
+      // initial position simple: random near center
+      const startX = Math.floor(MAP_WIDTH / 2 + (Math.random() * 3 - 1.5));
+      const startY = Math.floor(MAP_HEIGHT / 2 + (Math.random() * 3 - 1.5));
+      localPosRef.current = { x: Math.max(0, Math.min(MAP_WIDTH - 1, startX)), y: Math.max(0, Math.min(MAP_HEIGHT - 1, startY)) };
+
+      await upsertMe(user, localPosRef.current);
+
+      // get current room users
+      const { data: existing } = await supabaseClient
+        .from("room_users")
+        .select("*");
+
+      if (mounted) setPlayers(existing || []);
+
+      // subscribe to postgres changes on room_users
+      const channel = supabaseClient
+        .channel("room-updates")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "room_users" },
+          (payload) => {
+            const ev = payload.eventType; // INSERT / UPDATE / DELETE
+            const row = payload.new ?? payload.old;
+            setPlayers(prev => {
+              const clone = [...prev];
+              const idx = clone.findIndex(p => p.user_id === row.user_id);
+              if (payload.eventType === "DELETE") {
+                if (idx >= 0) clone.splice(idx, 1);
+                return clone;
+              }
+              // INSERT or UPDATE
+              if (idx >= 0) {
+                clone[idx] = row;
+              } else {
+                clone.push(row);
+              }
+              return clone;
+            });
+          }
+        )
+        .subscribe();
+
+      channelRef.current = channel;
+
+      // heartbeat: cada 10s actualiza last_heartbeat e is_online
+      heartbeatRef.current = setInterval(async () => {
+        await supabaseClient
+          .from("room_users")
+          .update({ last_heartbeat: new Date().toISOString(), is_online: true })
+          .eq("user_id", user.id);
+      }, 10000);
+
+      setLoading(false);
+    })();
+
+    // cleanup on unmount: remove subscription + delete my row
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      mounted = false;
+      if (channelRef.current) supabaseClient.removeChannel(channelRef.current);
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      (async () => {
+        const { data: authData } = await supabaseClient.auth.getUser();
+        const user = authData?.user;
+        if (user) {
+          await supabaseClient.from("room_users").delete().eq("user_id", user.id);
+        }
+      })();
     };
-  }, [users, currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ========================
-  // 💬 Chat
-  // ========================
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
+  // save position debounced (persist to DB)
+  const persistPosition = useCallback(async (pos) => {
+    const currentUser = me;
+    if (!currentUser) return;
     try {
-      const { error } = await supabaseClient.from("room_messages").insert({
-        user_id: currentUser.id,
-        content: newMessage.trim(),
+      await supabaseClient
+        .from("room_users")
+        .update({ x: pos.x, y: pos.y, last_activity: new Date().toISOString() })
+        .eq("user_id", currentUser.id);
+    } catch (err) {
+      console.error("persistPosition error", err);
+    }
+  }, [me]);
+
+  const schedulePersist = useCallback((pos) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      persistPosition(pos);
+      saveTimerRef.current = null;
+    }, DEBOUNCE_MS);
+  }, [persistPosition]);
+
+  // keyboard movement
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (!me) return;
+      const key = e.key.toLowerCase();
+      let dx = 0, dy = 0;
+      if (key === "arrowup" || key === "w") dy = -1;
+      if (key === "arrowdown" || key === "s") dy = 1;
+      if (key === "arrowleft" || key === "a") dx = -1;
+      if (key === "arrowright" || key === "d") dx = 1;
+      if (dx === 0 && dy === 0) return;
+
+      const np = { x: Math.max(0, Math.min(MAP_WIDTH - 1, localPosRef.current.x + dx)), y: Math.max(0, Math.min(MAP_HEIGHT - 1, localPosRef.current.y + dy)) };
+      localPosRef.current = np;
+      // optimistic UI update
+      setPlayers(prev => {
+        const clone = [...prev];
+        const idx = clone.findIndex(p => p.user_id === me.id);
+        const myRow = {
+          user_id: me.id,
+          name: me.user_metadata?.full_name || me.email,
+          username: me.user_metadata?.username || me.email?.split("@")[0],
+          avatar_url: me.user_metadata?.avatar_url || null,
+          x: np.x,
+          y: np.y,
+          is_online: true
+        };
+        if (idx >= 0) clone[idx] = { ...clone[idx], ...myRow };
+        else clone.push(myRow);
+        return clone;
       });
 
-      if (error) console.error("Error sending message:", error);
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+      schedulePersist(np);
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [me, schedulePersist]);
+
+  // click/tap to move
+  const handleMapClick = async (e) => {
+    if (!me) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const cellX = Math.floor(clickX / CELL_SIZE);
+    const cellY = Math.floor(clickY / CELL_SIZE);
+    const np = { x: Math.max(0, Math.min(MAP_WIDTH - 1, cellX)), y: Math.max(0, Math.min(MAP_HEIGHT - 1, cellY)) };
+    localPosRef.current = np;
+
+    setPlayers(prev => {
+      const clone = [...prev];
+      const idx = clone.findIndex(p => p.user_id === me.id);
+      const myRow = {
+        user_id: me.id,
+        name: me.user_metadata?.full_name || me.email,
+        username: me.user_metadata?.username || me.email?.split("@")[0],
+        avatar_url: me.user_metadata?.avatar_url || null,
+        x: np.x,
+        y: np.y,
+        is_online: true
+      };
+      if (idx >= 0) clone[idx] = { ...clone[idx], ...myRow };
+      else clone.push(myRow);
+      return clone;
+    });
+
+    schedulePersist(np);
   };
 
+  // utility render avatar
+  const renderAvatar = (p) => {
+    const left = p.x * CELL_SIZE;
+    const top = p.y * CELL_SIZE;
+    const isMe = me && p.user_id === me.id;
+
+    return (
+      <div
+        key={p.user_id}
+        className={`cr-avatar ${isMe ? "me" : ""} ${p.is_online ? "online" : "offline"}`}
+        style={{ left: `${left}px`, top: `${top}px`, width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}
+      >
+        <div className="avatar-sprite" title={p.name}>
+          {p.avatar_url ? <img src={p.avatar_url} alt={p.name} /> : <div className="avatar-fallback">{p.username?.charAt(0)?.toUpperCase() || "?"}</div>}
+        </div>
+        <div className="avatar-tag">{p.username}</div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return <div className="cr-loading">Cargando sala...</div>;
+  }
+
   return (
-    <div className="common-room-modal">
-      <div className="common-room-content">
-        <div className="common-room-header">
-          <h2>Arena Deportiva Lupi</h2>
-          <button className="close-btn" onClick={onClose}>
-            X
-          </button>
+    <div className="cr-root">
+      <div className="cr-left">
+        <div className="cr-map" onClick={handleMapClick} style={{ width: `${MAP_WIDTH * CELL_SIZE}px`, height: `${MAP_HEIGHT * CELL_SIZE}px` }}>
+          <div className="cr-map-grid" />
+          {players.map(renderAvatar)}
+        </div>
+      </div>
+
+      <div className="cr-right">
+        <div className="cr-info">
+          <h3>Sala Común</h3>
+          <p>Usuarios online: <strong>{players.length}</strong></p>
+          <p>Controles: Flechas / WASD — Click/Tap para moverte</p>
+          <div className="cr-players-list">
+            {players.map(p => (
+              <div key={p.user_id} className="cr-player-row">
+                <div className="cr-player-mini">
+                  {p.avatar_url ? <img src={p.avatar_url} alt="" /> : <div className="mini-fallback">{p.username?.charAt(0)}</div>}
+                </div>
+                <div className="cr-player-meta">
+                  <div className="cr-player-name">{p.username}</div>
+                  <div className="cr-player-pos">x:{p.x} y:{p.y} {p.is_online ? "●" : "○"}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="room-container">
-          <div className="canvas-container">
-            <canvas 
-              ref={canvasRef} 
-              width={1200} 
-              height={800}
-              style={{ width: '100%', height: '100%' }}
-            />
-            <div className="sport-elements">
-              <div className="sport-icon">⚽</div>
-              <div className="sport-icon">🏀</div>
-              <div className="sport-icon">🏈</div>
-            </div>
-            <div className="rpg-stats">
-              <div>Nivel: <span className="stat-value">15</span></div>
-              <div>EXP: <span className="stat-value">1200/2000</span></div>
-              <div>Oro: <span className="stat-value">5,430</span></div>
-            </div>
-          </div>
-
-          <div className="chat-container">
-            <div className="messages">
-              {messages.map((msg) => (
-                <div key={msg.id} className="message">
-                  <span className="user-name">{msg.user_id}:</span>
-                  <span className="message-content">{msg.content}</span>
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={sendMessage} className="message-form">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje..."
-              />
-              <button type="submit">Enviar</button>
-            </form>
-          </div>
+        <div className="cr-footer">
+          <small>Optimizado para mínimo uso de escrituras a DB • Heartbeat activo</small>
         </div>
       </div>
     </div>
   );
-};
-
-export default CommonRoom;
+}
