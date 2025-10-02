@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabaseClient } from '../../services/supabase';
+import {   } from '../../services/supabase';
 import '../styles/CommonRoom.css';
 
 const CommonRoom = () => {
@@ -54,7 +54,7 @@ const CommonRoom = () => {
       }
 
       // Buscar jugador existente
-      const { data: existingPlayer } = await supabase
+      const { data: existingPlayer } = await supabaseClient
         .from('players')
         .select('*')
         .eq('user_id', user.id)
@@ -62,7 +62,7 @@ const CommonRoom = () => {
 
       if (existingPlayer) {
         // Actualizar como online
-        await supabase
+        await supabaseClient
           .from('players')
           .update({ 
             is_online: true,
@@ -85,7 +85,7 @@ const CommonRoom = () => {
           is_online: true
         };
 
-        const { data: createdPlayer } = await supabase
+        const { data: createdPlayer } = await supabaseClient
           .from('players')
           .insert([newPlayer])
           .select()
@@ -99,7 +99,7 @@ const CommonRoom = () => {
   };
 
   const loadExistingPlayers = async () => {
-    const { data: onlinePlayers } = await supabase
+    const { data: onlinePlayers } = await supabaseClient
       .from('players')
       .select('*')
       .eq('is_online', true)
@@ -112,7 +112,7 @@ const CommonRoom = () => {
 
   const setupRealtimeSubscription = () => {
     // Suscribirse a cambios en la tabla de jugadores
-    const subscription = supabase
+    const subscription = supabaseClient
       .channel('room-changes')
       .on(
         'postgres_changes',
@@ -195,7 +195,7 @@ const CommonRoom = () => {
 
     // Actualizar en Supabase
     if (currentPlayer.id && !currentPlayer.id.startsWith('guest_')) {
-      await supabase
+      await supabaseClient
         .from('players')
         .update({
           x: clampedX,
@@ -236,7 +236,7 @@ const CommonRoom = () => {
   const cleanupGame = async () => {
     // Marcar jugador como offline al salir
     if (currentPlayer && currentPlayer.id && !currentPlayer.id.startsWith('guest_')) {
-      await supabase
+      await supabaseClient
         .from('players')
         .update({ is_online: false })
         .eq('id', currentPlayer.id);
@@ -257,7 +257,7 @@ const CommonRoom = () => {
   }, []);
 
   const loadChatMessages = async () => {
-    const { data: chatMessages } = await supabase
+    const { data: chatMessages } = await supabaseClient
       .from('chat_messages')
       .select('*')
       .eq('room_id', 'common-room')
@@ -268,7 +268,7 @@ const CommonRoom = () => {
   };
 
   const setupChatSubscription = () => {
-    supabase
+    supabaseClient
       .channel('chat-changes')
       .on(
         'postgres_changes',
@@ -288,7 +288,7 @@ const CommonRoom = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentPlayer) return;
 
-    await supabase
+    await supabaseClient
       .from('chat_messages')
       .insert([{
         room_id: 'common-room',
