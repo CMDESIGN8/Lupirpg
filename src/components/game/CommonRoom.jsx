@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { supabaseClient } from "../../services/supabase";
-import { usePresence } from "../../hooks/usePresence";
+import { usePresence } from "../hooks/usePresence";
 import { useChat } from "../../hooks/useChat";
 import { useGameLoop } from "../../hooks/useGameLoop";
 import "../styles/CommonRoom.css";
