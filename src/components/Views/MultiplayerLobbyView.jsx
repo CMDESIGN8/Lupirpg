@@ -20,7 +20,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const moveTimeoutRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
   const chatInputRef = useRef(null);
-  const initializationRef = useRef(false); // Para evitar inicialización múltiple
+  const initializationRef = useRef(false);
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
@@ -131,9 +131,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [supabaseClient, userToUse]);
 
-  // Movimiento con teclado
+  // Movimiento con teclado - CORREGIDO
   const handleKeyDown = useCallback((e) => {
-    if (chatInputRef.current && document.activeElement === chatInputRef.current) {
+    // Si está escribiendo en el chat, no mover al jugador
+    if (document.activeElement === chatInputRef.current) {
       return;
     }
 
@@ -170,9 +171,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }, 150);
   }, [movePlayer]);
 
-  // Enviar mensaje de chat
+  // Enviar mensaje de chat - CORREGIDO
   const sendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !userToUse?.id) return;
+    if (!newMessage.trim() || !userToUse?.id) {
+      console.log('❌ No message to send or no user');
+      return;
+    }
+
+    console.log('📤 Sending message:', newMessage.trim());
 
     try {
       const { error } = await supabaseClient
@@ -184,39 +190,49 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         });
 
       if (error) {
-        console.error('Error sending message:', error);
-        showMessage('Error al enviar el mensaje');
+        console.error('❌ Error sending message:', error);
+        showMessage('Error al enviar el mensaje: ' + error.message);
         return;
       }
 
+      console.log('✅ Message sent successfully');
+      
+      // Mostrar burbuja local inmediatamente
       showChatBubble(userToUse.id, newMessage.trim(), userToUse.username);
+      
+      // Limpiar input
       setNewMessage('');
       
+      // Enfocar el input de nuevo para seguir escribiendo
       if (chatInputRef.current) {
         chatInputRef.current.focus();
       }
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ Error sending message:', error);
       showMessage('Error al enviar el mensaje');
     }
   }, [newMessage, userToUse, supabaseClient, showMessage, showChatBubble]);
 
-  // Manejar envío con Enter
-  const handleKeyPress = useCallback((e) => {
+  // Manejar envío con Enter - CORREGIDO
+  const handleKeyDownChat = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('⌨️ Enter pressed, sending message...');
       sendMessage();
     }
   }, [sendMessage]);
 
-  // Configurar Realtime para mensajes
+  // Configurar Realtime para mensajes - CORREGIDO
   const setupMessagesRealtime = useCallback(() => {
+    console.log('💬 Setting up messages realtime...');
+
+    // Remover canal existente si existe
     if (channelRef.current?.messagesChannel) {
       supabaseClient.removeChannel(channelRef.current.messagesChannel);
     }
 
-    const messagesChannel = supabaseClient.channel('room-messages');
+    const messagesChannel = supabaseClient.channel('room-messages-realtime');
 
     messagesChannel
       .on(
@@ -227,9 +243,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_messages',
         },
         (payload) => {
-          console.log('💬 New message received:', payload.new);
+          console.log('💬 New message received via realtime:', payload.new);
           
+          // Mostrar burbuja de chat para el mensaje recibido (excepto nuestros propios mensajes)
           if (payload.new.user_id !== userToUse?.id) {
+            console.log('💬 Showing chat bubble for other player');
             showChatBubble(
               payload.new.user_id, 
               payload.new.content, 
@@ -239,7 +257,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         }
       )
       .subscribe((status) => {
-        console.log('💬 Messages channel status:', status);
+        console.log('💬 Messages channel subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to messages realtime');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Messages channel error');
+        }
       });
 
     return messagesChannel;
@@ -562,7 +586,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return channel;
   }, [supabaseClient, showMessage, startHeartbeat, startCleanup]);
 
-  // Efecto principal - SIMPLIFICADO
+  // Efecto principal
   useEffect(() => {
     if (!userToUse?.id) {
       showMessage('Error: Usuario no disponible');
@@ -570,7 +594,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       return;
     }
 
-    // Evitar inicialización múltiple
     if (initializationRef.current) {
       console.log('🚫 Already initializing, skipping...');
       return;
@@ -619,13 +642,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     initializeRoom();
 
-    // Limpieza al desmontar - SOLO UNA VEZ
+    // Limpieza al desmontar
     return () => {
       console.log('🧹 Component unmounting, cleaning up...');
       initializationRef.current = false;
       leaveRoom();
     };
-  }, []); // ← SIN DEPENDENCIAS para evitar re-ejecuciones
+  }, []);
 
   // Event listeners para teclado y touch
   useEffect(() => {
@@ -765,14 +788,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* Input de chat fijo */}
+      {/* Input de chat fijo - CORREGIDO */}
       <div className="lobby-chat-input-container">
         <input
           ref={chatInputRef}
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDownChat} {/* Cambiado de onKeyPress a onKeyDown */}
           placeholder="Escribe un mensaje y presiona Enter..."
           className="lobby-chat-input"
           maxLength={100}
