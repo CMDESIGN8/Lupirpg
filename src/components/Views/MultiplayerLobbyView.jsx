@@ -9,9 +9,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [players, setPlayers] = useState({});
   const [equippedAvatar, setEquippedAvatar] = useState(null);
   const [showMobileControls, setShowMobileControls] = useState(false);
-  const [showChat, setShowChat] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [activeChatBubbles, setActiveChatBubbles] = useState({});
   
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
@@ -20,18 +19,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const heartbeatIntervalRef = useRef(null);
   const moveTimeoutRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
-  const chatMessagesEndRef = useRef(null);
+  const chatInputRef = useRef(null);
+  const initializationRef = useRef(false); // Para evitar inicialización múltiple
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
 
   // Detectar si es móvil
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // Depuración
-  useEffect(() => {
-    console.log('MultiplayerLobbyView - User:', userToUse, 'Mobile:', isMobile);
-  }, [userToUse, isMobile]);
 
   // Obtener avatar equipado
   useEffect(() => {
@@ -63,6 +58,31 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     fetchEquippedAvatar();
   }, [supabaseClient, userToUse]);
 
+  // Función para mostrar burbuja de chat
+  const showChatBubble = useCallback((userId, message, username) => {
+    const bubbleId = `${userId}-${Date.now()}`;
+    
+    setActiveChatBubbles(prev => ({
+      ...prev,
+      [bubbleId]: {
+        userId,
+        message,
+        username,
+        timestamp: Date.now(),
+        position: players[userId]?.[0] || { x: 0, y: 0 }
+      }
+    }));
+
+    // Auto-remover la burbuja después de 5 segundos
+    setTimeout(() => {
+      setActiveChatBubbles(prev => {
+        const newBubbles = { ...prev };
+        delete newBubbles[bubbleId];
+        return newBubbles;
+      });
+    }, 5000);
+  }, [players]);
+
   // Función para mover al jugador
   const movePlayer = useCallback(async (dx, dy) => {
     if (!userToUse?.id) return;
@@ -71,13 +91,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     let newX = Math.max(0, Math.min(14, currentPos.x + dx));
     let newY = Math.max(0, Math.min(14, currentPos.y + dy));
 
-    // Si no hay cambio, no hacer nada
     if (newX === currentPos.x && newY === currentPos.y) return;
 
     playerPositionRef.current = { x: newX, y: newY };
 
     try {
-      // 1. Actualizar en la base de datos
       const { error } = await supabaseClient
         .from('room_players')
         .update({ 
@@ -92,9 +110,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         return;
       }
 
-      console.log('Moved to:', newX, newY);
-
-      // 2. Actualizar el estado local INMEDIATAMENTE para que se renderice
+      // Actualizar el estado local
       setPlayers(prev => {
         const currentPlayer = prev[userToUse.id]?.[0];
         if (!currentPlayer) return prev;
@@ -117,10 +133,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Movimiento con teclado
   const handleKeyDown = useCallback((e) => {
+    if (chatInputRef.current && document.activeElement === chatInputRef.current) {
+      return;
+    }
+
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].includes(e.key)) return;
     e.preventDefault();
 
-    // Limitar la frecuencia de movimiento
     if (moveTimeoutRef.current) return;
 
     let dx = 0, dy = 0;
@@ -146,7 +165,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     movePlayer(dx, dy);
 
-    // Timeout para evitar movimiento demasiado rápido
     moveTimeoutRef.current = setTimeout(() => {
       moveTimeoutRef.current = null;
     }, 150);
@@ -171,12 +189,18 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         return;
       }
 
+      showChatBubble(userToUse.id, newMessage.trim(), userToUse.username);
       setNewMessage('');
+      
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
       showMessage('Error al enviar el mensaje');
     }
-  }, [newMessage, userToUse, supabaseClient, showMessage]);
+  }, [newMessage, userToUse, supabaseClient, showMessage, showChatBubble]);
 
   // Manejar envío con Enter
   const handleKeyPress = useCallback((e) => {
@@ -186,25 +210,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [sendMessage]);
 
-  // Cargar historial de mensajes
-  const loadMessageHistory = useCallback(async () => {
-    try {
-      const { data, error } = await supabaseClient
-        .from('room_messages')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (!error && data) {
-        setMessages(data.reverse());
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    }
-  }, [supabaseClient]);
-
   // Configurar Realtime para mensajes
   const setupMessagesRealtime = useCallback(() => {
+    if (channelRef.current?.messagesChannel) {
+      supabaseClient.removeChannel(channelRef.current.messagesChannel);
+    }
+
     const messagesChannel = supabaseClient.channel('room-messages');
 
     messagesChannel
@@ -216,13 +227,15 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_messages',
         },
         (payload) => {
-          console.log('💬 New message:', payload.new);
-          setMessages(prev => [...prev, payload.new]);
+          console.log('💬 New message received:', payload.new);
           
-          // Auto-scroll to bottom
-          setTimeout(() => {
-            chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
+          if (payload.new.user_id !== userToUse?.id) {
+            showChatBubble(
+              payload.new.user_id, 
+              payload.new.content, 
+              payload.new.username
+            );
+          }
         }
       )
       .subscribe((status) => {
@@ -230,7 +243,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       });
 
     return messagesChannel;
-  }, [supabaseClient]);
+  }, [supabaseClient, userToUse, showChatBubble]);
 
   // Controles táctiles para móvil
   const handleTouchStart = useCallback((e) => {
@@ -246,14 +259,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     const deltaY = touch.clientY - touchStartRef.current.y;
     const minSwipeDistance = 30;
 
-    // Determinar dirección del swipe
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      // Movimiento horizontal
       if (Math.abs(deltaX) > minSwipeDistance) {
         movePlayer(deltaX > 0 ? 1 : -1, 0);
       }
     } else {
-      // Movimiento vertical
       if (Math.abs(deltaY) > minSwipeDistance) {
         movePlayer(0, deltaY > 0 ? 1 : -1);
       }
@@ -269,7 +279,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return (
       <div className="mobile-controls-overlay">
         <div className="joystick-container">
-          {/* Joystick de movimiento */}
           <div className="joystick-area">
             <div className="joystick-background">
               <button 
@@ -306,7 +315,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             </div>
           </div>
 
-          {/* Botones de acción */}
           <div className="action-buttons-game">
             <button 
               className="action-btn-game menu-btn"
@@ -328,72 +336,36 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   };
 
-  // Componente de Chat
-  const ChatPanel = () => {
-    if (!showChat) return null;
+  // Renderizar burbujas de chat
+  const renderChatBubbles = () => {
+    return Object.entries(activeChatBubbles).map(([bubbleId, bubble]) => {
+      const player = players[bubble.userId]?.[0];
+      if (!player) return null;
 
-    return (
-      <div className="lobby-chat-panel">
-        <div className="chat-header">
-          <h4>💬 Chat Global</h4>
-          <button 
-            className="chat-close-btn"
-            onClick={() => setShowChat(false)}
-          >
-            ✕
-          </button>
+      return (
+        <div
+          key={bubbleId}
+          className={`chat-bubble ${bubble.userId === userToUse?.id ? 'own-chat-bubble' : 'other-chat-bubble'}`}
+          style={{
+            left: `${player.x * 6.66}%`,
+            top: `${player.y * 6.66 - 15}%`,
+          }}
+        >
+          <div className="chat-bubble-content">
+            {bubble.userId !== userToUse?.id && (
+              <div className="chat-bubble-username">{bubble.username}</div>
+            )}
+            <div className="chat-bubble-message">{bubble.message}</div>
+          </div>
+          <div className="chat-bubble-tail"></div>
         </div>
-        
-        <div className="chat-messages">
-          {messages.map((message) => (
-            <div 
-              key={message.id}
-              className={`chat-message ${message.user_id === userToUse?.id ? 'own-message' : 'other-message'}`}
-            >
-              <div className="message-header">
-                <span className="message-username">
-                  {message.user_id === userToUse?.id ? 'Tú' : message.username}
-                </span>
-                <span className="message-time">
-                  {new Date(message.created_at).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </span>
-              </div>
-              <div className="message-content">
-                {message.content}
-              </div>
-            </div>
-          ))}
-          <div ref={chatMessagesEndRef} />
-        </div>
-
-        <div className="chat-input-container">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Escribe un mensaje..."
-            className="chat-input"
-            maxLength={200}
-          />
-          <button 
-            onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            className="chat-send-btn"
-          >
-            📨
-          </button>
-        </div>
-      </div>
-    );
+      );
+    });
   };
 
   // Función para unirse a la sala
   const joinRoom = useCallback(async () => {
-    if (!userToUse?.id) return;
+    if (!userToUse?.id) return false;
 
     try {
       const avatarUrl = equippedAvatar?.image_url || '/default-avatar.png';
@@ -402,7 +374,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       
       playerPositionRef.current = { x: initialX, y: initialY };
 
-      // Unirse a la sala
       const { error: upsertError } = await supabaseClient
         .from('room_players')
         .upsert({
@@ -420,9 +391,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         throw new Error(`Join error: ${upsertError.message}`);
       }
 
-      console.log('User joined room successfully');
+      console.log('✅ User joined room successfully');
 
-      // Obtener TODOS los jugadores activos
+      // Obtener jugadores activos
       const activeCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: currentPlayers, error: fetchError } = await supabaseClient
         .from('room_players')
@@ -435,12 +406,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           playersObj[player.user_id] = [player];
         });
         setPlayers(playersObj);
-        console.log('Loaded players:', currentPlayers.length);
+        console.log('📊 Loaded players:', currentPlayers.length);
       }
 
       return true;
     } catch (error) {
-      console.error('Error joining room:', error);
+      console.error('❌ Error joining room:', error);
       showMessage('Error al unirse a la sala: ' + error.message);
       return false;
     }
@@ -451,7 +422,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     if (!userToUse?.id) return;
 
     try {
-      // Limpiar intervalos y timeouts
+      console.log('🧹 Starting cleanup...');
+
+      // Limpiar intervalos
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
@@ -465,15 +438,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         moveTimeoutRef.current = null;
       }
 
-      // Remover canal de mensajes si existe
+      // Remover canales
       if (channelRef.current?.messagesChannel) {
         supabaseClient.removeChannel(channelRef.current.messagesChannel);
+        console.log('🗑️ Removed messages channel');
       }
 
-      // Remover canal principal
       if (channelRef.current) {
         supabaseClient.removeChannel(channelRef.current);
         channelRef.current = null;
+        console.log('🗑️ Removed main channel');
       }
 
       // Eliminar de la base de datos
@@ -482,9 +456,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         .delete()
         .eq('user_id', userToUse.id);
 
-      console.log('User left room successfully');
+      console.log('✅ User left room successfully');
     } catch (error) {
-      console.error('Error leaving room:', error);
+      console.error('❌ Error leaving room:', error);
     }
   }, [supabaseClient, userToUse]);
 
@@ -502,9 +476,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             last_activity: new Date().toISOString() 
           })
           .eq('user_id', userToUse.id);
-        console.log('Heartbeat sent');
       } catch (error) {
-        console.error('Heartbeat error:', error);
+        console.error('💓 Heartbeat error:', error);
       }
     }, 25000);
   }, [supabaseClient, userToUse]);
@@ -516,65 +489,52 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     cleanupIntervalRef.current = setInterval(async () => {
       try {
         const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-        const { error } = await supabaseClient
+        await supabaseClient
           .from('room_players')
           .delete()
           .lt('last_activity', cutoffTime)
           .neq('user_id', userToUse?.id || '');
-
-        if (!error) {
-          console.log('Cleanup completed');
-        }
       } catch (error) {
-        console.error('Cleanup error:', error);
+        console.error('🧹 Cleanup error:', error);
       }
     }, 60000);
   }, [supabaseClient, userToUse]);
 
-  // Configurar suscripción en tiempo real - CORREGIDA
+  // Configurar suscripción en tiempo real
   const setupRealtime = useCallback(() => {
     if (channelRef.current) {
-      console.log('Channel already exists, removing...');
+      console.log('🔄 Removing existing channel...');
       supabaseClient.removeChannel(channelRef.current);
     }
 
-    console.log('Setting up realtime channel...');
+    console.log('📡 Setting up realtime channel...');
     
-    const channel = supabaseClient.channel('room_players_updates', {
-      config: {
-        broadcast: { self: true }, // Recibir nuestros propios eventos también
-        presence: { key: userToUse?.id }
-      }
-    });
+    const channel = supabaseClient.channel('room_players_updates');
 
-    // Escuchar TODOS los cambios en room_players
     channel
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'room_players',
         },
         (payload) => {
-          console.log('🔴 REALTIME EVENT:', payload.eventType, payload.new || payload.old);
+          console.log('🔄 Room event:', payload.eventType, payload.new?.username);
           
           if (payload.eventType === 'INSERT') {
-            console.log('🟢 New player joined:', payload.new.username);
             setPlayers(prev => ({
               ...prev,
               [payload.new.user_id]: [payload.new]
             }));
           }
           else if (payload.eventType === 'UPDATE') {
-            console.log('🟡 Player updated:', payload.new.username, 'at', payload.new.x, payload.new.y);
             setPlayers(prev => ({
               ...prev,
               [payload.new.user_id]: [payload.new]
             }));
           }
           else if (payload.eventType === 'DELETE') {
-            console.log('🔴 Player left:', payload.old.username);
             setPlayers(prev => {
               const newPlayers = { ...prev };
               delete newPlayers[payload.old.user_id];
@@ -583,44 +543,26 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           }
         }
       )
-      .on('presence', { event: 'sync' }, () => {
-        console.log('🟣 Presence sync:', channel.presenceState());
-      })
-      .subscribe(async (status) => {
-        console.log('📡 Channel subscription status:', status);
+      .subscribe((status) => {
+        console.log('📡 Channel status:', status);
         
         if (status === 'SUBSCRIBED') {
           console.log('✅ Successfully subscribed to realtime updates');
-          setLoading(false);
           startHeartbeat();
           startCleanup();
-          
-          // Track presence
-          await channel.track({
-            user_id: userToUse.id,
-            username: userToUse.username,
-            online_at: new Date().toISOString()
-          });
         }
         
         if (status === 'CHANNEL_ERROR') {
           console.error('❌ Channel error');
           showMessage('Error de conexión en tiempo real');
-          setLoading(false);
-        }
-        
-        if (status === 'TIMED_OUT') {
-          console.error('⏰ Channel timeout');
-          showMessage('Timeout de conexión');
-          setLoading(false);
         }
       });
 
     channelRef.current = channel;
     return channel;
-  }, [supabaseClient, userToUse, showMessage, startHeartbeat, startCleanup]);
+  }, [supabaseClient, showMessage, startHeartbeat, startCleanup]);
 
-  // Efecto principal - CORREGIDO
+  // Efecto principal - SIMPLIFICADO
   useEffect(() => {
     if (!userToUse?.id) {
       showMessage('Error: Usuario no disponible');
@@ -628,56 +570,67 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       return;
     }
 
-    let mounted = true;
-    let channel;
+    // Evitar inicialización múltiple
+    if (initializationRef.current) {
+      console.log('🚫 Already initializing, skipping...');
+      return;
+    }
+
+    initializationRef.current = true;
+    console.log('🚀 Starting room initialization...');
 
     const initializeRoom = async () => {
       setLoading(true);
-      console.log('🚀 Initializing room...');
-      
-      // 1. Limpiar jugadores desconectados
+
       try {
+        // 1. Limpiar jugadores desconectados
         const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
         await supabaseClient
           .from('room_players')
           .delete()
           .lt('last_activity', cutoffTime);
+
+        // 2. Unirse a la sala
+        const joined = await joinRoom();
+        if (!joined) {
+          console.log('❌ Failed to join room');
+          setLoading(false);
+          return;
+        }
+
+        // 3. Configurar suscripción en tiempo real
+        setupRealtime();
+
+        // 4. Configurar chat en tiempo real
+        const messagesChannel = setupMessagesRealtime();
+        if (channelRef.current) {
+          channelRef.current.messagesChannel = messagesChannel;
+        }
+
+        setLoading(false);
+        console.log('✅ Room initialization completed');
+
       } catch (error) {
-        console.error('Cleanup error on init:', error);
+        console.error('❌ Error initializing room:', error);
+        showMessage('Error al inicializar la sala: ' + error.message);
+        setLoading(false);
       }
-
-      // 2. Unirse a la sala
-      const joined = await joinRoom();
-      if (!joined || !mounted) {
-        console.log('❌ Failed to join room or unmounted');
-        return;
-      }
-
-      // 3. Configurar suscripción en tiempo real
-      channel = setupRealtime();
-
-      // 4. Cargar y configurar chat
-      await loadMessageHistory();
-      const messagesChannel = setupMessagesRealtime();
-      channelRef.current.messagesChannel = messagesChannel;
     };
 
     initializeRoom();
 
-    // Limpieza al desmontar
+    // Limpieza al desmontar - SOLO UNA VEZ
     return () => {
-      console.log('🧹 Cleaning up room...');
-      mounted = false;
+      console.log('🧹 Component unmounting, cleaning up...');
+      initializationRef.current = false;
       leaveRoom();
     };
-  }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage, supabaseClient, loadMessageHistory, setupMessagesRealtime]);
+  }, []); // ← SIN DEPENDENCIAS para evitar re-ejecuciones
 
   // Event listeners para teclado y touch
   useEffect(() => {
-    // Teclado
     window.addEventListener('keydown', handleKeyDown);
     
-    // Touch (solo si es móvil)
     if (isMobile) {
       window.addEventListener('touchstart', handleTouchStart, { passive: true });
       window.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -708,8 +661,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       return diff >= 60 * 1000 && diff < 2 * 60 * 1000;
     });
     
-    console.log('👥 Players classification - Active:', activePlayers.length, 'Inactive:', inactivePlayers.length);
-    
     return { activePlayers, inactivePlayers };
   }, [players]);
 
@@ -732,9 +683,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 key={player.user_id}
                 className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
                 title={`${player.username} (${player.x}, ${player.y})`}
-                style={{
-                  transition: 'all 0.3s ease'
-                }}
               >
                 {player.avatar_url ? (
                   <img 
@@ -761,19 +709,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   };
 
-  // Timeout de seguridad
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('⏰ Loading timeout - returning to dashboard');
-        showMessage('Timeout de conexión');
-        setView('dashboard');
-      }
-    }, 15000);
-
-    return () => clearTimeout(timeout);
-  }, [loading, setView, showMessage]);
-
   if (loading) {
     return <LoadingScreen message="Conectando al Mundo Lupi..." />;
   }
@@ -790,27 +725,18 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   }
 
-  const { activePlayers, inactivePlayers } = classifyPlayers();
+  const { activePlayers } = classifyPlayers();
 
   return (
     <div className="lobby-container">
       <div className="lobby-header">
         <h1>🏟️ Mundo Lupi</h1>
-        <p>¡Muévete con las flechas del teclado y encuentra a otros jugadores!</p>
+        <p>¡Muévete con las flechas del teclado y chatea con otros jugadores!</p>
         <div className="lobby-info">
           <span>Jugadores activos: {activePlayers.length}</span>
-          <span>Mensajes: {messages.length}</span>
           <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
           
           <div className="lobby-control-buttons">
-            <button 
-              onClick={() => setShowChat(!showChat)}
-              className="lobby-chat-btn"
-            >
-              {showChat ? '💬 Ocultar Chat' : '💬 Mostrar Chat'}
-            </button>
-            
-            {/* Botón para controles móviles */}
             {isMobile && (
               <button 
                 onClick={() => setShowMobileControls(!showMobileControls)}
@@ -821,103 +747,78 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             )}
             
             <button onClick={() => setView('dashboard')} className="lobby-back-btn">
-              🏠 Volver al Dashboard
+              🏠 Salir
             </button>
           </div>
         </div>
       </div>
 
-      <div className="lobby-content">
-        <div className="lobby-map-container">
-          <div className="lobby-game-map">
-            {Array.from({ length: 15 }, (_, y) => (
-              <div key={y} className="lobby-map-row">
-                {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
-              </div>
-            ))}
-          </div>
+      <div className="lobby-map-container">
+        <div className="lobby-game-map">
+          {renderChatBubbles()}
+          
+          {Array.from({ length: 15 }, (_, y) => (
+            <div key={y} className="lobby-map-row">
+              {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
+            </div>
+          ))}
         </div>
-
-        <ChatPanel />
       </div>
 
-      {/* Controles móviles */}
+      {/* Input de chat fijo */}
+      <div className="lobby-chat-input-container">
+        <input
+          ref={chatInputRef}
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Escribe un mensaje y presiona Enter..."
+          className="lobby-chat-input"
+          maxLength={100}
+        />
+        <button 
+          onClick={sendMessage}
+          disabled={!newMessage.trim()}
+          className="lobby-chat-send-btn"
+        >
+          💬
+        </button>
+      </div>
+
       {renderMobileControls()}
 
       <div className="lobby-players-panel">
-        <h3>👥 Jugadores en la Sala ({activePlayers.length + inactivePlayers.length})</h3>
-        <div className="lobby-players-status">
-          <div className="lobby-status-active">
-            <h4>🟢 Activos ({activePlayers.length})</h4>
-            <div className="lobby-players-list">
-              {activePlayers.map(player => (
-                <div 
-                  key={player.user_id} 
-                  className={`lobby-player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
-                >
-                  <div className="lobby-player-info">
-                    {player.avatar_url && (
-                      <img 
-                        src={player.avatar_url} 
-                        alt="Avatar"
-                        className="lobby-player-avatar-small"
-                      />
-                    )}
-                    <span className="lobby-player-name">{player.username}</span>
-                    {player.user_id === userToUse.id && <span className="lobby-you-badge">(Tú)</span>}
-                  </div>
-                  <div className="lobby-player-position">
-                    ({player.x}, {player.y})
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {inactivePlayers.length > 0 && (
-            <div className="lobby-status-inactive">
-              <h4>🟡 Inactivos ({inactivePlayers.length})</h4>
-              <div className="lobby-players-list inactive">
-                {inactivePlayers.map(player => (
-                  <div 
-                    key={player.user_id} 
-                    className="lobby-player-item inactive"
-                  >
-                    <div className="lobby-player-info">
-                      {player.avatar_url && (
-                        <img 
-                          src={player.avatar_url} 
-                          alt="Avatar"
-                          className="lobby-player-avatar-small"
-                        />
-                      )}
-                      <span className="lobby-player-name">{player.username}</span>
-                    </div>
-                    <div className="lobby-player-position">
-                      (Inactivo)
-                    </div>
-                  </div>
-                ))}
+        <h3>👥 Jugadores en Línea ({activePlayers.length})</h3>
+        <div className="lobby-players-list">
+          {activePlayers.map(player => (
+            <div 
+              key={player.user_id} 
+              className={`lobby-player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
+            >
+              <div className="lobby-player-info">
+                {player.avatar_url && (
+                  <img 
+                    src={player.avatar_url} 
+                    alt="Avatar"
+                    className="lobby-player-avatar-small"
+                  />
+                )}
+                <span className="lobby-player-name">{player.username}</span>
+                {player.user_id === userToUse.id && <span className="lobby-you-badge">(Tú)</span>}
+              </div>
+              <div className="lobby-player-position">
+                ({player.x}, {player.y})
               </div>
             </div>
-          )}
+          ))}
         </div>
       </div>
 
       <div className="lobby-controls-help">
         <p>
-          {isMobile ? (
-            <>
-              🕹️ Controles: Desliza para moverte | Toca 🎮 para controles virtuales
-            </>
-          ) : (
-            <>
-              🕹️ Controles: Flechas o WASD para moverte
-            </>
-          )}
+          {isMobile ? '🕹️ Desliza para moverte | 💬 Escribe abajo para chatear' : '🕹️ Flechas o WASD para moverte | 💬 Escribe abajo para chatear'}
         </p>
-        <p>💬 Presiona el botón de chat para comunicarte con otros jugadores</p>
-        <p className="debug-info">🔴 Debug: {Object.keys(players).length} jugadores en estado</p>
       </div>
     </div>
   );
