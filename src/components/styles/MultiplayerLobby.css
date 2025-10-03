@@ -1,105 +1,260 @@
-/* src/components/styles/CommonRoom.css */
+/* src/components/styles/MultiplayerLobby.css */
+.lobby-container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: white;
+}
 
-.common-room-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
+.lobby-header {
+  text-align: center;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.lobby-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.lobby-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.lobby-back-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.lobby-back-btn:hover {
+  background: #ff5252;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+}
+
+/* Estilos del mapa del juego */
+.game-map-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Asegura que esté por encima de todo */
+  margin-bottom: 20px;
 }
 
-.map-container {
-  position: relative;
-  width: 800px;
-  height: 600px;
-  background-color: #3a8a3a;
-  background-image: 
-    linear-gradient(rgba(255,255,255,.07) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(255,255,255,.07) 2px, transparent 2px),
-    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
-  background-size: 64px 64px, 64px 64px, 32px 32px, 32px 32px;
-  border: 4px solid #4a2a1a;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  transform: scale(1);
-  animation: fadeIn 0.3s ease-out;
+.game-map {
+  display: inline-block;
+  border: 3px solid #2c3e50;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  background: #27ae60;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.player {
-  position: absolute;
-  width: 32px;
-  height: 48px;
-  transition: top 0.1s linear, left 0.1s linear;
+.map-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-.player img {
+.map-cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(52, 152, 219, 0.3);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.map-cell:hover {
+  background: rgba(52, 152, 219, 0.5);
+}
+
+.map-cell.occupied {
+  background: rgba(231, 76, 60, 0.3);
+}
+
+.players-in-cell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-marker {
+  transition: all 0.3s ease;
+}
+
+.player-marker.my-player {
+  z-index: 10;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.player-avatar {
   width: 32px;
   height: 32px;
-  object-fit: contain;
-  -webkit-user-drag: none; /* Evita que se pueda arrastrar la imagen */
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+}
+
+.my-player .player-avatar {
+  border: 3px solid #f39c12;
+  box-shadow: 0 0 10px rgba(243, 156, 18, 0.8);
+}
+
+.other-player .player-avatar {
+  border: 2px solid #3498db;
+}
+
+.player-initial {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e74c3c;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+/* Panel de jugadores */
+.players-panel {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.players-panel h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.players-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.player-item {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.player-item:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(5px);
+}
+
+.player-item.current-player {
+  background: rgba(243, 156, 18, 0.3);
+  border-left: 4px solid #f39c12;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .player-name {
-  background-color: rgba(0, 0, 0, 0.6);
-  color: white;
-  font-size: 10px;
-  padding: 2px 5px;
-  border-radius: 4px;
-  text-align: center;
-  white-space: nowrap;
-  position: absolute;
-  top: -18px;
-  transform: translateX(-50%);
-  left: 50%;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #c0392b;
-  color: white;
-  border: 2px solid white;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 20px;
   font-weight: bold;
-  cursor: pointer;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  line-height: 1;
 }
 
-.close-button:hover {
-  background-color: #e74c3c;
-  transform: scale(1.1);
-}
-
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.you-badge {
+  background: #f39c12;
   color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+}
+
+.player-position {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.controls-help {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+}
+
+/* Scrollbar personalizado */
+.players-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.players-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.players-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.players-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .game-map {
+    transform: scale(0.8);
+  }
+  
+  .lobby-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .players-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .error-container h2 {
