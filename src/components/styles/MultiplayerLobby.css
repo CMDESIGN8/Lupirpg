@@ -698,7 +698,6 @@
   }
 }
 
-/* Burbujas de Chat */
 /* Mejoras para las burbujas de chat */
 .chat-bubble {
   position: absolute;
@@ -711,7 +710,7 @@
 }
 
 .chat-bubble-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(121, 119, 119, 0.95);
   border: 2px solid #4CAF50;
   border-radius: 16px;
   padding: 8px 12px;
