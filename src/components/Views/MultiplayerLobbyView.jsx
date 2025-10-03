@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import LoadingScreen from '../UI/LoadingScreen';
-import '../styles/MultiplayerLobby.css'; // Crearemos este archivo CSS a continuación
+import '../styles/MultiplayerLobby.css';
 
 const MultiplayerLobbyView = ({ setView, supabaseClient, playerData, showMessage }) => {
   const [loading, setLoading] = useState(true);
@@ -10,7 +10,6 @@ const MultiplayerLobbyView = ({ setView, supabaseClient, playerData, showMessage
 
   // Función para manejar el movimiento del jugador
   const handleMove = useCallback(async (dx, dy) => {
-    // Encuentra la posición actual del jugador
     const me = players.find(p => p.user_id === playerData.id);
     if (!me) return;
 
@@ -53,20 +52,50 @@ const MultiplayerLobbyView = ({ setView, supabaseClient, playerData, showMessage
   useEffect(() => {
     const joinLobby = async () => {
       setLoading(true);
-      // 1. Unirse a la sala (o actualizar la posición si ya estaba)
+      
+      // 1. Unirse a la sala usando upsert con onConflict correcto
       const { error: upsertError } = await supabaseClient
         .from('room_players')
         .upsert({
           user_id: playerData.id,
           username: playerData.username,
-          x: Math.floor(Math.random() * 15), // Posición inicial aleatoria
+          x: Math.floor(Math.random() * 15),
           y: Math.floor(Math.random() * 15),
-        }, { onConflict: 'user_id' });
+        }, { 
+          onConflict: 'user_id', // Esto funcionará después de crear la constraint
+          ignoreDuplicates: false 
+        });
 
       if (upsertError) {
-        showMessage('Error al unirse al lobby: ' + upsertError.message);
-        setView('dashboard');
-        return;
+        console.error('Error al unirse al lobby:', upsertError);
+        
+        // Fallback: intentar insertar y si falla, actualizar
+        const { error: insertError } = await supabaseClient
+          .from('room_players')
+          .insert({
+            user_id: playerData.id,
+            username: playerData.username,
+            x: Math.floor(Math.random() * 15),
+            y: Math.floor(Math.random() * 15),
+          });
+
+        if (insertError) {
+          // Si la inserción falla, probablemente ya existe, entonces actualizar
+          const { error: updateError } = await supabaseClient
+            .from('room_players')
+            .update({
+              username: playerData.username,
+              x: Math.floor(Math.random() * 15),
+              y: Math.floor(Math.random() * 15),
+            })
+            .eq('user_id', playerData.id);
+
+          if (updateError) {
+            showMessage('Error al unirse al lobby: ' + updateError.message);
+            setView('dashboard');
+            return;
+          }
+        }
       }
       
       // 2. Obtener todos los jugadores actuales en la sala
@@ -99,7 +128,7 @@ const MultiplayerLobbyView = ({ setView, supabaseClient, playerData, showMessage
           setPlayers(current => current.map(p => p.user_id === payload.new.user_id ? payload.new : p));
         }
         if (payload.eventType === 'DELETE') {
-          setPlayers(current => current.filter(p => p.id !== payload.old.id));
+          setPlayers(current => current.filter(p => p.user_id !== payload.old.user_id));
         }
       })
       .subscribe();
@@ -129,9 +158,9 @@ const MultiplayerLobbyView = ({ setView, supabaseClient, playerData, showMessage
         {players.map(player => (
           <div
             key={player.user_id}
-            className="player-avatar-map"
+            className={`player-avatar-map ${player.user_id === playerData.id ? 'my-player' : ''}`}
             style={{
-              left: `${player.x * 6.66}%`, // 100% / 15 celdas
+              left: `${player.x * 6.66}%`,
               top: `${player.y * 6.66}%`,
               transition: 'left 0.2s, top 0.2s'
             }}
@@ -140,6 +169,16 @@ const MultiplayerLobbyView = ({ setView, supabaseClient, playerData, showMessage
             {player.username.charAt(0).toUpperCase()}
           </div>
         ))}
+      </div>
+      <div className="lobby-players-list">
+        <h3>Jugadores en el lobby ({players.length})</h3>
+        <ul>
+          {players.map(player => (
+            <li key={player.user_id} className={player.user_id === playerData.id ? 'my-player' : ''}>
+              {player.username} ({player.x}, {player.y})
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
