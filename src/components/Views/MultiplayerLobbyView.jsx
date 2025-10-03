@@ -25,7 +25,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   // Obtener avatar equipado
   useEffect(() => {
     const fetchEquippedAvatar = async () => {
-      // Usar currentUser.id si existe, si no usar playerData.id
       const userId = currentUser?.id || playerData?.id;
       
       if (!userId) {
@@ -63,6 +62,27 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     fetchEquippedAvatar();
   }, [supabaseClient, currentUser, playerData]);
 
+  // Función para limpiar jugadores inactivos
+  const cleanupInactivePlayers = useCallback(async () => {
+    try {
+      // Eliminar jugadores que no han tenido actividad en los últimos 30 segundos
+      const cutoffTime = new Date(Date.now() - 30 * 1000).toISOString();
+      
+      const { error } = await supabaseClient
+        .from('room_players')
+        .delete()
+        .lt('last_activity', cutoffTime);
+
+      if (error) {
+        console.error('Error cleaning inactive players:', error);
+      } else {
+        console.log('Cleaned up inactive players');
+      }
+    } catch (error) {
+      console.error('Error in cleanup:', error);
+    }
+  }, [supabaseClient]);
+
   // ✨ Efecto principal para unirse, escuchar cambios y salir de la sala
   useEffect(() => {
     // Determinar qué datos de usuario usar
@@ -79,20 +99,25 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     let channel;
     let isSubscribed = false;
+    let heartbeatInterval;
+    let cleanupInterval;
 
     const setupRoom = async () => {
       try {
         setLoading(true);
         
-        // 1. Obtener el avatar equipado del usuario actual
+        // 1. Limpiar jugadores inactivos al entrar
+        await cleanupInactivePlayers();
+        
+        // 2. Obtener el avatar equipado del usuario actual
         const avatarUrl = equippedAvatar?.image_url || '/default-avatar.png';
 
-        // 2. Posición inicial aleatoria
+        // 3. Posición inicial aleatoria
         const initialX = Math.floor(Math.random() * 15);
         const initialY = Math.floor(Math.random() * 15);
         playerPositionRef.current = { x: initialX, y: initialY };
 
-        // 3. Unirse a la sala en la base de datos
+        // 4. Unirse a la sala en la base de datos con timestamp actual
         const { error: upsertError } = await supabaseClient
           .from('room_players')
           .upsert({
@@ -112,10 +137,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           return;
         }
 
-        // 4. Obtener jugadores actuales en la sala
+        // 5. Obtener solo jugadores activos (últimos 30 segundos)
+        const activeCutoff = new Date(Date.now() - 30 * 1000).toISOString();
         const { data: currentPlayers, error: fetchError } = await supabaseClient
           .from('room_players')
-          .select('*');
+          .select('*')
+          .gte('last_activity', activeCutoff);
 
         if (fetchError) {
           console.error('Error fetching players:', fetchError);
@@ -126,13 +153,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             playersObj[player.user_id] = [player];
           });
           setPlayers(playersObj);
-          console.log('Initial players loaded:', currentPlayers?.length || 0);
+          console.log('Active players loaded:', currentPlayers?.length || 0);
         }
 
-        // 5. Crear canal de Supabase Realtime
+        // 6. Crear canal de Supabase Realtime
         channel = supabaseClient.channel('room_players_channel');
 
-        // 6. Escuchar cambios en la tabla room_players
+        // 7. Escuchar cambios en la tabla room_players
         channel
           .on(
             'postgres_changes',
@@ -144,17 +171,31 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             (payload) => {
               console.log('Room change:', payload.eventType, payload.new?.username);
               
-              if (payload.eventType === 'INSERT') {
+              // Filtrar solo jugadores activos
+              const now = new Date();
+              const payloadTime = new Date(payload.new?.last_activity || now);
+              const isActive = (now - payloadTime) < 30 * 1000; // 30 segundos
+              
+              if (payload.eventType === 'INSERT' && isActive) {
                 setPlayers(prev => ({
                   ...prev,
                   [payload.new.user_id]: [payload.new]
                 }));
               }
               else if (payload.eventType === 'UPDATE') {
-                setPlayers(prev => ({
-                  ...prev,
-                  [payload.new.user_id]: [payload.new]
-                }));
+                if (isActive) {
+                  setPlayers(prev => ({
+                    ...prev,
+                    [payload.new.user_id]: [payload.new]
+                  }));
+                } else {
+                  // Si el jugador está inactivo, eliminarlo del estado
+                  setPlayers(prev => {
+                    const newPlayers = { ...prev };
+                    delete newPlayers[payload.new.user_id];
+                    return newPlayers;
+                  });
+                }
               }
               else if (payload.eventType === 'DELETE') {
                 setPlayers(prev => {
@@ -171,6 +212,23 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               isSubscribed = true;
               setLoading(false);
               console.log('Successfully joined the room!');
+              
+              // Iniciar heartbeat para mantener al usuario activo
+              heartbeatInterval = setInterval(async () => {
+                try {
+                  await supabaseClient
+                    .from('room_players')
+                    .update({ 
+                      last_activity: new Date().toISOString() 
+                    })
+                    .eq('user_id', userToUse.id);
+                } catch (error) {
+                  console.error('Heartbeat error:', error);
+                }
+              }, 15000); // Cada 15 segundos
+              
+              // Limpiar inactivos periódicamente
+              cleanupInterval = setInterval(cleanupInactivePlayers, 30000); // Cada 30 segundos
             }
           });
 
@@ -183,9 +241,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     setupRoom();
 
-    // 7. Función de limpieza al desmontar
+    // 8. Función de limpieza al desmontar
     return () => {
       console.log('Cleaning up room for user:', userToUse.id);
+      
+      // Limpiar intervalos
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      if (cleanupInterval) clearInterval(cleanupInterval);
+      
       const leaveRoom = async () => {
         try {
           await supabaseClient
@@ -205,7 +268,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       
       leaveRoom();
     };
-  }, [currentUser, playerData, supabaseClient, equippedAvatar, showMessage, setView]);
+  }, [currentUser, playerData, supabaseClient, equippedAvatar, showMessage, setView, cleanupInactivePlayers]);
 
   // ✨ Efecto para manejar el movimiento del jugador con el teclado
   useEffect(() => {
@@ -241,7 +304,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       playerPositionRef.current = { x: newX, y: newY };
 
       try {
-        // Actualizar en la base de datos
+        // Actualizar en la base de datos con timestamp actual
         const { error } = await supabaseClient
           .from('room_players')
           .update({ 
@@ -265,48 +328,59 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentUser, playerData, supabaseClient]);
 
+  // Filtrar jugadores activos para mostrar
+  const getActivePlayers = useCallback(() => {
+    const now = new Date();
+    return Object.values(players).flat().filter(player => {
+      if (!player.last_activity) return false;
+      const lastActivity = new Date(player.last_activity);
+      return (now - lastActivity) < 30 * 1000; // Últimos 30 segundos
+    });
+  }, [players]);
+
   // Renderizar celda del mapa
   const renderMapCell = (x, y) => {
     const userToUse = currentUser || playerData;
-    const playersInCell = Object.values(players).flat().filter(player => 
+    const activePlayers = getActivePlayers();
+    const playersInCell = activePlayers.filter(player => 
       player.x === x && player.y === y
     );
     
     return (
       <div 
-  key={`${x}-${y}`} 
-  className={`lobby-map-cell ${playersInCell.length > 0 ? 'occupied' : ''}`}
->
-  {playersInCell.length > 0 && (
-    <div className="lobby-players-in-cell">
-      {playersInCell.map(player => (
-        <div 
-          key={player.user_id}
-          className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
-          title={player.username}
-        >
-          {player.avatar_url ? (
-            <img 
-              src={player.avatar_url} 
-              alt={player.username}
-              className="lobby-player-avatar"
-              onError={(e) => {
-                e.target.src = '/default-avatar.png';
-              }}
-            />
-          ) : (
-            <div className="lobby-player-initial">
-              {player.username?.charAt(0)?.toUpperCase() || '?'}
-            </div>
-          )}
-          <div className="lobby-player-name-tag">
-            {player.username}
+        key={`${x}-${y}`} 
+        className={`lobby-map-cell ${playersInCell.length > 0 ? 'occupied' : ''}`}
+      >
+        {playersInCell.length > 0 && (
+          <div className="lobby-players-in-cell">
+            {playersInCell.map(player => (
+              <div 
+                key={player.user_id}
+                className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
+                title={player.username}
+              >
+                {player.avatar_url ? (
+                  <img 
+                    src={player.avatar_url} 
+                    alt={player.username}
+                    className="lobby-player-avatar"
+                    onError={(e) => {
+                      e.target.src = '/default-avatar.png';
+                    }}
+                  />
+                ) : (
+                  <div className="lobby-player-initial">
+                    {player.username?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                )}
+                <div className="lobby-player-name-tag">
+                  {player.username}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+        )}
+      </div>
     );
   };
 
@@ -315,11 +389,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   }
 
   const userToUse = currentUser || playerData;
-  const playersArray = Object.values(players).flat();
+  const activePlayersArray = getActivePlayers();
 
   if (!userToUse) {
     return (
-      <div className="error-container">
+      <div className="lobby-error-container">
         <h2>Error</h2>
         <p>No se pudo cargar la información del usuario.</p>
         <button onClick={() => setView('dashboard')} className="lobby-back-btn">
@@ -335,7 +409,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <h1>🏟️ Mundo Lupi</h1>
         <p>¡Muévete con las flechas del teclado y encuentra a otros jugadores!</p>
         <div className="lobby-info">
-          <span>Jugadores en línea: {playersArray.length}</span>
+          <span>Jugadores en línea: {activePlayersArray.length}</span>
           <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
           <button onClick={() => setView('dashboard')} className="lobby-back-btn">
             🏠 Volver al Dashboard
@@ -344,46 +418,46 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       </div>
 
       <div className="lobby-map-container">
-    <div className="lobby-game-map">
-      {Array.from({ length: 15 }, (_, y) => (
-        <div key={y} className="lobby-map-row">
-          {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
+        <div className="lobby-game-map">
+          {Array.from({ length: 15 }, (_, y) => (
+            <div key={y} className="lobby-map-row">
+              {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
-  </div>
+      </div>
 
-  <div className="lobby-players-panel">
-    <h3>👥 Jugadores Conectados ({playersArray.length})</h3>
-    <div className="lobby-players-list">
-      {playersArray.map(player => (
-        <div 
-          key={player.user_id} 
-          className={`lobby-player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
-        >
-          <div className="lobby-player-info">
-            {player.avatar_url && (
-              <img 
-                src={player.avatar_url} 
-                alt="Avatar"
-                className="lobby-player-avatar-small"
-              />
-            )}
-            <span className="lobby-player-name">{player.username}</span>
-            {player.user_id === userToUse.id && <span className="lobby-you-badge">(Tú)</span>}
-          </div>
-          <div className="lobby-player-position">
-            Posición: ({player.x}, {player.y})
-          </div>
+      <div className="lobby-players-panel">
+        <h3>👥 Jugadores Conectados ({activePlayersArray.length})</h3>
+        <div className="lobby-players-list">
+          {activePlayersArray.map(player => (
+            <div 
+              key={player.user_id} 
+              className={`lobby-player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
+            >
+              <div className="lobby-player-info">
+                {player.avatar_url && (
+                  <img 
+                    src={player.avatar_url} 
+                    alt="Avatar"
+                    className="lobby-player-avatar-small"
+                  />
+                )}
+                <span className="lobby-player-name">{player.username}</span>
+                {player.user_id === userToUse.id && <span className="lobby-you-badge">(Tú)</span>}
+              </div>
+              <div className="lobby-player-position">
+                Posición: ({player.x}, {player.y})
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
-  </div>
+      </div>
 
-  <div className="lobby-controls-help">
-    <p>🕹️ Controles: Flechas para moverte | ESC para salir</p>
-  </div>
-</div>
+      <div className="lobby-controls-help">
+        <p>🕹️ Controles: Flechas para moverte | ESC para salir</p>
+      </div>
+    </div>
   );
 };
 
