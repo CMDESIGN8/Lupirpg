@@ -9,29 +9,24 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [players, setPlayers] = useState({});
   const [equippedAvatar, setEquippedAvatar] = useState(null);
   
-  // Referencia para la posición del jugador actual
+  // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
-  const userToUseRef = useRef(null); // Referencia para el usuario actual
+  const channelRef = useRef(null);
+  const cleanupIntervalRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
 
-  // Depuración: ver qué props estamos recibiendo
+  // Determinar usuario actual
+  const userToUse = currentUser || playerData;
+
+  // Depuración
   useEffect(() => {
-    console.log('MultiplayerLobbyView - Props recibidas:', {
-      currentUser,
-      playerData,
-      hasSetView: !!setView,
-      hasSupabaseClient: !!supabaseClient
-    });
-  }, [currentUser, playerData, setView, supabaseClient]);
+    console.log('MultiplayerLobbyView - User:', userToUse);
+  }, [userToUse]);
 
   // Obtener avatar equipado
   useEffect(() => {
     const fetchEquippedAvatar = async () => {
-      const userId = currentUser?.id || playerData?.id;
-      
-      if (!userId) {
-        console.log('No user ID found for avatar fetch');
-        return;
-      }
+      if (!userToUse?.id) return;
       
       try {
         const { data, error } = await supabaseClient
@@ -43,16 +38,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               name
             )
           `)
-          .eq('player_id', userId)
+          .eq('player_id', userToUse.id)
           .eq('is_equipped', true)
           .single();
 
-        if (error) {
-          console.log('Error fetching avatar (puede ser normal si no tiene avatar):', error);
-          return;
-        }
-
-        if (data) {
+        if (!error && data) {
           setEquippedAvatar(data.avatars);
         }
       } catch (error) {
@@ -61,225 +51,222 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     };
 
     fetchEquippedAvatar();
-  }, [supabaseClient, currentUser, playerData]);
+  }, [supabaseClient, userToUse]);
 
-  // Función para limpiar jugadores DESCONECTADOS (excluyendo al usuario actual)
-  const cleanupDisconnectedPlayers = useCallback(async () => {
+  // Función para unirse a la sala
+  const joinRoom = useCallback(async () => {
+    if (!userToUse?.id) return;
+
     try {
-      const currentUserId = userToUseRef.current?.id;
-      if (!currentUserId) return;
-
-      // Solo eliminar jugadores que no han tenido actividad en los últimos 2 MINUTOS
-      // Y que NO sean el usuario actual
-      const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const avatarUrl = equippedAvatar?.image_url || '/default-avatar.png';
+      const initialX = Math.floor(Math.random() * 15);
+      const initialY = Math.floor(Math.random() * 15);
       
-      const { error } = await supabaseClient
+      playerPositionRef.current = { x: initialX, y: initialY };
+
+      // Unirse a la sala
+      const { error: upsertError } = await supabaseClient
+        .from('room_players')
+        .upsert({
+          user_id: userToUse.id,
+          username: userToUse.username || 'Jugador',
+          avatar_url: avatarUrl,
+          x: initialX,
+          y: initialY,
+          last_activity: new Date().toISOString()
+        }, { 
+          onConflict: 'user_id'
+        });
+
+      if (upsertError) {
+        throw new Error(`Join error: ${upsertError.message}`);
+      }
+
+      console.log('User joined room successfully');
+
+      // Obtener jugadores actuales
+      const { data: currentPlayers, error: fetchError } = await supabaseClient
+        .from('room_players')
+        .select('*')
+        .gte('last_activity', new Date(Date.now() - 2 * 60 * 1000).toISOString());
+
+      if (!fetchError && currentPlayers) {
+        const playersObj = {};
+        currentPlayers.forEach(player => {
+          playersObj[player.user_id] = [player];
+        });
+        setPlayers(playersObj);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error joining room:', error);
+      showMessage('Error al unirse a la sala: ' + error.message);
+      return false;
+    }
+  }, [supabaseClient, userToUse, equippedAvatar, showMessage]);
+
+  // Función para salir de la sala
+  const leaveRoom = useCallback(async () => {
+    if (!userToUse?.id) return;
+
+    try {
+      // Limpiar intervalos
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      if (cleanupIntervalRef.current) {
+        clearInterval(cleanupIntervalRef.current);
+        cleanupIntervalRef.current = null;
+      }
+
+      // Remover canal
+      if (channelRef.current) {
+        supabaseClient.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+
+      // Eliminar de la base de datos
+      await supabaseClient
         .from('room_players')
         .delete()
-        .lt('last_activity', cutoffTime)
-        .neq('user_id', currentUserId); // ← EXCLUIR al usuario actual
+        .eq('user_id', userToUse.id);
 
-      if (error) {
-        console.error('Error cleaning disconnected players:', error);
-      } else {
-        console.log('Cleaned up disconnected players (excluding current user)');
-      }
+      console.log('User left room successfully');
     } catch (error) {
-      console.error('Error in cleanup:', error);
+      console.error('Error leaving room:', error);
     }
-  }, [supabaseClient]);
+  }, [supabaseClient, userToUse]);
 
-  // ✨ Efecto principal para unirse, escuchar cambios y salir de la sala
-  useEffect(() => {
-    // Determinar qué datos de usuario usar
-    const userToUse = currentUser || playerData;
-    userToUseRef.current = userToUse; // Guardar en referencia
+  // Heartbeat para mantener activo
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) return;
+
+    heartbeatIntervalRef.current = setInterval(async () => {
+      if (!userToUse?.id) return;
+
+      try {
+        await supabaseClient
+          .from('room_players')
+          .update({ 
+            last_activity: new Date().toISOString() 
+          })
+          .eq('user_id', userToUse.id);
+      } catch (error) {
+        console.error('Heartbeat error:', error);
+      }
+    }, 25000); // Cada 25 segundos
+  }, [supabaseClient, userToUse]);
+
+  // Limpiar jugadores desconectados
+  const startCleanup = useCallback(() => {
+    if (cleanupIntervalRef.current) return;
+
+    cleanupIntervalRef.current = setInterval(async () => {
+      try {
+        const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        await supabaseClient
+          .from('room_players')
+          .delete()
+          .lt('last_activity', cutoffTime)
+          .neq('user_id', userToUse?.id || '');
+      } catch (error) {
+        console.error('Cleanup error:', error);
+      }
+    }, 60000); // Cada 60 segundos
+  }, [supabaseClient, userToUse]);
+
+  // Configurar suscripción en tiempo real
+  const setupRealtime = useCallback(() => {
+    if (channelRef.current) return;
+
+    const channel = supabaseClient.channel('room_players_realtime');
     
+    channel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'room_players',
+        },
+        (payload) => {
+          console.log('Realtime update:', payload.eventType, payload.new?.username);
+          
+          if (payload.eventType === 'INSERT') {
+            setPlayers(prev => ({
+              ...prev,
+              [payload.new.user_id]: [payload.new]
+            }));
+          }
+          else if (payload.eventType === 'UPDATE') {
+            setPlayers(prev => ({
+              ...prev,
+              [payload.new.user_id]: [payload.new]
+            }));
+          }
+          else if (payload.eventType === 'DELETE') {
+            setPlayers(prev => {
+              const newPlayers = { ...prev };
+              delete newPlayers[payload.old.user_id];
+              return newPlayers;
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('Realtime connected successfully');
+          setLoading(false);
+          startHeartbeat();
+          startCleanup();
+        }
+        
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Realtime connection failed:', status);
+          showMessage('Error de conexión en tiempo real');
+          setLoading(false);
+        }
+      });
+
+    channelRef.current = channel;
+  }, [supabaseClient, showMessage, startHeartbeat, startCleanup]);
+
+  // Efecto principal
+  useEffect(() => {
     if (!userToUse?.id) {
-      console.error('No user data available:', { currentUser, playerData });
-      showMessage('Error: No se pudo cargar la información del usuario');
+      showMessage('Error: Usuario no disponible');
       setTimeout(() => setView('dashboard'), 2000);
       return;
     }
 
-    console.log('Setting up room for user:', userToUse.id, userToUse.username);
+    let mounted = true;
 
-    let channel;
-    let isSubscribed = false;
-    let heartbeatInterval;
-    let cleanupInterval;
-    let isUnmounting = false; // Bandera para evitar ejecuciones después del desmontaje
+    const initializeRoom = async () => {
+      setLoading(true);
+      
+      // 1. Unirse a la sala
+      const joined = await joinRoom();
+      if (!joined || !mounted) return;
 
-    const setupRoom = async () => {
-      try {
-        setLoading(true);
-        
-        // 1. Limpiar jugadores DESCONECTADOS (2 minutos) al entrar, excluyendo al usuario actual
-        await cleanupDisconnectedPlayers();
-        
-        // 2. Obtener el avatar equipado del usuario actual
-        const avatarUrl = equippedAvatar?.image_url || '/default-avatar.png';
-
-        // 3. Posición inicial aleatoria
-        const initialX = Math.floor(Math.random() * 15);
-        const initialY = Math.floor(Math.random() * 15);
-        playerPositionRef.current = { x: initialX, y: initialY };
-
-        // 4. Unirse a la sala en la base de datos con timestamp actual
-        const { error: upsertError } = await supabaseClient
-          .from('room_players')
-          .upsert({
-            user_id: userToUse.id,
-            username: userToUse.username || 'Jugador',
-            avatar_url: avatarUrl,
-            x: initialX,
-            y: initialY,
-            last_activity: new Date().toISOString()
-          }, { 
-            onConflict: 'user_id'
-          });
-
-        if (upsertError) {
-          console.error('Error joining room:', upsertError);
-          showMessage('Error al unirse a la sala: ' + upsertError.message);
-          setLoading(false);
-          return;
-        }
-
-        console.log('User successfully joined room');
-
-        // 5. Obtener TODOS los jugadores de la sala (sin filtrar por tiempo)
-        const { data: currentPlayers, error: fetchError } = await supabaseClient
-          .from('room_players')
-          .select('*');
-
-        if (fetchError) {
-          console.error('Error fetching players:', fetchError);
-        } else {
-          // Convertir array a objeto para el estado
-          const playersObj = {};
-          currentPlayers?.forEach(player => {
-            playersObj[player.user_id] = [player];
-          });
-          setPlayers(playersObj);
-          console.log('All room players loaded:', currentPlayers?.length || 0);
-        }
-
-        // 6. Crear canal de Supabase Realtime
-        channel = supabaseClient.channel('room_players_channel');
-
-        // 7. Escuchar cambios en la tabla room_players
-        channel
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'room_players',
-            },
-            (payload) => {
-              if (isUnmounting) return; // No procesar eventos si el componente se está desmontando
-              
-              console.log('Room change:', payload.eventType, payload.new?.username);
-              
-              if (payload.eventType === 'INSERT') {
-                setPlayers(prev => ({
-                  ...prev,
-                  [payload.new.user_id]: [payload.new]
-                }));
-              }
-              else if (payload.eventType === 'UPDATE') {
-                setPlayers(prev => ({
-                  ...prev,
-                  [payload.new.user_id]: [payload.new]
-                }));
-              }
-              else if (payload.eventType === 'DELETE') {
-                setPlayers(prev => {
-                  const newPlayers = { ...prev };
-                  delete newPlayers[payload.old.user_id];
-                  return newPlayers;
-                });
-              }
-            }
-          )
-          .subscribe((status) => {
-            console.log('Channel subscription status:', status);
-            if (status === 'SUBSCRIBED') {
-              isSubscribed = true;
-              setLoading(false);
-              console.log('Successfully joined the room!');
-              
-              // Heartbeat más espaciado - solo para mantener conexión
-              heartbeatInterval = setInterval(async () => {
-                if (isUnmounting) return;
-                try {
-                  await supabaseClient
-                    .from('room_players')
-                    .update({ 
-                      last_activity: new Date().toISOString() 
-                    })
-                    .eq('user_id', userToUse.id);
-                  console.log('Heartbeat sent');
-                } catch (error) {
-                  console.error('Heartbeat error:', error);
-                }
-              }, 30000); // Cada 30 segundos
-              
-              // Limpiar DESCONECTADOS (no inactivos) cada 2 minutos
-              cleanupInterval = setInterval(() => {
-                if (isUnmounting) return;
-                cleanupDisconnectedPlayers();
-              }, 120000);
-            } else if (status === 'CHANNEL_ERROR') {
-              console.error('Channel subscription error');
-              setLoading(false);
-              showMessage('Error de conexión con el servidor');
-            }
-          });
-
-      } catch (error) {
-        console.error('Error setting up room:', error);
-        showMessage('Error al configurar la sala: ' + error.message);
-        setLoading(false);
-      }
+      // 2. Configurar suscripción en tiempo real
+      setupRealtime();
     };
 
-    setupRoom();
+    initializeRoom();
 
-    // 8. Función de limpieza al desmontar
+    // Limpieza al desmontar
     return () => {
-      console.log('Cleaning up room for user:', userToUse.id);
-      isUnmounting = true; // Marcar que el componente se está desmontando
-      
-      // Limpiar intervalos
-      if (heartbeatInterval) clearInterval(heartbeatInterval);
-      if (cleanupInterval) clearInterval(cleanupInterval);
-      
-      const leaveRoom = async () => {
-        try {
-          await supabaseClient
-            .from('room_players')
-            .delete()
-            .eq('user_id', userToUse.id);
-          console.log('User removed from room');
-        } catch (error) {
-          console.error('Error leaving room:', error);
-        }
-        
-        if (channel && isSubscribed) {
-          supabaseClient.removeChannel(channel);
-          console.log('Channel removed');
-        }
-      };
-      
+      mounted = false;
       leaveRoom();
     };
-  }, [currentUser, playerData, supabaseClient, equippedAvatar, showMessage, setView, cleanupDisconnectedPlayers]);
+  }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage]);
 
-  // ✨ Efecto para manejar el movimiento del jugador con el teclado
+  // Movimiento del jugador
   useEffect(() => {
-    const userToUse = currentUser || playerData;
     if (!userToUse?.id) return;
 
     const handleKeyDown = async (e) => {
@@ -291,28 +278,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       let newY = currentPos.y;
 
       switch (e.key) {
-        case 'ArrowUp':    
-          newY = Math.max(0, newY - 1); 
-          break;
-        case 'ArrowDown':  
-          newY = Math.min(14, newY + 1); 
-          break;
-        case 'ArrowLeft':  
-          newX = Math.max(0, newX - 1); 
-          break;
-        case 'ArrowRight': 
-          newX = Math.min(14, newX + 1); 
-          break;
-        default: 
-          return;
+        case 'ArrowUp': newY = Math.max(0, newY - 1); break;
+        case 'ArrowDown': newY = Math.min(14, newY + 1); break;
+        case 'ArrowLeft': newX = Math.max(0, newX - 1); break;
+        case 'ArrowRight': newX = Math.min(14, newX + 1); break;
+        default: return;
       }
 
-      // Actualizar referencia local
       playerPositionRef.current = { x: newX, y: newY };
 
       try {
-        // Actualizar en la base de datos con timestamp actual
-        const { error } = await supabaseClient
+        await supabaseClient
           .from('room_players')
           .update({ 
             x: newX, 
@@ -320,44 +296,36 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             last_activity: new Date().toISOString()
           })
           .eq('user_id', userToUse.id);
-
-        if (error) {
-          console.error('Error updating position:', error);
-        } else {
-          console.log('Position updated:', newX, newY);
-        }
       } catch (error) {
-        console.error('Error moving player:', error);
+        console.error('Move error:', error);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentUser, playerData, supabaseClient]);
+  }, [userToUse, supabaseClient]);
 
-  // Clasificar jugadores por estado
+  // Clasificar jugadores
   const classifyPlayers = useCallback(() => {
     const now = new Date();
     const allPlayers = Object.values(players).flat();
     
     const activePlayers = allPlayers.filter(player => {
       if (!player.last_activity) return false;
-      const lastActivity = new Date(player.last_activity);
-      return (now - lastActivity) < 60 * 1000; // Activos en último minuto
+      return (now - new Date(player.last_activity)) < 60 * 1000;
     });
     
     const inactivePlayers = allPlayers.filter(player => {
       if (!player.last_activity) return false;
-      const lastActivity = new Date(player.last_activity);
-      return (now - lastActivity) >= 60 * 1000 && (now - lastActivity) < 2 * 60 * 1000; // 1-2 minutos
+      const diff = now - new Date(player.last_activity);
+      return diff >= 60 * 1000 && diff < 2 * 60 * 1000;
     });
     
     return { activePlayers, inactivePlayers };
   }, [players]);
 
-  // Renderizar celda del mapa (solo jugadores activos)
+  // Renderizar celda del mapa
   const renderMapCell = (x, y) => {
-    const userToUse = currentUser || playerData;
     const { activePlayers } = classifyPlayers();
     const playersInCell = activePlayers.filter(player => 
       player.x === x && player.y === y
@@ -401,12 +369,22 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   };
 
-  if (loading) {
-    return <LoadingScreen message="Entrando al Mundo Lupi..." />;
-  }
+  // Timeout de seguridad
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Loading timeout - returning to dashboard');
+        showMessage('Timeout de conexión');
+        setView('dashboard');
+      }
+    }, 15000);
 
-  const userToUse = currentUser || playerData;
-  const { activePlayers, inactivePlayers } = classifyPlayers();
+    return () => clearTimeout(timeout);
+  }, [loading, setView, showMessage]);
+
+  if (loading) {
+    return <LoadingScreen message="Conectando al Mundo Lupi..." />;
+  }
 
   if (!userToUse) {
     return (
@@ -419,6 +397,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       </div>
     );
   }
+
+  const { activePlayers, inactivePlayers } = classifyPlayers();
 
   return (
     <div className="lobby-container">
