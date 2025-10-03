@@ -59,7 +59,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     fetchEquippedAvatar();
   }, [supabaseClient, userToUse]);
 
-  // Función para mover al jugador - ACTUALIZADA
+  // Función para mover al jugador
   const movePlayer = useCallback(async (dx, dy) => {
     if (!userToUse?.id) return;
 
@@ -275,11 +275,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
       console.log('User joined room successfully');
 
-      // Obtener jugadores actuales
+      // Obtener TODOS los jugadores activos
+      const activeCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: currentPlayers, error: fetchError } = await supabaseClient
         .from('room_players')
         .select('*')
-        .gte('last_activity', new Date(Date.now() - 2 * 60 * 1000).toISOString());
+        .gte('last_activity', activeCutoff);
 
       if (!fetchError && currentPlayers) {
         const playersObj = {};
@@ -287,6 +288,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           playersObj[player.user_id] = [player];
         });
         setPlayers(playersObj);
+        console.log('Loaded players:', currentPlayers.length);
       }
 
       return true;
@@ -348,6 +350,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             last_activity: new Date().toISOString() 
           })
           .eq('user_id', userToUse.id);
+        console.log('Heartbeat sent');
       } catch (error) {
         console.error('Heartbeat error:', error);
       }
@@ -361,47 +364,65 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     cleanupIntervalRef.current = setInterval(async () => {
       try {
         const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-        await supabaseClient
+        const { error } = await supabaseClient
           .from('room_players')
           .delete()
           .lt('last_activity', cutoffTime)
           .neq('user_id', userToUse?.id || '');
+
+        if (!error) {
+          console.log('Cleanup completed');
+        }
       } catch (error) {
         console.error('Cleanup error:', error);
       }
     }, 60000);
   }, [supabaseClient, userToUse]);
 
-  // Configurar suscripción en tiempo real
+  // Configurar suscripción en tiempo real - CORREGIDA
   const setupRealtime = useCallback(() => {
-    if (channelRef.current) return;
+    if (channelRef.current) {
+      console.log('Channel already exists, removing...');
+      supabaseClient.removeChannel(channelRef.current);
+    }
 
-    const channel = supabaseClient.channel('room_players_realtime');
+    console.log('Setting up realtime channel...');
     
+    const channel = supabaseClient.channel('room_players_updates', {
+      config: {
+        broadcast: { self: true }, // Recibir nuestros propios eventos también
+        presence: { key: userToUse?.id }
+      }
+    });
+
+    // Escuchar TODOS los cambios en room_players
     channel
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // INSERT, UPDATE, DELETE
           schema: 'public',
           table: 'room_players',
         },
         (payload) => {
-          console.log('Realtime update:', payload.eventType, payload.new?.username);
+          console.log('🔴 REALTIME EVENT:', payload.eventType, payload.new || payload.old);
           
           if (payload.eventType === 'INSERT') {
+            console.log('🟢 New player joined:', payload.new.username);
             setPlayers(prev => ({
               ...prev,
               [payload.new.user_id]: [payload.new]
             }));
           }
           else if (payload.eventType === 'UPDATE') {
+            console.log('🟡 Player updated:', payload.new.username, 'at', payload.new.x, payload.new.y);
             setPlayers(prev => ({
               ...prev,
               [payload.new.user_id]: [payload.new]
             }));
           }
           else if (payload.eventType === 'DELETE') {
+            console.log('🔴 Player left:', payload.old.username);
             setPlayers(prev => {
               const newPlayers = { ...prev };
               delete newPlayers[payload.old.user_id];
@@ -410,27 +431,44 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+      .on('presence', { event: 'sync' }, () => {
+        console.log('🟣 Presence sync:', channel.presenceState());
+      })
+      .subscribe(async (status) => {
+        console.log('📡 Channel subscription status:', status);
         
         if (status === 'SUBSCRIBED') {
-          console.log('Realtime connected successfully');
+          console.log('✅ Successfully subscribed to realtime updates');
           setLoading(false);
           startHeartbeat();
           startCleanup();
+          
+          // Track presence
+          await channel.track({
+            user_id: userToUse.id,
+            username: userToUse.username,
+            online_at: new Date().toISOString()
+          });
         }
         
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('Realtime connection failed:', status);
+        if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Channel error');
           showMessage('Error de conexión en tiempo real');
+          setLoading(false);
+        }
+        
+        if (status === 'TIMED_OUT') {
+          console.error('⏰ Channel timeout');
+          showMessage('Timeout de conexión');
           setLoading(false);
         }
       });
 
     channelRef.current = channel;
-  }, [supabaseClient, showMessage, startHeartbeat, startCleanup]);
+    return channel;
+  }, [supabaseClient, userToUse, showMessage, startHeartbeat, startCleanup]);
 
-  // Efecto principal
+  // Efecto principal - CORREGIDO
   useEffect(() => {
     if (!userToUse?.id) {
       showMessage('Error: Usuario no disponible');
@@ -439,26 +477,43 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     let mounted = true;
+    let channel;
 
     const initializeRoom = async () => {
       setLoading(true);
+      console.log('🚀 Initializing room...');
       
-      // 1. Unirse a la sala
-      const joined = await joinRoom();
-      if (!joined || !mounted) return;
+      // 1. Limpiar jugadores desconectados
+      try {
+        const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        await supabaseClient
+          .from('room_players')
+          .delete()
+          .lt('last_activity', cutoffTime);
+      } catch (error) {
+        console.error('Cleanup error on init:', error);
+      }
 
-      // 2. Configurar suscripción en tiempo real
-      setupRealtime();
+      // 2. Unirse a la sala
+      const joined = await joinRoom();
+      if (!joined || !mounted) {
+        console.log('❌ Failed to join room or unmounted');
+        return;
+      }
+
+      // 3. Configurar suscripción en tiempo real
+      channel = setupRealtime();
     };
 
     initializeRoom();
 
     // Limpieza al desmontar
     return () => {
+      console.log('🧹 Cleaning up room...');
       mounted = false;
       leaveRoom();
     };
-  }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage]);
+  }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage, supabaseClient]);
 
   // Event listeners para teclado y touch
   useEffect(() => {
@@ -496,6 +551,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       return diff >= 60 * 1000 && diff < 2 * 60 * 1000;
     });
     
+    console.log('👥 Players classification - Active:', activePlayers.length, 'Inactive:', inactivePlayers.length);
+    
     return { activePlayers, inactivePlayers };
   }, [players]);
 
@@ -517,9 +574,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               <div 
                 key={player.user_id}
                 className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
-                title={player.username}
+                title={`${player.username} (${player.x}, ${player.y})`}
                 style={{
-                  transform: `translate(${0}px, ${0}px)`,
                   transition: 'all 0.3s ease'
                 }}
               >
@@ -552,7 +608,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading) {
-        console.warn('Loading timeout - returning to dashboard');
+        console.warn('⏰ Loading timeout - returning to dashboard');
         showMessage('Timeout de conexión');
         setView('dashboard');
       }
@@ -619,7 +675,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       {renderMobileControls()}
 
       <div className="lobby-players-panel">
-        <h3>👥 Jugadores en la Sala</h3>
+        <h3>👥 Jugadores en la Sala ({activePlayers.length + inactivePlayers.length})</h3>
         <div className="lobby-players-status">
           <div className="lobby-status-active">
             <h4>🟢 Activos ({activePlayers.length})</h4>
@@ -682,15 +738,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <p>
           {isMobile ? (
             <>
-              🕹️ Controles: Desliza para moverte | Toca 🎮 para controles virtuales | ESC para salir
+              🕹️ Controles: Desliza para moverte | Toca 🎮 para controles virtuales
             </>
           ) : (
             <>
-              🕹️ Controles: Flechas o WASD para moverte | ESC para salir
+              🕹️ Controles: Flechas o WASD para moverte
             </>
           )}
         </p>
         <p>💡 Los jugadores se marcan como inactivos después de 1 minuto sin movimiento</p>
+        <p className="debug-info">🔴 Debug: {Object.keys(players).length} jugadores en estado</p>
       </div>
     </div>
   );
