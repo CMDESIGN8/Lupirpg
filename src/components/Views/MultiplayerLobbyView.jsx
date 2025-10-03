@@ -131,7 +131,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [supabaseClient, userToUse]);
 
-  // Movimiento con teclado - CORREGIDO
+  // Movimiento con teclado
   const handleKeyDown = useCallback((e) => {
     // Si está escribiendo en el chat, no mover al jugador
     if (document.activeElement === chatInputRef.current) {
@@ -171,14 +171,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }, 150);
   }, [movePlayer]);
 
-  // Enviar mensaje de chat - CORREGIDO
+  // Enviar mensaje de chat
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !userToUse?.id) {
-      console.log('❌ No message to send or no user');
+      console.log('No message to send or no user');
       return;
     }
 
-    console.log('📤 Sending message:', newMessage.trim());
+    console.log('Sending message:', newMessage.trim());
 
     try {
       const { error } = await supabaseClient
@@ -190,12 +190,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         });
 
       if (error) {
-        console.error('❌ Error sending message:', error);
+        console.error('Error sending message:', error);
         showMessage('Error al enviar el mensaje: ' + error.message);
         return;
       }
 
-      console.log('✅ Message sent successfully');
+      console.log('Message sent successfully');
       
       // Mostrar burbuja local inmediatamente
       showChatBubble(userToUse.id, newMessage.trim(), userToUse.username);
@@ -209,23 +209,23 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       }
 
     } catch (error) {
-      console.error('❌ Error sending message:', error);
+      console.error('Error sending message:', error);
       showMessage('Error al enviar el mensaje');
     }
   }, [newMessage, userToUse, supabaseClient, showMessage, showChatBubble]);
 
-  // Manejar envío con Enter - CORREGIDO
+  // Manejar envío con Enter
   const handleKeyDownChat = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('⌨️ Enter pressed, sending message...');
+      console.log('Enter pressed, sending message...');
       sendMessage();
     }
   }, [sendMessage]);
 
-  // Configurar Realtime para mensajes - CORREGIDO
+  // Configurar Realtime para mensajes
   const setupMessagesRealtime = useCallback(() => {
-    console.log('💬 Setting up messages realtime...');
+    console.log('Setting up messages realtime...');
 
     // Remover canal existente si existe
     if (channelRef.current?.messagesChannel) {
@@ -243,11 +243,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_messages',
         },
         (payload) => {
-          console.log('💬 New message received via realtime:', payload.new);
+          console.log('New message received via realtime:', payload.new);
           
           // Mostrar burbuja de chat para el mensaje recibido (excepto nuestros propios mensajes)
           if (payload.new.user_id !== userToUse?.id) {
-            console.log('💬 Showing chat bubble for other player');
+            console.log('Showing chat bubble for other player');
             showChatBubble(
               payload.new.user_id, 
               payload.new.content, 
@@ -257,12 +257,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         }
       )
       .subscribe((status) => {
-        console.log('💬 Messages channel subscription status:', status);
+        console.log('Messages channel subscription status:', status);
         
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to messages realtime');
+          console.log('Successfully subscribed to messages realtime');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Messages channel error');
+          console.error('Messages channel error');
         }
       });
 
@@ -415,7 +415,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         throw new Error(`Join error: ${upsertError.message}`);
       }
 
-      console.log('✅ User joined room successfully');
+      console.log('User joined room successfully');
 
       // Obtener jugadores activos
       const activeCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
@@ -430,12 +430,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           playersObj[player.user_id] = [player];
         });
         setPlayers(playersObj);
-        console.log('📊 Loaded players:', currentPlayers.length);
+        console.log('Loaded players:', currentPlayers.length);
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Error joining room:', error);
+      console.error('Error joining room:', error);
       showMessage('Error al unirse a la sala: ' + error.message);
       return false;
     }
@@ -446,7 +446,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     if (!userToUse?.id) return;
 
     try {
-      console.log('🧹 Starting cleanup...');
+      console.log('Starting cleanup...');
 
       // Limpiar intervalos
       if (heartbeatIntervalRef.current) {
@@ -465,13 +465,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       // Remover canales
       if (channelRef.current?.messagesChannel) {
         supabaseClient.removeChannel(channelRef.current.messagesChannel);
-        console.log('🗑️ Removed messages channel');
+        console.log('Removed messages channel');
       }
 
       if (channelRef.current) {
         supabaseClient.removeChannel(channelRef.current);
         channelRef.current = null;
-        console.log('🗑️ Removed main channel');
+        console.log('Removed main channel');
       }
 
       // Eliminar de la base de datos
@@ -480,9 +480,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         .delete()
         .eq('user_id', userToUse.id);
 
-      console.log('✅ User left room successfully');
+      console.log('User left room successfully');
     } catch (error) {
-      console.error('❌ Error leaving room:', error);
+      console.error('Error leaving room:', error);
     }
   }, [supabaseClient, userToUse]);
 
@@ -501,7 +501,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           })
           .eq('user_id', userToUse.id);
       } catch (error) {
-        console.error('💓 Heartbeat error:', error);
+        console.error('Heartbeat error:', error);
       }
     }, 25000);
   }, [supabaseClient, userToUse]);
@@ -519,7 +519,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           .lt('last_activity', cutoffTime)
           .neq('user_id', userToUse?.id || '');
       } catch (error) {
-        console.error('🧹 Cleanup error:', error);
+        console.error('Cleanup error:', error);
       }
     }, 60000);
   }, [supabaseClient, userToUse]);
@@ -527,11 +527,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   // Configurar suscripción en tiempo real
   const setupRealtime = useCallback(() => {
     if (channelRef.current) {
-      console.log('🔄 Removing existing channel...');
+      console.log('Removing existing channel...');
       supabaseClient.removeChannel(channelRef.current);
     }
 
-    console.log('📡 Setting up realtime channel...');
+    console.log('Setting up realtime channel...');
     
     const channel = supabaseClient.channel('room_players_updates');
 
@@ -544,7 +544,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_players',
         },
         (payload) => {
-          console.log('🔄 Room event:', payload.eventType, payload.new?.username);
+          console.log('Room event:', payload.eventType, payload.new?.username);
           
           if (payload.eventType === 'INSERT') {
             setPlayers(prev => ({
@@ -568,16 +568,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         }
       )
       .subscribe((status) => {
-        console.log('📡 Channel status:', status);
+        console.log('Channel status:', status);
         
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to realtime updates');
+          console.log('Successfully subscribed to realtime updates');
           startHeartbeat();
           startCleanup();
         }
         
         if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Channel error');
+          console.error('Channel error');
           showMessage('Error de conexión en tiempo real');
         }
       });
@@ -595,12 +595,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     if (initializationRef.current) {
-      console.log('🚫 Already initializing, skipping...');
+      console.log('Already initializing, skipping...');
       return;
     }
 
     initializationRef.current = true;
-    console.log('🚀 Starting room initialization...');
+    console.log('Starting room initialization...');
 
     const initializeRoom = async () => {
       setLoading(true);
@@ -616,7 +616,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         // 2. Unirse a la sala
         const joined = await joinRoom();
         if (!joined) {
-          console.log('❌ Failed to join room');
+          console.log('Failed to join room');
           setLoading(false);
           return;
         }
@@ -631,10 +631,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         }
 
         setLoading(false);
-        console.log('✅ Room initialization completed');
+        console.log('Room initialization completed');
 
       } catch (error) {
-        console.error('❌ Error initializing room:', error);
+        console.error('Error initializing room:', error);
         showMessage('Error al inicializar la sala: ' + error.message);
         setLoading(false);
       }
@@ -644,7 +644,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     // Limpieza al desmontar
     return () => {
-      console.log('🧹 Component unmounting, cleaning up...');
+      console.log('Component unmounting, cleaning up...');
       initializationRef.current = false;
       leaveRoom();
     };
@@ -788,17 +788,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* Input de chat fijo - CORREGIDO */}
+      {/* Input de chat fijo */}
       <div className="lobby-chat-input-container">
         <input
           ref={chatInputRef}
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={handleKeyDownChat} 
-          
-          {/* Cambiado de onKeyPress a onKeyDown */}
-          
+          onKeyDown={handleKeyDownChat}
           placeholder="Escribe un mensaje y presiona Enter..."
           className="lobby-chat-input"
           maxLength={100}
