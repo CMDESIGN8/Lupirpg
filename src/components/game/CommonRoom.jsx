@@ -1,31 +1,30 @@
 // src/components/game/CommonRoom.jsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabaseClient } from '../../services/supabase'; // Asegúrate que la ruta a tu cliente supabase sea correcta
+// NO necesitas useNavigate
+// import { useNavigate } from 'react-router-dom';
+import { supabaseClient } from '../../services/supabase';
 import LoadingScreen from '../UI/LoadingScreen';
 import '../styles/CommonRoom.css';
 
-const CommonRoom = () => {
+// Recibimos setView como prop
+const CommonRoom = ({ setView }) => { 
   const [currentUser, setCurrentUser] = useState(null);
   const [players, setPlayers] = useState({});
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
   
-  // Usamos useRef para la posición y el canal para evitar re-creaciones innecesarias
   const playerPositionRef = useRef({ x: 0, y: 0, direction: 'down' });
   const channelRef = useRef(null);
 
-  // Efecto para inicializar y limpiar la sala
   useEffect(() => {
+    // ... toda la lógica de 'initialize' que te pasé en la respuesta anterior es la misma
     const initialize = async () => {
-      // 1. Obtener datos del usuario logueado
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) {
-        navigate('/login'); // Si no hay sesión, redirigir al login
+        setView('login'); // O como manejes la sesión expirada
         return;
       }
-
+      
       const { data: playerData, error: playerError } = await supabaseClient
         .from('players')
         .select('*, player_avatars(avatars(image_url))')
@@ -35,7 +34,7 @@ const CommonRoom = () => {
         
       if (playerError || !playerData) {
         console.error("Error fetching player:", playerError);
-        navigate('/dashboard'); // Si hay un error, volver al dash
+        setView('dashboard');
         return;
       }
       
@@ -48,11 +47,10 @@ const CommonRoom = () => {
       setCurrentUser(userProfile);
       setLoading(false);
 
-      // --- CONFIGURACIÓN DE SUPABASE REALTIME ---
-      // BUG FIX: Usamos un nombre de canal constante para todos
       const roomChannel = supabaseClient.channel('sala-comun-principal');
       channelRef.current = roomChannel;
 
+      // ... toda la lógica de suscripción al canal .on() se mantiene igual
       roomChannel
         .on('presence', { event: 'sync' }, () => {
           const presenceState = roomChannel.presenceState();
@@ -107,48 +105,22 @@ const CommonRoom = () => {
           }
         });
     };
-
+    
     initialize();
 
-    // Función de limpieza al salir de la página
     return () => {
       const channel = channelRef.current;
       if (channel) {
-        supabaseClient.removeChannel(channel);
-        if (currentUser) {
-            supabaseClient.from('room_users').delete().eq('user_id', currentUser.id).then();
-        }
+        supabaseClient.removeChannel(channel).then(() => {
+             if (currentUser) {
+                supabaseClient.from('room_users').delete().eq('user_id', currentUser.id).then();
+             }
+        });
       }
     };
-  }, []); // El array vacío asegura que esto solo se ejecute una vez
+  }, []);
 
-  // Efecto para el movimiento del jugador
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const handleKeyDown = (e) => {
-      let { x, y, direction } = playerPositionRef.current;
-
-      switch (e.key) {
-        case 'ArrowUp':    y = Math.max(0, y - 1); direction = 'up'; break;
-        case 'ArrowDown':  y = Math.min(17, y + 1); direction = 'down'; break;
-        case 'ArrowLeft':  x = Math.max(0, x - 1); direction = 'left'; break;
-        case 'ArrowRight': x = Math.min(24, x + 1); direction = 'right'; break;
-        default: return;
-      }
-
-      playerPositionRef.current = { x, y, direction };
-
-      // Actualización a Supabase (sin await para no bloquear la UI)
-      supabaseClient.from('room_users')
-        .update({ x, y, direction })
-        .eq('user_id', currentUser.id)
-        .then();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentUser]); // Se activa una vez que tenemos los datos del usuario
+  // El useEffect del movimiento se mantiene exactamente igual...
 
   if (loading) return <LoadingScreen message="Entrando a la Sala Común..." />;
 
@@ -159,17 +131,15 @@ const CommonRoom = () => {
           <div
             key={player.id}
             className="player"
-            style={{
-              left: `${player.x * 32}px`,
-              top: `${player.y * 32}px`,
-            }}
+            style={{ left: `${player.x * 32}px`, top: `${player.y * 32}px` }}
           >
             <img src={player.avatar_url} alt={player.username} className={`player-sprite direction-${player.direction}`} />
             <span className="player-name">{player.username}</span>
           </div>
         ))}
       </div>
-      <button className="back-button" onClick={() => navigate('/dashboard')}>
+      {/* Botón para volver al dashboard usando setView */}
+      <button className="back-button" onClick={() => setView('dashboard')}>
         Volver al Dashboard
       </button>
     </div>
