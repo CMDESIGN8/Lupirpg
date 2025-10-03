@@ -274,39 +274,39 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     
     return (
       <div 
-        key={`${x}-${y}`} 
-        className={`map-cell ${playersInCell.length > 0 ? 'occupied' : ''}`}
-      >
-        {playersInCell.length > 0 && (
-          <div className="players-in-cell">
-            {playersInCell.map(player => (
-              <div 
-                key={player.user_id}
-                className={`player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
-                title={player.username}
-              >
-                {player.avatar_url ? (
-                  <img 
-                    src={player.avatar_url} 
-                    alt={player.username}
-                    className="player-avatar"
-                    onError={(e) => {
-                      e.target.src = '/default-avatar.png';
-                    }}
-                  />
-                ) : (
-                  <div className="player-initial">
-                    {player.username?.charAt(0)?.toUpperCase() || '?'}
-                  </div>
-                )}
-                <div className="player-name-tag">
-                  {player.username}
-                </div>
-              </div>
-            ))}
+  key={`${x}-${y}`} 
+  className={`lobby-map-cell ${playersInCell.length > 0 ? 'occupied' : ''}`}
+>
+  {playersInCell.length > 0 && (
+    <div className="lobby-players-in-cell">
+      {playersInCell.map(player => (
+        <div 
+          key={player.user_id}
+          className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
+          title={player.username}
+        >
+          {player.avatar_url ? (
+            <img 
+              src={player.avatar_url} 
+              alt={player.username}
+              className="lobby-player-avatar"
+              onError={(e) => {
+                e.target.src = '/default-avatar.png';
+              }}
+            />
+          ) : (
+            <div className="lobby-player-initial">
+              {player.username?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+          )}
+          <div className="lobby-player-name-tag">
+            {player.username}
           </div>
-        )}
-      </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
     );
   };
 
@@ -343,48 +343,47 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      <div className="game-map-container">
-        <div className="game-map">
-          {/* Renderizar grid del mapa 15x15 */}
-          {Array.from({ length: 15 }, (_, y) => (
-            <div key={y} className="map-row">
-              {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
-            </div>
-          ))}
+      <div className="lobby-map-container">
+    <div className="lobby-game-map">
+      {Array.from({ length: 15 }, (_, y) => (
+        <div key={y} className="lobby-map-row">
+          {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
         </div>
-      </div>
-
-      <div className="players-panel">
-        <h3>👥 Jugadores Conectados ({playersArray.length})</h3>
-        <div className="players-list">
-          {playersArray.map(player => (
-            <div 
-              key={player.user_id} 
-              className={`player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
-            >
-              <div className="player-info">
-                {player.avatar_url && (
-                  <img 
-                    src={player.avatar_url} 
-                    alt="Avatar"
-                    className="player-avatar-small"
-                  />
-                )}
-                <span className="player-name">{player.username}</span>
-                {player.user_id === userToUse.id && <span className="you-badge">(Tú)</span>}
-              </div>
-              <div className="player-position">
-                Posición: ({player.x}, {player.y})
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="controls-help">
-        <p>🕹️ Controles: Flechas para moverte | ESC para salir</p>
-      </div>
+      ))}
     </div>
+  </div>
+
+  <div className="lobby-players-panel">
+    <h3>👥 Jugadores Conectados ({playersArray.length})</h3>
+    <div className="lobby-players-list">
+      {playersArray.map(player => (
+        <div 
+          key={player.user_id} 
+          className={`lobby-player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
+        >
+          <div className="lobby-player-info">
+            {player.avatar_url && (
+              <img 
+                src={player.avatar_url} 
+                alt="Avatar"
+                className="lobby-player-avatar-small"
+              />
+            )}
+            <span className="lobby-player-name">{player.username}</span>
+            {player.user_id === userToUse.id && <span className="lobby-you-badge">(Tú)</span>}
+          </div>
+          <div className="lobby-player-position">
+            Posición: ({player.x}, {player.y})
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div className="lobby-controls-help">
+    <p>🕹️ Controles: Flechas para moverte | ESC para salir</p>
+  </div>
+</div>
   );
 };
 

@@ -1,4 +1,6 @@
 /* src/components/styles/MultiplayerLobby.css */
+
+/* Contenedor principal específico del lobby */
 .lobby-container {
   padding: 20px;
   max-width: 1000px;
@@ -8,6 +10,7 @@
   color: white;
 }
 
+/* Header del lobby */
 .lobby-header {
   text-align: center;
   margin-bottom: 20px;
@@ -28,8 +31,11 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
+/* Botón específico del lobby */
 .lobby-back-btn {
   background: #ff6b6b;
   color: white;
@@ -48,14 +54,14 @@
   box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
 }
 
-/* Estilos del mapa del juego */
-.game-map-container {
+/* Estilos del mapa del juego - MUY ESPECÍFICOS */
+.lobby-map-container {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
 }
 
-.game-map {
+.lobby-game-map {
   display: inline-block;
   border: 3px solid #2c3e50;
   border-radius: 10px;
@@ -64,11 +70,11 @@
   background: #27ae60;
 }
 
-.map-row {
+.lobby-map-row {
   display: flex;
 }
 
-.map-cell {
+.lobby-map-cell {
   width: 40px;
   height: 40px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -77,15 +83,15 @@
   transition: all 0.2s ease;
 }
 
-.map-cell:hover {
+.lobby-map-cell:hover {
   background: rgba(52, 152, 219, 0.5);
 }
 
-.map-cell.occupied {
+.lobby-map-cell.occupied {
   background: rgba(231, 76, 60, 0.3);
 }
 
-.players-in-cell {
+.lobby-players-in-cell {
   position: absolute;
   top: 0;
   left: 0;
@@ -96,22 +102,23 @@
   justify-content: center;
 }
 
-.player-marker {
+/* Avatares específicos del lobby */
+.lobby-player-marker {
   transition: all 0.3s ease;
 }
 
-.player-marker.my-player {
+.lobby-player-marker.my-player {
   z-index: 10;
-  animation: pulse 2s infinite;
+  animation: lobby-pulse 2s infinite;
 }
 
-@keyframes pulse {
+@keyframes lobby-pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
 
-.player-avatar {
+.lobby-player-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -119,16 +126,16 @@
   object-fit: cover;
 }
 
-.my-player .player-avatar {
+.lobby-player-marker.my-player .lobby-player-avatar {
   border: 3px solid #f39c12;
   box-shadow: 0 0 10px rgba(243, 156, 18, 0.8);
 }
 
-.other-player .player-avatar {
+.lobby-player-marker.other-player .lobby-player-avatar {
   border: 2px solid #3498db;
 }
 
-.player-initial {
+.lobby-player-initial {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -141,8 +148,26 @@
   border: 2px solid white;
 }
 
-/* Panel de jugadores */
-.players-panel {
+.lobby-player-name-tag {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  display: none;
+}
+
+.lobby-player-marker:hover .lobby-player-name-tag {
+  display: block;
+}
+
+/* Panel de jugadores del lobby */
+.lobby-players-panel {
   background: rgba(255, 255, 255, 0.1);
   padding: 20px;
   border-radius: 15px;
@@ -150,13 +175,13 @@
   backdrop-filter: blur(10px);
 }
 
-.players-panel h3 {
+.lobby-players-panel h3 {
   margin-top: 0;
   margin-bottom: 15px;
   text-align: center;
 }
 
-.players-list {
+.lobby-players-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 10px;
@@ -164,7 +189,7 @@
   overflow-y: auto;
 }
 
-.player-item {
+.lobby-player-item {
   background: rgba(255, 255, 255, 0.2);
   padding: 10px;
   border-radius: 10px;
@@ -174,34 +199,35 @@
   transition: all 0.3s ease;
 }
 
-.player-item:hover {
+.lobby-player-item:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: translateX(5px);
 }
 
-.player-item.current-player {
+.lobby-player-item.current-player {
   background: rgba(243, 156, 18, 0.3);
   border-left: 4px solid #f39c12;
 }
 
-.player-info {
+.lobby-player-info {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.player-avatar-small {
+.lobby-player-avatar-small {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.player-name {
+.lobby-player-name {
   font-weight: bold;
 }
 
-.you-badge {
+.lobby-you-badge {
   background: #f39c12;
   color: white;
   padding: 2px 8px;
@@ -209,12 +235,13 @@
   font-size: 0.8em;
 }
 
-.player-position {
+.lobby-player-position {
   font-size: 0.9em;
   opacity: 0.8;
 }
 
-.controls-help {
+/* Controles del lobby */
+.lobby-controls-help {
   text-align: center;
   background: rgba(255, 255, 255, 0.1);
   padding: 15px;
@@ -222,28 +249,54 @@
   backdrop-filter: blur(10px);
 }
 
-/* Scrollbar personalizado */
-.players-list::-webkit-scrollbar {
+/* Error container específico del lobby */
+.lobby-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.lobby-error-container h2 {
+  margin-bottom: 20px;
+}
+
+.lobby-error-container button {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+/* Scrollbar específico del lobby */
+.lobby-players-list::-webkit-scrollbar {
   width: 8px;
 }
 
-.players-list::-webkit-scrollbar-track {
+.lobby-players-list::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
 
-.players-list::-webkit-scrollbar-thumb {
+.lobby-players-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
 }
 
-.players-list::-webkit-scrollbar-thumb:hover {
+.lobby-players-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* Responsive */
+/* Responsive para el lobby */
 @media (max-width: 768px) {
-  .game-map {
+  .lobby-game-map {
     transform: scale(0.8);
   }
   
@@ -252,21 +305,17 @@
     gap: 10px;
   }
   
-  .players-list {
+  .lobby-players-list {
     grid-template-columns: 1fr;
   }
-}
-
-.error-container h2 {
-  margin-bottom: 20px;
-}
-
-.error-container button {
-  background: #ff6b6b;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 25px;
-  cursor: pointer;
-  margin-top: 20px;
+  
+  .lobby-map-cell {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .lobby-player-avatar {
+    width: 26px;
+    height: 26px;
+  }
 }
