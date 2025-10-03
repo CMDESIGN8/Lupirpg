@@ -9,9 +9,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [players, setPlayers] = useState({});
   const [equippedAvatar, setEquippedAvatar] = useState(null);
   const [showMobileControls, setShowMobileControls] = useState(false);
-  const [showChat, setShowChat] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [activeChatBubbles, setActiveChatBubbles] = useState({});
   
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
@@ -20,7 +19,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const heartbeatIntervalRef = useRef(null);
   const moveTimeoutRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
-  const chatMessagesEndRef = useRef(null);
+  const chatInputRef = useRef(null);
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
@@ -62,6 +61,31 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     fetchEquippedAvatar();
   }, [supabaseClient, userToUse]);
+
+  // Función para mostrar burbuja de chat
+  const showChatBubble = useCallback((userId, message, username) => {
+    const bubbleId = `${userId}-${Date.now()}`;
+    
+    setActiveChatBubbles(prev => ({
+      ...prev,
+      [bubbleId]: {
+        userId,
+        message,
+        username,
+        timestamp: Date.now(),
+        position: players[userId]?.[0] || { x: 0, y: 0 }
+      }
+    }));
+
+    // Auto-remover la burbuja después de 5 segundos
+    setTimeout(() => {
+      setActiveChatBubbles(prev => {
+        const newBubbles = { ...prev };
+        delete newBubbles[bubbleId];
+        return newBubbles;
+      });
+    }, 5000);
+  }, [players]);
 
   // Función para mover al jugador
   const movePlayer = useCallback(async (dx, dy) => {
@@ -117,6 +141,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Movimiento con teclado
   const handleKeyDown = useCallback((e) => {
+    // Si está escribiendo en el chat, no mover al jugador
+    if (chatInputRef.current && document.activeElement === chatInputRef.current) {
+      return;
+    }
+
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].includes(e.key)) return;
     e.preventDefault();
 
@@ -171,12 +200,21 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         return;
       }
 
+      // Mostrar burbuja local inmediatamente
+      showChatBubble(userToUse.id, newMessage.trim(), userToUse.username);
+      
       setNewMessage('');
+      
+      // Enfocar el input de nuevo para seguir escribiendo
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
       showMessage('Error al enviar el mensaje');
     }
-  }, [newMessage, userToUse, supabaseClient, showMessage]);
+  }, [newMessage, userToUse, supabaseClient, showMessage, showChatBubble]);
 
   // Manejar envío con Enter
   const handleKeyPress = useCallback((e) => {
@@ -185,23 +223,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       sendMessage();
     }
   }, [sendMessage]);
-
-  // Cargar historial de mensajes
-  const loadMessageHistory = useCallback(async () => {
-    try {
-      const { data, error } = await supabaseClient
-        .from('room_messages')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (!error && data) {
-        setMessages(data.reverse());
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    }
-  }, [supabaseClient]);
 
   // Configurar Realtime para mensajes
   const setupMessagesRealtime = useCallback(() => {
@@ -216,13 +237,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_messages',
         },
         (payload) => {
-          console.log('💬 New message:', payload.new);
-          setMessages(prev => [...prev, payload.new]);
+          console.log('💬 New message received:', payload.new);
           
-          // Auto-scroll to bottom
-          setTimeout(() => {
-            chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
+          // Mostrar burbuja de chat para el mensaje recibido
+          if (payload.new.user_id !== userToUse?.id) {
+            showChatBubble(
+              payload.new.user_id, 
+              payload.new.content, 
+              payload.new.username
+            );
+          }
         }
       )
       .subscribe((status) => {
@@ -230,7 +254,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       });
 
     return messagesChannel;
-  }, [supabaseClient]);
+  }, [supabaseClient, userToUse, showChatBubble]);
 
   // Controles táctiles para móvil
   const handleTouchStart = useCallback((e) => {
@@ -328,67 +352,31 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   };
 
-  // Componente de Chat
-  const ChatPanel = () => {
-    if (!showChat) return null;
+  // Renderizar burbujas de chat
+  const renderChatBubbles = () => {
+    return Object.entries(activeChatBubbles).map(([bubbleId, bubble]) => {
+      const player = players[bubble.userId]?.[0];
+      if (!player) return null;
 
-    return (
-      <div className="lobby-chat-panel">
-        <div className="chat-header">
-          <h4>💬 Chat Global</h4>
-          <button 
-            className="chat-close-btn"
-            onClick={() => setShowChat(false)}
-          >
-            ✕
-          </button>
+      return (
+        <div
+          key={bubbleId}
+          className={`chat-bubble ${bubble.userId === userToUse?.id ? 'own-chat-bubble' : 'other-chat-bubble'}`}
+          style={{
+            left: `${player.x * 6.66}%`,
+            top: `${player.y * 6.66 - 15}%`, // Posicionar arriba del jugador
+          }}
+        >
+          <div className="chat-bubble-content">
+            {bubble.userId !== userToUse?.id && (
+              <div className="chat-bubble-username">{bubble.username}</div>
+            )}
+            <div className="chat-bubble-message">{bubble.message}</div>
+          </div>
+          <div className="chat-bubble-tail"></div>
         </div>
-        
-        <div className="chat-messages">
-          {messages.map((message) => (
-            <div 
-              key={message.id}
-              className={`chat-message ${message.user_id === userToUse?.id ? 'own-message' : 'other-message'}`}
-            >
-              <div className="message-header">
-                <span className="message-username">
-                  {message.user_id === userToUse?.id ? 'Tú' : message.username}
-                </span>
-                <span className="message-time">
-                  {new Date(message.created_at).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </span>
-              </div>
-              <div className="message-content">
-                {message.content}
-              </div>
-            </div>
-          ))}
-          <div ref={chatMessagesEndRef} />
-        </div>
-
-        <div className="chat-input-container">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Escribe un mensaje..."
-            className="chat-input"
-            maxLength={200}
-          />
-          <button 
-            onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            className="chat-send-btn"
-          >
-            📨
-          </button>
-        </div>
-      </div>
-    );
+      );
+    });
   };
 
   // Función para unirse a la sala
@@ -656,8 +644,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       // 3. Configurar suscripción en tiempo real
       channel = setupRealtime();
 
-      // 4. Cargar y configurar chat
-      await loadMessageHistory();
+      // 4. Configurar chat en tiempo real
       const messagesChannel = setupMessagesRealtime();
       channelRef.current.messagesChannel = messagesChannel;
     };
@@ -670,7 +657,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       mounted = false;
       leaveRoom();
     };
-  }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage, supabaseClient, loadMessageHistory, setupMessagesRealtime]);
+  }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage, supabaseClient, setupMessagesRealtime]);
 
   // Event listeners para teclado y touch
   useEffect(() => {
@@ -796,20 +783,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     <div className="lobby-container">
       <div className="lobby-header">
         <h1>🏟️ Mundo Lupi</h1>
-        <p>¡Muévete con las flechas del teclado y encuentra a otros jugadores!</p>
+        <p>¡Muévete con las flechas del teclado y chatea con otros jugadores!</p>
         <div className="lobby-info">
           <span>Jugadores activos: {activePlayers.length}</span>
-          <span>Mensajes: {messages.length}</span>
           <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
           
           <div className="lobby-control-buttons">
-            <button 
-              onClick={() => setShowChat(!showChat)}
-              className="lobby-chat-btn"
-            >
-              {showChat ? '💬 Ocultar Chat' : '💬 Mostrar Chat'}
-            </button>
-            
             {/* Botón para controles móviles */}
             {isMobile && (
               <button 
@@ -827,18 +806,39 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      <div className="lobby-content">
-        <div className="lobby-map-container">
-          <div className="lobby-game-map">
-            {Array.from({ length: 15 }, (_, y) => (
-              <div key={y} className="lobby-map-row">
-                {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
-              </div>
-            ))}
-          </div>
+      <div className="lobby-map-container">
+        <div className="lobby-game-map">
+          {/* Burbujas de chat */}
+          {renderChatBubbles()}
+          
+          {/* Mapa */}
+          {Array.from({ length: 15 }, (_, y) => (
+            <div key={y} className="lobby-map-row">
+              {Array.from({ length: 15 }, (_, x) => renderMapCell(x, y))}
+            </div>
+          ))}
         </div>
+      </div>
 
-        <ChatPanel />
+      {/* Input de chat fijo en la parte inferior */}
+      <div className="lobby-chat-input-container">
+        <input
+          ref={chatInputRef}
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Escribe un mensaje y presiona Enter..."
+          className="lobby-chat-input"
+          maxLength={100}
+        />
+        <button 
+          onClick={sendMessage}
+          disabled={!newMessage.trim()}
+          className="lobby-chat-send-btn"
+        >
+          💬
+        </button>
       </div>
 
       {/* Controles móviles */}
@@ -873,34 +873,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               ))}
             </div>
           </div>
-          
-          {inactivePlayers.length > 0 && (
-            <div className="lobby-status-inactive">
-              <h4>🟡 Inactivos ({inactivePlayers.length})</h4>
-              <div className="lobby-players-list inactive">
-                {inactivePlayers.map(player => (
-                  <div 
-                    key={player.user_id} 
-                    className="lobby-player-item inactive"
-                  >
-                    <div className="lobby-player-info">
-                      {player.avatar_url && (
-                        <img 
-                          src={player.avatar_url} 
-                          alt="Avatar"
-                          className="lobby-player-avatar-small"
-                        />
-                      )}
-                      <span className="lobby-player-name">{player.username}</span>
-                    </div>
-                    <div className="lobby-player-position">
-                      (Inactivo)
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -908,16 +880,15 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <p>
           {isMobile ? (
             <>
-              🕹️ Controles: Desliza para moverte | Toca 🎮 para controles virtuales
+              🕹️ Desliza para moverte | 💬 Escribe abajo para chatear
             </>
           ) : (
             <>
-              🕹️ Controles: Flechas o WASD para moverte
+              🕹️ Flechas o WASD para moverte | 💬 Escribe abajo para chatear
             </>
           )}
         </p>
-        <p>💬 Presiona el botón de chat para comunicarte con otros jugadores</p>
-        <p className="debug-info">🔴 Debug: {Object.keys(players).length} jugadores en estado</p>
+        <p>💡 Los mensajes aparecen como burbujas sobre los jugadores</p>
       </div>
     </div>
   );
