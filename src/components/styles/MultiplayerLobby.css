@@ -1,15 +1,8 @@
 /* src/components/styles/MultiplayerLobby.css */
-
 .lobby-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 100vh;
-  background-color: #2c3e50;
-  color: white;
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .lobby-header {
@@ -17,54 +10,76 @@
   margin-bottom: 20px;
 }
 
-.lobby-header h1 {
-  font-size: 2.5rem;
-  color: #3498db;
-}
-
 .lobby-back-btn {
-  background-color: #3498db;
+  background: #ff6b6b;
   color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1rem;
   margin-top: 10px;
-  transition: background-color 0.3s;
 }
 
 .lobby-back-btn:hover {
-  background-color: #2980b9;
+  background: #ff5252;
 }
 
 .lobby-map {
-  width: 80vw;
-  height: 80vw;
-  max-width: 600px;
-  max-height: 600px;
-  background-color: #34495e;
-  border: 5px solid #2980b9;
   position: relative;
-  border-radius: 10px;
-  background-image: 
-    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 6.66% 6.66%;
+  width: 500px;
+  height: 500px;
+  background: #e8f5e8;
+  border: 2px solid #2e7d32;
+  border-radius: 8px;
+  margin: 0 auto 20px;
+  overflow: hidden;
 }
 
 .player-avatar-map {
   position: absolute;
-  width: 6.66%;
-  height: 6.66%;
-  background-color: #e74c3c;
+  width: 30px;
+  height: 30px;
+  background: #2196f3;
+  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 1.2rem;
-  color: white;
-  border: 2px solid #c0392b;
-  box-sizing: border-box;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.player-avatar-map.my-player {
+  background: #ff9800;
+  border: 2px solid #ff5722;
+}
+
+.lobby-players-list {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.lobby-players-list h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.lobby-players-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.lobby-players-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.lobby-players-list li.my-player {
+  font-weight: bold;
+  color: #ff9800;
 }
