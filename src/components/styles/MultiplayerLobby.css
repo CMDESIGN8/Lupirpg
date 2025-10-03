@@ -562,6 +562,7 @@
   align-self: flex-end;
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
+  font-weight: bold;
 }
 
 .other-message {
@@ -589,6 +590,8 @@
 
 .message-content {
   line-height: 1.4;
+  color:rgba(52, 152, 219, 0.5);
+  font-weight: bold;
 }
 
 .chat-input-container {
