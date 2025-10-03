@@ -1,85 +1,92 @@
-/* src/components/styles/MultiplayerLobby.css */
-.lobby-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+/* src/components/styles/CommonRoom.css */
+
+.common-room-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Asegura que esté por encima de todo */
 }
 
-.lobby-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.lobby-back-btn {
-  background: #ff6b6b;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.lobby-back-btn:hover {
-  background: #ff5252;
-}
-
-.lobby-map {
+.map-container {
   position: relative;
-  width: 500px;
-  height: 500px;
-  background: #e8f5e8;
-  border: 2px solid #2e7d32;
-  border-radius: 8px;
-  margin: 0 auto 20px;
-  overflow: hidden;
+  width: 800px;
+  height: 600px;
+  background-color: #3a8a3a;
+  background-image: 
+    linear-gradient(rgba(255,255,255,.07) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255,255,255,.07) 2px, transparent 2px),
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 64px 64px, 64px 64px, 32px 32px, 32px 32px;
+  border: 4px solid #4a2a1a;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  transform: scale(1);
+  animation: fadeIn 0.3s ease-out;
 }
 
-.player-avatar-map {
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.player {
   position: absolute;
+  width: 32px;
+  height: 48px;
+  transition: top 0.1s linear, left 0.1s linear;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.player img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  -webkit-user-drag: none; /* Evita que se pueda arrastrar la imagen */
+}
+
+.player-name {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+  position: absolute;
+  top: -18px;
+  transform: translateX(-50%);
+  left: 50%;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #c0392b;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
   width: 30px;
   height: 30px;
-  background: #2196f3;
-  color: white;
-  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-weight: bold;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  align-items: center;
+  line-height: 1;
 }
 
-.player-avatar-map.my-player {
-  background: #ff9800;
-  border: 2px solid #ff5722;
-}
-
-.lobby-players-list {
-  background: white;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 300px;
-  margin: 0 auto;
-}
-
-.lobby-players-list h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.lobby-players-list ul {
-  list-style: none;
-  padding: 0;
-}
-
-.lobby-players-list li {
-  padding: 5px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.lobby-players-list li.my-player {
-  font-weight: bold;
-  color: #ff9800;
+.close-button:hover {
+  background-color: #e74c3c;
+  transform: scale(1.1);
 }
