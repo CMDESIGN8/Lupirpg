@@ -847,4 +847,4 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   );
 };
 
-export default MultiplayerLobbyView;
+export default MultiplayerLobbyView;  
