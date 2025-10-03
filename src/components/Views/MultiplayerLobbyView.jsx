@@ -8,20 +8,26 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [loading, setLoading] = useState(true);
   const [players, setPlayers] = useState({});
   const [equippedAvatar, setEquippedAvatar] = useState(null);
+  const [showMobileControls, setShowMobileControls] = useState(false);
   
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
   const channelRef = useRef(null);
   const cleanupIntervalRef = useRef(null);
   const heartbeatIntervalRef = useRef(null);
+  const moveTimeoutRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
 
+  // Detectar si es móvil
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   // Depuración
   useEffect(() => {
-    console.log('MultiplayerLobbyView - User:', userToUse);
-  }, [userToUse]);
+    console.log('MultiplayerLobbyView - User:', userToUse, 'Mobile:', isMobile);
+  }, [userToUse, isMobile]);
 
   // Obtener avatar equipado
   useEffect(() => {
@@ -52,6 +58,168 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     fetchEquippedAvatar();
   }, [supabaseClient, userToUse]);
+
+  // Función para mover al jugador
+  const movePlayer = useCallback(async (dx, dy) => {
+    if (!userToUse?.id) return;
+
+    const currentPos = playerPositionRef.current;
+    let newX = Math.max(0, Math.min(14, currentPos.x + dx));
+    let newY = Math.max(0, Math.min(14, currentPos.y + dy));
+
+    // Si no hay cambio, no hacer nada
+    if (newX === currentPos.x && newY === currentPos.y) return;
+
+    playerPositionRef.current = { x: newX, y: newY };
+
+    try {
+      await supabaseClient
+        .from('room_players')
+        .update({ 
+          x: newX, 
+          y: newY,
+          last_activity: new Date().toISOString()
+        })
+        .eq('user_id', userToUse.id);
+      
+      console.log('Moved to:', newX, newY);
+    } catch (error) {
+      console.error('Move error:', error);
+    }
+  }, [supabaseClient, userToUse]);
+
+  // Movimiento con teclado
+  const handleKeyDown = useCallback((e) => {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].includes(e.key)) return;
+    e.preventDefault();
+
+    // Limitar la frecuencia de movimiento
+    if (moveTimeoutRef.current) return;
+
+    let dx = 0, dy = 0;
+
+    switch (e.key.toLowerCase()) {
+      case 'arrowup':
+      case 'w':
+        dy = -1;
+        break;
+      case 'arrowdown':
+      case 's':
+        dy = 1;
+        break;
+      case 'arrowleft':
+      case 'a':
+        dx = -1;
+        break;
+      case 'arrowright':
+      case 'd':
+        dx = 1;
+        break;
+    }
+
+    movePlayer(dx, dy);
+
+    // Timeout para evitar movimiento demasiado rápido
+    moveTimeoutRef.current = setTimeout(() => {
+      moveTimeoutRef.current = null;
+    }, 150);
+  }, [movePlayer]);
+
+  // Controles táctiles para móvil
+  const handleTouchStart = useCallback((e) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (!touchStartRef.current) return;
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const minSwipeDistance = 30; // Distancia mínima para considerar un swipe
+
+    // Determinar dirección del swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Movimiento horizontal
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        movePlayer(deltaX > 0 ? 1 : -1, 0);
+      }
+    } else {
+      // Movimiento vertical
+      if (Math.abs(deltaY) > minSwipeDistance) {
+        movePlayer(0, deltaY > 0 ? 1 : -1);
+      }
+    }
+
+    touchStartRef.current = null;
+  }, [movePlayer]);
+
+  // Joystick virtual para móvil
+  const renderMobileControls = () => {
+    if (!isMobile || !showMobileControls) return null;
+
+    return (
+      <div className="mobile-controls-overlay">
+        <div className="joystick-container">
+          {/* Joystick de movimiento */}
+          <div className="joystick-area">
+            <div className="joystick-background">
+              <button 
+                className="joystick-btn up"
+                onTouchStart={() => movePlayer(0, -1)}
+                aria-label="Mover arriba"
+              >
+                ↑
+              </button>
+              <div className="joystick-middle-row">
+                <button 
+                  className="joystick-btn left"
+                  onTouchStart={() => movePlayer(-1, 0)}
+                  aria-label="Mover izquierda"
+                >
+                  ←
+                </button>
+                <div className="joystick-center"></div>
+                <button 
+                  className="joystick-btn right"
+                  onTouchStart={() => movePlayer(1, 0)}
+                  aria-label="Mover derecha"
+                >
+                  →
+                </button>
+              </div>
+              <button 
+                className="joystick-btn down"
+                onTouchStart={() => movePlayer(0, 1)}
+                aria-label="Mover abajo"
+              >
+                ↓
+              </button>
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="action-buttons">
+            <button 
+              className="action-btn menu-btn"
+              onClick={() => setShowMobileControls(false)}
+              aria-label="Ocultar controles"
+            >
+              🎮
+            </button>
+            <button 
+              className="action-btn exit-btn"
+              onClick={() => setView('dashboard')}
+              aria-label="Salir"
+            >
+              🏠
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Función para unirse a la sala
   const joinRoom = useCallback(async () => {
@@ -111,7 +279,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     if (!userToUse?.id) return;
 
     try {
-      // Limpiar intervalos
+      // Limpiar intervalos y timeouts
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
@@ -119,6 +287,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       if (cleanupIntervalRef.current) {
         clearInterval(cleanupIntervalRef.current);
         cleanupIntervalRef.current = null;
+      }
+      if (moveTimeoutRef.current) {
+        clearTimeout(moveTimeoutRef.current);
+        moveTimeoutRef.current = null;
       }
 
       // Remover canal
@@ -156,7 +328,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       } catch (error) {
         console.error('Heartbeat error:', error);
       }
-    }, 25000); // Cada 25 segundos
+    }, 25000);
   }, [supabaseClient, userToUse]);
 
   // Limpiar jugadores desconectados
@@ -174,7 +346,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       } catch (error) {
         console.error('Cleanup error:', error);
       }
-    }, 60000); // Cada 60 segundos
+    }, 60000);
   }, [supabaseClient, userToUse]);
 
   // Configurar suscripción en tiempo real
@@ -265,45 +437,25 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     };
   }, [userToUse, joinRoom, setupRealtime, leaveRoom, setView, showMessage]);
 
-  // Movimiento del jugador
+  // Event listeners para teclado y touch
   useEffect(() => {
-    if (!userToUse?.id) return;
+    // Teclado
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Touch (solo si es móvil)
+    if (isMobile) {
+      window.addEventListener('touchstart', handleTouchStart, { passive: true });
+      window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
 
-    const handleKeyDown = async (e) => {
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-      e.preventDefault();
-
-      const currentPos = playerPositionRef.current;
-      let newX = currentPos.x;
-      let newY = currentPos.y;
-
-      switch (e.key) {
-        case 'ArrowUp': newY = Math.max(0, newY - 1); break;
-        case 'ArrowDown': newY = Math.min(14, newY + 1); break;
-        case 'ArrowLeft': newX = Math.max(0, newX - 1); break;
-        case 'ArrowRight': newX = Math.min(14, newX + 1); break;
-        default: return;
-      }
-
-      playerPositionRef.current = { x: newX, y: newY };
-
-      try {
-        await supabaseClient
-          .from('room_players')
-          .update({ 
-            x: newX, 
-            y: newY,
-            last_activity: new Date().toISOString()
-          })
-          .eq('user_id', userToUse.id);
-      } catch (error) {
-        console.error('Move error:', error);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (isMobile) {
+        window.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('touchend', handleTouchEnd);
       }
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [userToUse, supabaseClient]);
+  }, [handleKeyDown, handleTouchStart, handleTouchEnd, isMobile]);
 
   // Clasificar jugadores
   const classifyPlayers = useCallback(() => {
@@ -409,6 +561,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           <span>Jugadores activos: {activePlayers.length}</span>
           <span>Inactivos: {inactivePlayers.length}</span>
           <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
+          
+          {/* Botón para controles móviles */}
+          {isMobile && (
+            <button 
+              onClick={() => setShowMobileControls(!showMobileControls)}
+              className="lobby-mobile-controls-btn"
+            >
+              {showMobileControls ? '❌ Ocultar Controles' : '🎮 Mostrar Controles'}
+            </button>
+          )}
+          
           <button onClick={() => setView('dashboard')} className="lobby-back-btn">
             🏠 Volver al Dashboard
           </button>
@@ -424,6 +587,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           ))}
         </div>
       </div>
+
+      {/* Controles móviles */}
+      {renderMobileControls()}
 
       <div className="lobby-players-panel">
         <h3>👥 Jugadores en la Sala</h3>
@@ -486,7 +652,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       </div>
 
       <div className="lobby-controls-help">
-        <p>🕹️ Controles: Flechas para moverte | ESC para salir</p>
+        <p>
+          {isMobile ? (
+            <>
+              🕹️ Controles: Desliza para moverte | Toca 🎮 para controles virtuales | ESC para salir
+            </>
+          ) : (
+            <>
+              🕹️ Controles: Flechas o WASD para moverte | ESC para salir
+            </>
+          )}
+        </p>
         <p>💡 Los jugadores se marcan como inactivos después de 1 minuto sin movimiento</p>
       </div>
     </div>
