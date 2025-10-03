@@ -59,7 +59,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     fetchEquippedAvatar();
   }, [supabaseClient, userToUse]);
 
-  // Función para mover al jugador
+  // Función para mover al jugador - ACTUALIZADA
   const movePlayer = useCallback(async (dx, dy) => {
     if (!userToUse?.id) return;
 
@@ -73,7 +73,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     playerPositionRef.current = { x: newX, y: newY };
 
     try {
-      await supabaseClient
+      // 1. Actualizar en la base de datos
+      const { error } = await supabaseClient
         .from('room_players')
         .update({ 
           x: newX, 
@@ -81,8 +82,30 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           last_activity: new Date().toISOString()
         })
         .eq('user_id', userToUse.id);
-      
+
+      if (error) {
+        console.error('Move error:', error);
+        return;
+      }
+
       console.log('Moved to:', newX, newY);
+
+      // 2. Actualizar el estado local INMEDIATAMENTE para que se renderice
+      setPlayers(prev => {
+        const currentPlayer = prev[userToUse.id]?.[0];
+        if (!currentPlayer) return prev;
+
+        return {
+          ...prev,
+          [userToUse.id]: [{
+            ...currentPlayer,
+            x: newX,
+            y: newY,
+            last_activity: new Date().toISOString()
+          }]
+        };
+      });
+
     } catch (error) {
       console.error('Move error:', error);
     }
@@ -137,7 +160,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     const touch = e.changedTouches[0];
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
-    const minSwipeDistance = 30; // Distancia mínima para considerar un swipe
+    const minSwipeDistance = 30;
 
     // Determinar dirección del swipe
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
@@ -495,6 +518,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 key={player.user_id}
                 className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
                 title={player.username}
+                style={{
+                  transform: `translate(${0}px, ${0}px)`,
+                  transition: 'all 0.3s ease'
+                }}
               >
                 {player.avatar_url ? (
                   <img 

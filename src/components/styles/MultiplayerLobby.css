@@ -103,8 +103,10 @@
 }
 
 /* Avatares específicos del lobby */
+/* Agrega esto a tu CSS existente */
 .lobby-player-marker {
   transition: all 0.3s ease;
+  will-change: transform;
 }
 
 .lobby-player-marker.my-player {
@@ -112,10 +114,15 @@
   animation: lobby-pulse 2s infinite;
 }
 
-@keyframes lobby-pulse {
+/* Animación de movimiento suave */
+@keyframes smooth-move {
   0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  50% { transform: scale(1.05); }
   100% { transform: scale(1); }
+}
+
+.lobby-player-marker.moving {
+  animation: smooth-move 0.3s ease;
 }
 
 .lobby-player-avatar {
