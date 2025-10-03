@@ -1,6 +1,6 @@
 // src/components/Views/MultiplayerLobbyView.jsx
 import React, { useState, useEffect, useRef } from "react";
-import "../../styles/MultiplayerLobby.css";
+import "../styles/MultiplayerLobby.css";
 import { supabaseClient } from "../../services/supabase";
 import playerSprite from "../../assets/player.png";
 import mapBackground from "../../assets/map.png";
