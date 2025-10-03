@@ -415,13 +415,13 @@
   border: 2px dashed rgba(255, 255, 255, 0.5);
 }
 
-.action-buttons {
+.action-buttons-game {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.action-btn {
+.action-btn-game {
   width: 60px;
   height: 60px;
   border: none;
@@ -438,7 +438,7 @@
   touch-action: manipulation;
 }
 
-.action-btn:active {
+.action-btn-game:active {
   transform: scale(0.9);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -464,7 +464,7 @@
     height: 50px;
   }
   
-  .action-btn {
+  .action-btn-game {
     width: 50px;
     height: 50px;
     font-size: 16px;
@@ -478,12 +478,12 @@
 /* Mejoras de usabilidad táctil */
 @media (hover: none) and (pointer: coarse) {
   .joystick-btn:hover,
-  .action-btn:hover {
+  .action-btn-game:hover {
     transform: none;
   }
   
   .joystick-btn:active,
-  .action-btn:active {
+  .action-btn-game:active {
     transform: scale(0.9);
   }
 }

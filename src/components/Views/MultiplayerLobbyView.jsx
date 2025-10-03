@@ -223,16 +223,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           </div>
 
           {/* Botones de acción */}
-          <div className="action-buttons">
+          <div className="action-buttons-game">
             <button 
-              className="action-btn menu-btn"
+              className="action-btn-game menu-btn"
               onClick={() => setShowMobileControls(false)}
               aria-label="Ocultar controles"
             >
               🎮
             </button>
             <button 
-              className="action-btn exit-btn"
+              className="action-btn-game exit-btn"
               onClick={() => setView('dashboard')}
               aria-label="Salir"
             >
