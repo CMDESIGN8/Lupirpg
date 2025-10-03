@@ -795,7 +795,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={handleKeyDownChat} {/* Cambiado de onKeyPress a onKeyDown */}
+          onKeyDown={handleKeyDownChat} 
+          
+          {/* Cambiado de onKeyPress a onKeyDown */}
+          
           placeholder="Escribe un mensaje y presiona Enter..."
           className="lobby-chat-input"
           maxLength={100}
