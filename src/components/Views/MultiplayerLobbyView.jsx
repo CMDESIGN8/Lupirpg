@@ -12,10 +12,26 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   // Referencia para la posición del jugador actual
   const playerPositionRef = useRef({ x: 0, y: 0 });
 
+  // Depuración: ver qué props estamos recibiendo
+  useEffect(() => {
+    console.log('MultiplayerLobbyView - Props recibidas:', {
+      currentUser,
+      playerData,
+      hasSetView: !!setView,
+      hasSupabaseClient: !!supabaseClient
+    });
+  }, [currentUser, playerData, setView, supabaseClient]);
+
   // Obtener avatar equipado
   useEffect(() => {
     const fetchEquippedAvatar = async () => {
-      if (!currentUser?.id) return;
+      // Usar currentUser.id si existe, si no usar playerData.id
+      const userId = currentUser?.id || playerData?.id;
+      
+      if (!userId) {
+        console.log('No user ID found for avatar fetch');
+        return;
+      }
       
       try {
         const { data, error } = await supabaseClient
@@ -27,11 +43,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               name
             )
           `)
-          .eq('player_id', currentUser.id)
+          .eq('player_id', userId)
           .eq('is_equipped', true)
           .single();
 
-        if (!error && data) {
+        if (error) {
+          console.log('Error fetching avatar (puede ser normal si no tiene avatar):', error);
+          return;
+        }
+
+        if (data) {
           setEquippedAvatar(data.avatars);
         }
       } catch (error) {
@@ -40,16 +61,21 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     };
 
     fetchEquippedAvatar();
-  }, [supabaseClient, currentUser]);
+  }, [supabaseClient, currentUser, playerData]);
 
   // ✨ Efecto principal para unirse, escuchar cambios y salir de la sala
   useEffect(() => {
-    // Si no hay usuario, no hacemos nada
-    if (!currentUser?.id) {
-      console.error('No current user found');
-      setView('dashboard');
+    // Determinar qué datos de usuario usar
+    const userToUse = currentUser || playerData;
+    
+    if (!userToUse?.id) {
+      console.error('No user data available:', { currentUser, playerData });
+      showMessage('Error: No se pudo cargar la información del usuario');
+      setTimeout(() => setView('dashboard'), 2000);
       return;
     }
+
+    console.log('Setting up room for user:', userToUse.id, userToUse.username);
 
     let channel;
     let isSubscribed = false;
@@ -70,8 +96,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         const { error: upsertError } = await supabaseClient
           .from('room_players')
           .upsert({
-            user_id: currentUser.id,
-            username: currentUser.username || playerData?.username || 'Jugador',
+            user_id: userToUse.id,
+            username: userToUse.username || 'Jugador',
             avatar_url: avatarUrl,
             x: initialX,
             y: initialY,
@@ -91,13 +117,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           .from('room_players')
           .select('*');
 
-        if (!fetchError && currentPlayers) {
-          // Convertir array a objeto para el estado de presencia
+        if (fetchError) {
+          console.error('Error fetching players:', fetchError);
+        } else {
+          // Convertir array a objeto para el estado
           const playersObj = {};
-          currentPlayers.forEach(player => {
+          currentPlayers?.forEach(player => {
             playersObj[player.user_id] = [player];
           });
           setPlayers(playersObj);
+          console.log('Initial players loaded:', currentPlayers?.length || 0);
         }
 
         // 5. Crear canal de Supabase Realtime
@@ -113,7 +142,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               table: 'room_players',
             },
             (payload) => {
-              console.log('Change received:', payload);
+              console.log('Room change:', payload.eventType, payload.new?.username);
               
               if (payload.eventType === 'INSERT') {
                 setPlayers(prev => ({
@@ -137,10 +166,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             }
           )
           .subscribe((status) => {
-            console.log('Channel status:', status);
+            console.log('Channel subscription status:', status);
             if (status === 'SUBSCRIBED') {
               isSubscribed = true;
               setLoading(false);
+              console.log('Successfully joined the room!');
             }
           });
 
@@ -155,31 +185,32 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     // 7. Función de limpieza al desmontar
     return () => {
-      console.log('Cleaning up room...');
+      console.log('Cleaning up room for user:', userToUse.id);
       const leaveRoom = async () => {
         try {
-          if (currentUser?.id) {
-            await supabaseClient
-              .from('room_players')
-              .delete()
-              .eq('user_id', currentUser.id);
-          }
+          await supabaseClient
+            .from('room_players')
+            .delete()
+            .eq('user_id', userToUse.id);
+          console.log('User removed from room');
         } catch (error) {
           console.error('Error leaving room:', error);
         }
         
         if (channel && isSubscribed) {
           supabaseClient.removeChannel(channel);
+          console.log('Channel removed');
         }
       };
       
       leaveRoom();
     };
-  }, [currentUser, supabaseClient, equippedAvatar, showMessage, setView, playerData]);
+  }, [currentUser, playerData, supabaseClient, equippedAvatar, showMessage, setView]);
 
   // ✨ Efecto para manejar el movimiento del jugador con el teclado
   useEffect(() => {
-    if (!currentUser?.id) return;
+    const userToUse = currentUser || playerData;
+    if (!userToUse?.id) return;
 
     const handleKeyDown = async (e) => {
       if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
@@ -218,10 +249,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             y: newY,
             last_activity: new Date().toISOString()
           })
-          .eq('user_id', currentUser.id);
+          .eq('user_id', userToUse.id);
 
         if (error) {
           console.error('Error updating position:', error);
+        } else {
+          console.log('Position updated:', newX, newY);
         }
       } catch (error) {
         console.error('Error moving player:', error);
@@ -230,10 +263,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentUser, supabaseClient]);
+  }, [currentUser, playerData, supabaseClient]);
 
   // Renderizar celda del mapa
   const renderMapCell = (x, y) => {
+    const userToUse = currentUser || playerData;
     const playersInCell = Object.values(players).flat().filter(player => 
       player.x === x && player.y === y
     );
@@ -248,7 +282,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             {playersInCell.map(player => (
               <div 
                 key={player.user_id}
-                className={`player-marker ${player.user_id === currentUser?.id ? 'my-player' : 'other-player'}`}
+                className={`player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
                 title={player.username}
               >
                 {player.avatar_url ? (
@@ -280,7 +314,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return <LoadingScreen message="Entrando al Mundo Lupi..." />;
   }
 
-  if (!currentUser) {
+  const userToUse = currentUser || playerData;
+  const playersArray = Object.values(players).flat();
+
+  if (!userToUse) {
     return (
       <div className="error-container">
         <h2>Error</h2>
@@ -292,8 +329,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   }
 
-  const playersArray = Object.values(players).flat();
-
   return (
     <div className="lobby-container">
       <div className="lobby-header">
@@ -301,6 +336,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <p>¡Muévete con las flechas del teclado y encuentra a otros jugadores!</p>
         <div className="lobby-info">
           <span>Jugadores en línea: {playersArray.length}</span>
+          <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
           <button onClick={() => setView('dashboard')} className="lobby-back-btn">
             🏠 Volver al Dashboard
           </button>
@@ -324,7 +360,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           {playersArray.map(player => (
             <div 
               key={player.user_id} 
-              className={`player-item ${player.user_id === currentUser.id ? 'current-player' : ''}`}
+              className={`player-item ${player.user_id === userToUse.id ? 'current-player' : ''}`}
             >
               <div className="player-info">
                 {player.avatar_url && (
@@ -335,7 +371,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                   />
                 )}
                 <span className="player-name">{player.username}</span>
-                {player.user_id === currentUser.id && <span className="you-badge">(Tú)</span>}
+                {player.user_id === userToUse.id && <span className="you-badge">(Tú)</span>}
               </div>
               <div className="player-position">
                 Posición: ({player.x}, {player.y})
