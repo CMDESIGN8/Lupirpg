@@ -11,7 +11,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeChatBubbles, setActiveChatBubbles] = useState({});
-  const [isChatFocused, setIsChatFocused] = useState(false);
   
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
@@ -59,13 +58,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     fetchEquippedAvatar();
   }, [supabaseClient, userToUse]);
 
-  // Función para mostrar burbuja de chat - MEJORADA
+  // Función para mostrar burbuja de chat
   const showChatBubble = useCallback((userId, message, username) => {
     const bubbleId = `${userId}-${Date.now()}`;
-    const player = players[userId]?.[0];
     
-    if (!player) return;
-
     setActiveChatBubbles(prev => ({
       ...prev,
       [bubbleId]: {
@@ -73,7 +69,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         message,
         username,
         timestamp: Date.now(),
-        position: { x: player.x, y: player.y }
+        position: players[userId]?.[0] || { x: 0, y: 0 }
       }
     }));
 
@@ -135,23 +131,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [supabaseClient, userToUse]);
 
-  // Movimiento con teclado - MEJORADO
+  // Movimiento con teclado
   const handleKeyDown = useCallback((e) => {
     // Si está escribiendo en el chat, no mover al jugador
-    if (isChatFocused) {
-      // Solo permitir Escape para salir del chat
-      if (e.key === 'Escape') {
-        chatInputRef.current?.blur();
-        setIsChatFocused(false);
-      }
-      return;
-    }
-
-    // Activar chat con Enter o T
-    if (e.key === 'Enter' || e.key === 't' || e.key === 'T') {
-      e.preventDefault();
-      chatInputRef.current?.focus();
-      setIsChatFocused(true);
+    if (document.activeElement === chatInputRef.current) {
       return;
     }
 
@@ -186,9 +169,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     moveTimeoutRef.current = setTimeout(() => {
       moveTimeoutRef.current = null;
     }, 150);
-  }, [movePlayer, isChatFocused]);
+  }, [movePlayer]);
 
-  // Enviar mensaje de chat - MEJORADO
+  // Enviar mensaje de chat
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !userToUse?.id) {
       console.log('No message to send or no user');
@@ -220,12 +203,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       // Limpiar input
       setNewMessage('');
       
-      // Mantener el foco en el input para seguir escribiendo
-      setTimeout(() => {
-        if (chatInputRef.current) {
-          chatInputRef.current.focus();
-        }
-      }, 10);
+      // Enfocar el input de nuevo para seguir escribiendo
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -233,33 +214,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [newMessage, userToUse, supabaseClient, showMessage, showChatBubble]);
 
-  // Manejar envío con Enter - MEJORADO
+  // Manejar envío con Enter
   const handleKeyDownChat = useCallback((e) => {
-    console.log('Key pressed in chat:', e.key);
-    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      e.stopPropagation();
       console.log('Enter pressed, sending message...');
       sendMessage();
     }
-    
-    // Permitir Escape para salir del chat
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      chatInputRef.current?.blur();
-      setIsChatFocused(false);
-    }
   }, [sendMessage]);
-
-  // Manejar focus del chat
-  const handleChatFocus = useCallback(() => {
-    setIsChatFocused(true);
-  }, []);
-
-  const handleChatBlur = useCallback(() => {
-    setIsChatFocused(false);
-  }, []);
 
   // Configurar Realtime para mensajes
   const setupMessagesRealtime = useCallback(() => {
@@ -398,20 +360,19 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   };
 
-  // Renderizar burbujas de chat - MEJORADO
+  // Renderizar burbujas de chat
   const renderChatBubbles = () => {
     return Object.entries(activeChatBubbles).map(([bubbleId, bubble]) => {
       const player = players[bubble.userId]?.[0];
       if (!player) return null;
 
-      // Posición más precisa cerca de la cabeza del personaje
       return (
         <div
           key={bubbleId}
           className={`chat-bubble ${bubble.userId === userToUse?.id ? 'own-chat-bubble' : 'other-chat-bubble'}`}
           style={{
-            left: `${(player.x + 0.5) * 6.66}%`, // Centrado en la celda
-            top: `${player.y * 6.66 - 8}%`, // Más cerca de la cabeza
+            left: `${player.x * 6.66}%`,
+            top: `${player.y * 6.66 - 15}%`,
           }}
         >
           <div className="chat-bubble-content">
@@ -426,7 +387,204 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     });
   };
 
-  // ... (el resto de las funciones remain igual: joinRoom, leaveRoom, startHeartbeat, startCleanup, setupRealtime)
+  // Función para unirse a la sala
+  const joinRoom = useCallback(async () => {
+    if (!userToUse?.id) return false;
+
+    try {
+      const avatarUrl = equippedAvatar?.image_url || '/default-avatar.png';
+      const initialX = Math.floor(Math.random() * 15);
+      const initialY = Math.floor(Math.random() * 15);
+      
+      playerPositionRef.current = { x: initialX, y: initialY };
+
+      const { error: upsertError } = await supabaseClient
+        .from('room_players')
+        .upsert({
+          user_id: userToUse.id,
+          username: userToUse.username || 'Jugador',
+          avatar_url: avatarUrl,
+          x: initialX,
+          y: initialY,
+          last_activity: new Date().toISOString()
+        }, { 
+          onConflict: 'user_id'
+        });
+
+      if (upsertError) {
+        throw new Error(`Join error: ${upsertError.message}`);
+      }
+
+      console.log('User joined room successfully');
+
+      // Obtener jugadores activos
+      const activeCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const { data: currentPlayers, error: fetchError } = await supabaseClient
+        .from('room_players')
+        .select('*')
+        .gte('last_activity', activeCutoff);
+
+      if (!fetchError && currentPlayers) {
+        const playersObj = {};
+        currentPlayers.forEach(player => {
+          playersObj[player.user_id] = [player];
+        });
+        setPlayers(playersObj);
+        console.log('Loaded players:', currentPlayers.length);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error joining room:', error);
+      showMessage('Error al unirse a la sala: ' + error.message);
+      return false;
+    }
+  }, [supabaseClient, userToUse, equippedAvatar, showMessage]);
+
+  // Función para salir de la sala
+  const leaveRoom = useCallback(async () => {
+    if (!userToUse?.id) return;
+
+    try {
+      console.log('Starting cleanup...');
+
+      // Limpiar intervalos
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      if (cleanupIntervalRef.current) {
+        clearInterval(cleanupIntervalRef.current);
+        cleanupIntervalRef.current = null;
+      }
+      if (moveTimeoutRef.current) {
+        clearTimeout(moveTimeoutRef.current);
+        moveTimeoutRef.current = null;
+      }
+
+      // Remover canales
+      if (channelRef.current?.messagesChannel) {
+        supabaseClient.removeChannel(channelRef.current.messagesChannel);
+        console.log('Removed messages channel');
+      }
+
+      if (channelRef.current) {
+        supabaseClient.removeChannel(channelRef.current);
+        channelRef.current = null;
+        console.log('Removed main channel');
+      }
+
+      // Eliminar de la base de datos
+      await supabaseClient
+        .from('room_players')
+        .delete()
+        .eq('user_id', userToUse.id);
+
+      console.log('User left room successfully');
+    } catch (error) {
+      console.error('Error leaving room:', error);
+    }
+  }, [supabaseClient, userToUse]);
+
+  // Heartbeat para mantener activo
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) return;
+
+    heartbeatIntervalRef.current = setInterval(async () => {
+      if (!userToUse?.id) return;
+
+      try {
+        await supabaseClient
+          .from('room_players')
+          .update({ 
+            last_activity: new Date().toISOString() 
+          })
+          .eq('user_id', userToUse.id);
+      } catch (error) {
+        console.error('Heartbeat error:', error);
+      }
+    }, 25000);
+  }, [supabaseClient, userToUse]);
+
+  // Limpiar jugadores desconectados
+  const startCleanup = useCallback(() => {
+    if (cleanupIntervalRef.current) return;
+
+    cleanupIntervalRef.current = setInterval(async () => {
+      try {
+        const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        await supabaseClient
+          .from('room_players')
+          .delete()
+          .lt('last_activity', cutoffTime)
+          .neq('user_id', userToUse?.id || '');
+      } catch (error) {
+        console.error('Cleanup error:', error);
+      }
+    }, 60000);
+  }, [supabaseClient, userToUse]);
+
+  // Configurar suscripción en tiempo real
+  const setupRealtime = useCallback(() => {
+    if (channelRef.current) {
+      console.log('Removing existing channel...');
+      supabaseClient.removeChannel(channelRef.current);
+    }
+
+    console.log('Setting up realtime channel...');
+    
+    const channel = supabaseClient.channel('room_players_updates');
+
+    channel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'room_players',
+        },
+        (payload) => {
+          console.log('Room event:', payload.eventType, payload.new?.username);
+          
+          if (payload.eventType === 'INSERT') {
+            setPlayers(prev => ({
+              ...prev,
+              [payload.new.user_id]: [payload.new]
+            }));
+          }
+          else if (payload.eventType === 'UPDATE') {
+            setPlayers(prev => ({
+              ...prev,
+              [payload.new.user_id]: [payload.new]
+            }));
+          }
+          else if (payload.eventType === 'DELETE') {
+            setPlayers(prev => {
+              const newPlayers = { ...prev };
+              delete newPlayers[payload.old.user_id];
+              return newPlayers;
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Channel status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to realtime updates');
+          startHeartbeat();
+          startCleanup();
+        }
+        
+        if (status === 'CHANNEL_ERROR') {
+          console.error('Channel error');
+          showMessage('Error de conexión en tiempo real');
+        }
+      });
+
+    channelRef.current = channel;
+    return channel;
+  }, [supabaseClient, showMessage, startHeartbeat, startCleanup]);
 
   // Efecto principal
   useEffect(() => {
@@ -492,11 +650,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     };
   }, []);
 
-  // Event listeners para teclado y touch - MEJORADO
+  // Event listeners para teclado y touch
   useEffect(() => {
-    const handleKeyDownWrapper = (e) => handleKeyDown(e);
-    
-    window.addEventListener('keydown', handleKeyDownWrapper);
+    window.addEventListener('keydown', handleKeyDown);
     
     if (isMobile) {
       window.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -504,7 +660,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDownWrapper);
+      window.removeEventListener('keydown', handleKeyDown);
       if (isMobile) {
         window.removeEventListener('touchstart', handleTouchStart);
         window.removeEventListener('touchend', handleTouchEnd);
@@ -632,7 +788,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* Input de chat fijo - MEJORADO */}
+      {/* Input de chat fijo */}
       <div className="lobby-chat-input-container">
         <input
           ref={chatInputRef}
@@ -640,9 +796,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDownChat}
-          onFocus={handleChatFocus}
-          onBlur={handleChatBlur}
-          placeholder={isChatFocused ? "Escribe tu mensaje..." : "Presiona Enter o T para chatear..."}
+          placeholder="Escribe un mensaje y presiona Enter..."
           className="lobby-chat-input"
           maxLength={100}
         />
@@ -686,9 +840,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
       <div className="lobby-controls-help">
         <p>
-          {isMobile 
-            ? '🕹️ Desliza para moverte | 💬 Toca abajo para chatear' 
-            : `🕹️ Flechas/WASD para moverte | 💬 ${isChatFocused ? 'Enter para enviar, Escape para salir' : 'Enter o T para chatear'}`}
+          {isMobile ? '🕹️ Desliza para moverte | 💬 Escribe abajo para chatear' : '🕹️ Flechas o WASD para moverte | 💬 Escribe abajo para chatear'}
         </p>
       </div>
     </div>
