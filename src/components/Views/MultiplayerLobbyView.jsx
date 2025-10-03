@@ -15,7 +15,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
   const channelRef = useRef(null);
-  const messagesChannelRef = useRef(null);
+  const cleanupIntervalRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
+  const moveTimeoutRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
   const chatInputRef = useRef(null);
   const initializationRef = useRef(false);
 
@@ -65,7 +68,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         userId,
         message,
         username,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        position: players[userId]?.[0] || { x: 0, y: 0 }
       }
     }));
 
@@ -77,7 +81,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         return newBubbles;
       });
     }, 5000);
-  }, []);
+  }, [players]);
 
   // Función para mover al jugador
   const movePlayer = useCallback(async (dx, dy) => {
@@ -137,6 +141,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].includes(e.key)) return;
     e.preventDefault();
 
+    if (moveTimeoutRef.current) return;
+
     let dx = 0, dy = 0;
 
     switch (e.key.toLowerCase()) {
@@ -159,50 +165,52 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     movePlayer(dx, dy);
+
+    moveTimeoutRef.current = setTimeout(() => {
+      moveTimeoutRef.current = null;
+    }, 150);
   }, [movePlayer]);
 
-  // Enviar mensaje de chat - VERSIÓN SIMPLIFICADA
+  // Enviar mensaje de chat
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !userToUse?.id) {
-      console.log('No message to send');
+      console.log('No message to send or no user');
       return;
     }
 
-    console.log('Attempting to send message:', newMessage.trim());
+    console.log('Sending message:', newMessage.trim());
 
     try {
-      // 1. Insertar mensaje en la base de datos
-      const { data, error } = await supabaseClient
+      const { error } = await supabaseClient
         .from('room_messages')
         .insert({
           user_id: userToUse.id,
           username: userToUse.username || 'Jugador',
           content: newMessage.trim()
-        })
-        .select();
+        });
 
       if (error) {
-        console.error('Database error:', error);
+        console.error('Error sending message:', error);
         showMessage('Error al enviar el mensaje: ' + error.message);
         return;
       }
 
-      console.log('Message saved to database:', data);
-
-      // 2. Mostrar burbuja local inmediatamente
+      console.log('Message sent successfully');
+      
+      // Mostrar burbuja local inmediatamente
       showChatBubble(userToUse.id, newMessage.trim(), userToUse.username);
       
-      // 3. Limpiar input
+      // Limpiar input
       setNewMessage('');
       
-      // 4. Enfocar el input de nuevo
+      // Enfocar el input de nuevo para seguir escribiendo
       if (chatInputRef.current) {
         chatInputRef.current.focus();
       }
 
     } catch (error) {
-      console.error('Unexpected error:', error);
-      showMessage('Error inesperado al enviar el mensaje');
+      console.error('Error sending message:', error);
+      showMessage('Error al enviar el mensaje');
     }
   }, [newMessage, userToUse, supabaseClient, showMessage, showChatBubble]);
 
@@ -210,24 +218,22 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const handleKeyDownChat = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('Enter pressed - sending message');
+      console.log('Enter pressed, sending message...');
       sendMessage();
     }
   }, [sendMessage]);
 
-  // Configurar Realtime para mensajes - VERSIÓN SIMPLIFICADA
+  // Configurar Realtime para mensajes
   const setupMessagesRealtime = useCallback(() => {
     console.log('Setting up messages realtime...');
 
     // Remover canal existente si existe
-    if (messagesChannelRef.current) {
-      supabaseClient.removeChannel(messagesChannelRef.current);
+    if (channelRef.current?.messagesChannel) {
+      supabaseClient.removeChannel(channelRef.current.messagesChannel);
     }
 
-    // Crear nuevo canal específico para mensajes
-    const messagesChannel = supabaseClient.channel('room_messages_updates');
+    const messagesChannel = supabaseClient.channel('room-messages-realtime');
 
-    // Configurar listener para nuevos mensajes
     messagesChannel
       .on(
         'postgres_changes',
@@ -237,11 +243,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_messages',
         },
         (payload) => {
-          console.log('📨 New message received:', payload.new);
+          console.log('New message received via realtime:', payload.new);
           
-          // Solo mostrar burbuja si el mensaje no es nuestro
+          // Mostrar burbuja de chat para el mensaje recibido (excepto nuestros propios mensajes)
           if (payload.new.user_id !== userToUse?.id) {
-            console.log('Showing bubble for other player:', payload.new.username);
+            console.log('Showing chat bubble for other player');
             showChatBubble(
               payload.new.user_id, 
               payload.new.content, 
@@ -251,16 +257,15 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         }
       )
       .subscribe((status) => {
-        console.log('Messages channel status:', status);
+        console.log('Messages channel subscription status:', status);
         
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to messages');
-        } else {
-          console.log('Messages channel status:', status);
+          console.log('Successfully subscribed to messages realtime');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Messages channel error');
         }
       });
 
-    messagesChannelRef.current = messagesChannel;
     return messagesChannel;
   }, [supabaseClient, userToUse, showChatBubble]);
 
@@ -443,10 +448,23 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     try {
       console.log('Starting cleanup...');
 
+      // Limpiar intervalos
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      if (cleanupIntervalRef.current) {
+        clearInterval(cleanupIntervalRef.current);
+        cleanupIntervalRef.current = null;
+      }
+      if (moveTimeoutRef.current) {
+        clearTimeout(moveTimeoutRef.current);
+        moveTimeoutRef.current = null;
+      }
+
       // Remover canales
-      if (messagesChannelRef.current) {
-        supabaseClient.removeChannel(messagesChannelRef.current);
-        messagesChannelRef.current = null;
+      if (channelRef.current?.messagesChannel) {
+        supabaseClient.removeChannel(channelRef.current.messagesChannel);
         console.log('Removed messages channel');
       }
 
@@ -468,13 +486,52 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [supabaseClient, userToUse]);
 
-  // Configurar suscripción en tiempo real para jugadores
+  // Heartbeat para mantener activo
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) return;
+
+    heartbeatIntervalRef.current = setInterval(async () => {
+      if (!userToUse?.id) return;
+
+      try {
+        await supabaseClient
+          .from('room_players')
+          .update({ 
+            last_activity: new Date().toISOString() 
+          })
+          .eq('user_id', userToUse.id);
+      } catch (error) {
+        console.error('Heartbeat error:', error);
+      }
+    }, 25000);
+  }, [supabaseClient, userToUse]);
+
+  // Limpiar jugadores desconectados
+  const startCleanup = useCallback(() => {
+    if (cleanupIntervalRef.current) return;
+
+    cleanupIntervalRef.current = setInterval(async () => {
+      try {
+        const cutoffTime = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        await supabaseClient
+          .from('room_players')
+          .delete()
+          .lt('last_activity', cutoffTime)
+          .neq('user_id', userToUse?.id || '');
+      } catch (error) {
+        console.error('Cleanup error:', error);
+      }
+    }, 60000);
+  }, [supabaseClient, userToUse]);
+
+  // Configurar suscripción en tiempo real
   const setupRealtime = useCallback(() => {
     if (channelRef.current) {
+      console.log('Removing existing channel...');
       supabaseClient.removeChannel(channelRef.current);
     }
 
-    console.log('Setting up players realtime...');
+    console.log('Setting up realtime channel...');
     
     const channel = supabaseClient.channel('room_players_updates');
 
@@ -487,7 +544,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           table: 'room_players',
         },
         (payload) => {
-          console.log('Player event:', payload.eventType, payload.new?.username);
+          console.log('Room event:', payload.eventType, payload.new?.username);
           
           if (payload.eventType === 'INSERT') {
             setPlayers(prev => ({
@@ -511,16 +568,23 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         }
       )
       .subscribe((status) => {
-        console.log('Players channel status:', status);
+        console.log('Channel status:', status);
         
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to players updates');
+          console.log('Successfully subscribed to realtime updates');
+          startHeartbeat();
+          startCleanup();
+        }
+        
+        if (status === 'CHANNEL_ERROR') {
+          console.error('Channel error');
+          showMessage('Error de conexión en tiempo real');
         }
       });
 
     channelRef.current = channel;
     return channel;
-  }, [supabaseClient]);
+  }, [supabaseClient, showMessage, startHeartbeat, startCleanup]);
 
   // Efecto principal
   useEffect(() => {
@@ -531,6 +595,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     if (initializationRef.current) {
+      console.log('Already initializing, skipping...');
       return;
     }
 
@@ -551,18 +616,22 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         // 2. Unirse a la sala
         const joined = await joinRoom();
         if (!joined) {
+          console.log('Failed to join room');
           setLoading(false);
           return;
         }
 
-        // 3. Configurar suscripción en tiempo real para jugadores
+        // 3. Configurar suscripción en tiempo real
         setupRealtime();
 
-        // 4. Configurar suscripción en tiempo real para mensajes
-        setupMessagesRealtime();
+        // 4. Configurar chat en tiempo real
+        const messagesChannel = setupMessagesRealtime();
+        if (channelRef.current) {
+          channelRef.current.messagesChannel = messagesChannel;
+        }
 
         setLoading(false);
-        console.log('✅ Room initialization completed');
+        console.log('Room initialization completed');
 
       } catch (error) {
         console.error('Error initializing room:', error);
@@ -609,7 +678,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       return (now - new Date(player.last_activity)) < 60 * 1000;
     });
     
-    return { activePlayers };
+    const inactivePlayers = allPlayers.filter(player => {
+      if (!player.last_activity) return false;
+      const diff = now - new Date(player.last_activity);
+      return diff >= 60 * 1000 && diff < 2 * 60 * 1000;
+    });
+    
+    return { activePlayers, inactivePlayers };
   }, [players]);
 
   // Renderizar celda del mapa
