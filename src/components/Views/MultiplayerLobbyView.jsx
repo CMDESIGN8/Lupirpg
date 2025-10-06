@@ -14,6 +14,9 @@ const MultiplayerWorld = ({ currentUser }) => {
 
   const [myPosition, setMyPosition] = useState({ row: 5, col: 5 });
 
+  // 🟢 Validación segura: si no hay usuario, mostramos cargando
+  if (!currentUser) return <div className="lobby-container">Cargando mundo Lupi...</div>;
+
   // Movimiento simple con teclado
   const handleKeyDown = (e) => {
     setMyPosition((pos) => {
@@ -34,10 +37,13 @@ const MultiplayerWorld = ({ currentUser }) => {
   // Simular jugadores online (reemplazar con Supabase)
   useEffect(() => {
     const interval = setInterval(() => {
-      setPlayers((prev) => [
-        ...prev.filter(p => p.id !== currentUser.id),
-        { id: currentUser.id, name: currentUser.username, position: myPosition }
-      ]);
+      setPlayers((prev) => {
+        const others = prev.filter(p => p.id !== currentUser.id);
+        return [
+          ...others,
+          { id: currentUser.id, name: currentUser.username, position: myPosition }
+        ];
+      });
     }, 200);
     return () => clearInterval(interval);
   }, [myPosition, currentUser]);
@@ -45,12 +51,13 @@ const MultiplayerWorld = ({ currentUser }) => {
   // Enviar mensaje
   const sendMessage = () => {
     if (!inputMessage) return;
-    const newMsg = { id: Date.now(), username: currentUser.username, message: inputMessage, position: myPosition };
+    const newMsg = { id: Date.now(), username: currentUser.username, message: inputMessage, playerId: currentUser.id };
     setChatMessages((msgs) => [...msgs, newMsg]);
     setInputMessage('');
+    // Desaparece después de 2 segundos
     setTimeout(() => {
       setChatMessages((msgs) => msgs.filter(m => m.id !== newMsg.id));
-    }, 2000); // desaparece después de 2s
+    }, 2000);
   };
 
   return (
@@ -60,7 +67,11 @@ const MultiplayerWorld = ({ currentUser }) => {
       </div>
 
       <div className="lobby-map-container">
-        <div className="lobby-game-map" ref={mapRef} style={{ width: MAP_COLS * TILE_SIZE, height: MAP_ROWS * TILE_SIZE }}>
+        <div
+          className="lobby-game-map"
+          ref={mapRef}
+          style={{ width: MAP_COLS * TILE_SIZE, height: MAP_ROWS * TILE_SIZE }}
+        >
           {/* Mapa tiles */}
           {Array.from({ length: MAP_ROWS }).map((_, row) => (
             <div key={row} className="lobby-map-row">
@@ -73,22 +84,27 @@ const MultiplayerWorld = ({ currentUser }) => {
           {/* Jugadores */}
           {players.map((p) => (
             <div
-              key={p.id}
+              key={p.id || Math.random()}
               className={`lobby-player-marker ${p.id === currentUser.id ? 'my-player' : 'other-player'}`}
               style={{
-                top: p.position.row * TILE_SIZE + 'px',
-                left: p.position.col * TILE_SIZE + 'px'
+                top: p.position?.row * TILE_SIZE + 'px',
+                left: p.position?.col * TILE_SIZE + 'px'
               }}
             >
               <div className="lobby-player-avatar"></div>
-              <div className="lobby-player-name-tag">{p.name}</div>
+              <div className="lobby-player-name-tag">{p.name || 'Jugador'}</div>
 
               {/* Burbujas de chat */}
-              {chatMessages.filter(m => m.id === p.id)?.map((m) => (
-                <div className={`chat-bubble ${m.username === currentUser.username ? 'own-chat-bubble' : ''}`} key={m.id}>
-                  <div className="chat-bubble-content">{m.message}</div>
-                </div>
-              ))}
+              {chatMessages
+                .filter(m => m && m.playerId === p.id)
+                .map((m) => (
+                  <div
+                    className={`chat-bubble ${m.username === currentUser.username ? 'own-chat-bubble' : ''}`}
+                    key={m.id}
+                  >
+                    <div className="chat-bubble-content">{m.message}</div>
+                  </div>
+                ))}
             </div>
           ))}
         </div>
