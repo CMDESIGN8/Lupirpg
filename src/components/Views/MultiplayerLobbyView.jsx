@@ -1,5 +1,4 @@
-// src/components/Views/MultiplayerLobbyView.jsx
-
+// MultiplayerLobbyView.jsx - Versión mejorada con MMORPG deportivo
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import LoadingScreen from '../UI/LoadingScreen';
 import '../styles/MultiplayerLobby.css';
@@ -11,6 +10,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeChatBubbles, setActiveChatBubbles] = useState({});
+  const [gameMode, setGameMode] = useState('lobby'); // 'lobby', 'training', 'match', 'tournament'
+  const [selectedSport, setSelectedSport] = useState(playerData?.sport || 'fútbol');
+  const [matchmaking, setMatchmaking] = useState(false);
   
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
@@ -24,6 +26,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
+
+  // Deportes disponibles para MMORPG
+  const sports = [
+    { id: 'fútbol', name: '⚽ Fútbol', color: '#2E8B57' },
+    { id: 'baloncesto', name: '🏀 Baloncesto', color: '#FF6B35' },
+    { id: 'tenis', name: '🎾 Tenis', color: '#4ECDC4' },
+    { id: 'atletismo', name: '🏃 Atletismo', color: '#45B7D1' }
+  ];
 
   // Detectar si es móvil
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -269,6 +279,34 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return messagesChannel;
   }, [supabaseClient, userToUse, showChatBubble]);
 
+  // Funciones MMORPG Deportivo
+  const startMatchmaking = () => {
+    setMatchmaking(true);
+    showMessage(`Buscando partida de ${selectedSport}...`);
+
+    // Simular búsqueda de partida
+    setTimeout(() => {
+      setMatchmaking(false);
+      setGameMode('match');
+      showMessage('¡Partida encontrada! Preparándose...');
+    }, 3000);
+  };
+
+  const startTraining = () => {
+    setGameMode('training');
+    showMessage('Entrando al modo entrenamiento...');
+  };
+
+  const joinTournament = () => {
+    setGameMode('tournament');
+    showMessage('Uniéndote al torneo deportivo...');
+  };
+
+  const backToLobby = () => {
+    setGameMode('lobby');
+    setMatchmaking(false);
+  };
+
   // Controles táctiles para móvil
   const handleTouchStart = useCallback((e) => {
     const touch = e.touches[0];
@@ -406,7 +444,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           avatar_url: avatarUrl,
           x: initialX,
           y: initialY,
-          last_activity: new Date().toISOString()
+          last_activity: new Date().toISOString(),
+          sport: selectedSport,
+          game_mode: gameMode
         }, { 
           onConflict: 'user_id'
         });
@@ -439,7 +479,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       showMessage('Error al unirse a la sala: ' + error.message);
       return false;
     }
-  }, [supabaseClient, userToUse, equippedAvatar, showMessage]);
+  }, [supabaseClient, userToUse, equippedAvatar, selectedSport, gameMode, showMessage]);
 
   // Función para salir de la sala
   const leaveRoom = useCallback(async () => {
@@ -497,14 +537,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         await supabaseClient
           .from('room_players')
           .update({ 
-            last_activity: new Date().toISOString() 
+            last_activity: new Date().toISOString(),
+            game_mode: gameMode,
+            sport: selectedSport
           })
           .eq('user_id', userToUse.id);
       } catch (error) {
         console.error('Heartbeat error:', error);
       }
     }, 25000);
-  }, [supabaseClient, userToUse]);
+  }, [supabaseClient, userToUse, gameMode, selectedSport]);
 
   // Limpiar jugadores desconectados
   const startCleanup = useCallback(() => {
@@ -705,7 +747,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               <div 
                 key={player.user_id}
                 className={`lobby-player-marker ${player.user_id === userToUse?.id ? 'my-player' : 'other-player'}`}
-                title={`${player.username} (${player.x}, ${player.y})`}
+                title={`${player.username} (${player.x}, ${player.y}) - ${player.sport || 'Sin deporte'}`}
               >
                 {player.avatar_url ? (
                   <img 
@@ -724,10 +766,103 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 <div className="lobby-player-name-tag">
                   {player.username}
                 </div>
+                {player.sport && (
+                  <div className="lobby-player-sport">
+                    {player.sport === 'fútbol' && '⚽'}
+                    {player.sport === 'baloncesto' && '🏀'}
+                    {player.sport === 'tenis' && '🎾'}
+                    {player.sport === 'atletismo' && '🏃'}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
+      </div>
+    );
+  };
+
+  // Renderizar panel de MMORPG deportivo
+  const renderSportsMMORPGPanel = () => {
+    if (gameMode !== 'lobby') return null;
+
+    return (
+      <div className="sports-mmorpg-panel">
+        <h3>🎯 MMORPG Deportivo</h3>
+        
+        <div className="sport-selection">
+          <h4>Selecciona tu Deporte:</h4>
+          <div className="sports-buttons">
+            {sports.map(sport => (
+              <button
+                key={sport.id}
+                className={`sport-btn ${selectedSport === sport.id ? 'active' : ''}`}
+                onClick={() => setSelectedSport(sport.id)}
+                style={{ borderColor: sport.color }}
+              >
+                {sport.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="game-actions-mmorpg">
+          <button 
+            className="mmorpg-btn primary"
+            onClick={startMatchmaking}
+            disabled={matchmaking}
+          >
+            {matchmaking ? 'Buscando rival...' : '⚽ Partida Rápida'}
+          </button>
+
+          <button 
+            className="mmorpg-btn secondary"
+            onClick={startTraining}
+          >
+            🏋️ Entrenamiento
+          </button>
+
+          <button 
+            className="mmorpg-btn tournament"
+            onClick={joinTournament}
+          >
+            🏆 Torneo
+          </button>
+        </div>
+
+        <div className="current-sport-info">
+          <p>Deporte actual: <strong>{sports.find(s => s.id === selectedSport)?.name}</strong></p>
+          <p>Jugadores en {selectedSport}: {
+            Object.values(players).filter(p => p[0]?.sport === selectedSport).length
+          }</p>
+        </div>
+      </div>
+    );
+  };
+
+  // Renderizar vista de partida
+  const renderMatchView = () => {
+    if (gameMode !== 'match') return null;
+
+    return (
+      <div className="match-overlay">
+        <div className="match-container">
+          <h2>⚽ Partida de {selectedSport}</h2>
+          <div className="match-score">
+            <span>0 - 0</span>
+            <span className="match-timer">05:00</span>
+          </div>
+          
+          <div className="match-controls">
+            <button className="control-btn">⬆️ Pase</button>
+            <button className="control-btn">🎯 Disparo</button>
+            <button className="control-btn">🛡️ Defensa</button>
+          </div>
+
+          <button className="back-to-lobby-btn" onClick={backToLobby}>
+            🏃 Abandonar Partida
+          </button>
+        </div>
       </div>
     );
   };
@@ -753,11 +888,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   return (
     <div className="lobby-container">
       <div className="lobby-header">
-        <h1>🏟️ Mundo Lupi</h1>
-        <p>¡Muévete con las flechas del teclado y chatea con otros jugadores!</p>
+        <h1>🏟️ Mundo Lupi - MMORPG Deportivo</h1>
+        <p>¡Explora, chatea y compite en deportes con otros jugadores!</p>
         <div className="lobby-info">
           <span>Jugadores activos: {activePlayers.length}</span>
-          <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
+          <span>Tu deporte: {selectedSport}</span>
+          <span>Posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
           
           <div className="lobby-control-buttons">
             {isMobile && (
@@ -779,6 +915,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       <div className="lobby-map-container">
         <div className="lobby-game-map">
           {renderChatBubbles()}
+          {renderMatchView()}
           
           {Array.from({ length: 15 }, (_, y) => (
             <div key={y} className="lobby-map-row">
@@ -787,6 +924,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           ))}
         </div>
       </div>
+
+      {/* Panel MMORPG Deportivo */}
+      {renderSportsMMORPGPanel()}
 
       {/* Input de chat fijo */}
       <div className="lobby-chat-input-container">
@@ -830,8 +970,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 <span className="lobby-player-name">{player.username}</span>
                 {player.user_id === userToUse.id && <span className="lobby-you-badge">(Tú)</span>}
               </div>
-              <div className="lobby-player-position">
-                ({player.x}, {player.y})
+              <div className="lobby-player-details">
+                <span className="lobby-player-sport-small">
+                  {player.sport === 'fútbol' && '⚽'}
+                  {player.sport === 'baloncesto' && '🏀'}
+                  {player.sport === 'tenis' && '🎾'}
+                  {player.sport === 'atletismo' && '🏃'}
+                </span>
+                <span className="lobby-player-position">
+                  ({player.x}, {player.y})
+                </span>
               </div>
             </div>
           ))}
@@ -842,6 +990,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <p>
           {isMobile ? '🕹️ Desliza para moverte | 💬 Escribe abajo para chatear' : '🕹️ Flechas o WASD para moverte | 💬 Escribe abajo para chatear'}
         </p>
+        <p>🎯 Usa el panel deportivo para unirte a partidas y torneos</p>
       </div>
     </div>
   );
