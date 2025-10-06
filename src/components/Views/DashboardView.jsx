@@ -406,9 +406,9 @@ const handleBuyItem = async (listing) => {
             </button>
 
           
-<button className="action-btn primary" onClick={() => setView('mmorpg')} disabled={loading}>
-  <span className="nav-icon">🎮</span>
-  <span>Mundo MMORPG</span>
+<button className="action-btn primary" onClick={() => setView('sports_mmorpg')} disabled={loading}>
+  <span className="nav-icon">🏆</span>
+  <span>MMORPG Deportivo</span>
 </button>
             
             <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>

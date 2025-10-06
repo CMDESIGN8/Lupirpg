@@ -21,7 +21,7 @@ import LupiMiniGame from "./components/game/LupiMiniGame";
 import RewardChest from "./components/game/RewardChest";
 import ClubsSystem from './components/Clubs/ClubsSystem';
 import MultiplayerLobbyView from './components/Views/MultiplayerLobbyView.jsx';
-import MMORPGPortal from './components/Views/MMORPGPortal.jsx';
+import MMORPGPortal from './components/Views/SportsMMORPGView .jsx';
 
 
 
@@ -1160,13 +1160,13 @@ case 'clubs': return <ClubsSystem
 />;
       case 'multiplayer_lobby': return <MultiplayerLobbyView {...props} />;
 
-      case 'mmorpg':
+      case 'sports_mmorpg':
   return (
-    <MMORPGPortal 
+    <SportsMMORPGView 
       playerData={playerData}
-      supabaseClient={supabaseClient}
-      session={session}
       setView={setView}
+      supabaseClient={supabaseClient}
+      showMessage={showMessage}
     />
   );
 
