@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import '../components/styles/MultiplayerLobby.css';
-import { supabaseClient } from '../services/supabase';
+import '../styles/MultiplayerLobby.css';
+import { supabaseClient } from '../../services/supabase';
 
 const TILE_SIZE = 45;
 const MAP_ROWS = 12;
