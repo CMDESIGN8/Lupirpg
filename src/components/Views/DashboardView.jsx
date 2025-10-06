@@ -404,6 +404,12 @@ const handleBuyItem = async (listing) => {
               <span className="nav-icon">⚡</span>
               <span>Entrenar</span>
             </button>
+
+          
+<button className="action-btn primary" onClick={() => setView('mmorpg')} disabled={loading}>
+  <span className="nav-icon">🎮</span>
+  <span>Mundo MMORPG</span>
+</button>
             
             <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
               <span className="nav-icon">🔍</span>
