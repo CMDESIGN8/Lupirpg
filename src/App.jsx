@@ -21,7 +21,7 @@ import LupiMiniGame from "./components/game/LupiMiniGame";
 import RewardChest from "./components/game/RewardChest";
 import ClubsSystem from './components/Clubs/ClubsSystem';
 import MultiplayerLobbyView from './components/Views/MultiplayerLobbyView.jsx';
-import MMORPGPortal from './components/MMORPGPortal.jsx';
+import MMORPGPortal from './components/Views/MMORPGPortal.jsx';
 
 
 
