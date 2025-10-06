@@ -22,6 +22,247 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const chatInputRef = useRef(null);
   const initializationRef = useRef(false);
 
+  // --- NUEVAS REFERENCIAS / ESTADOS para el motor gráfico ---
+const canvasRef = useRef(null);
+const [worldSize] = useState({ width: 1200, height: 1200 }); // píxeles, mundo expandido
+const [tileCount] = useState({ x: 60, y: 60 }); // 60x60 tiles -> mundo abierto
+const [entities, setEntities] = useState({}); // { ball: {x,y,vx,vy,...}, ... }
+const entitiesRef = useRef({});
+const lastServerUpdateRef = useRef(Date.now());
+const outgoingThrottleRef = useRef(null);
+
+// util para set + ref sincronizados
+const setEntitiesWithRef = (updater) => {
+  setEntities(prev => {
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    entitiesRef.current = next;
+    return next;
+  });
+};
+
+// ---------- RENDER LOOP + INTERPOLACIÓN ----------
+useEffect(() => {
+  let rafId;
+  let lastTime = performance.now();
+
+  const draw = (now) => {
+    const dt = Math.min(50, now - lastTime) / 1000; // cap delta
+    lastTime = now;
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      rafId = requestAnimationFrame(draw);
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    // Clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background grid (opcional)
+    // draw tiles visible around player
+    const camera = getCameraForPlayer(); // función abajo
+    drawWorldGrid(ctx, camera, tileCount, worldSize);
+
+    // update local entity physics (client-side prediction for local entities)
+    // actualizar pelota
+    const ents = { ...entitiesRef.current };
+    if (ents.ball) {
+      // integrador simple de física
+      ents.ball.x += ents.ball.vx * dt;
+      ents.ball.y += ents.ball.vy * dt;
+      // fricción
+      ents.ball.vx *= Math.pow(0.9, dt * 10);
+      ents.ball.vy *= Math.pow(0.9, dt * 10);
+
+      // keep inside world bounds
+      ents.ball.x = Math.max(0, Math.min(tileCount.x - 0.01, ents.ball.x));
+      ents.ball.y = Math.max(0, Math.min(tileCount.y - 0.01, ents.ball.y));
+    }
+
+    // Dibujar entidades interpoladas (players + ball)
+    // players - usar interpolación entre last known pos y server timestamp (simple)
+    Object.values(players).flat().forEach(p => {
+      const screenPos = worldToScreen({ x: p.x, y: p.y }, camera, tileCount, worldSize);
+      drawPlayerSprite(ctx, p, screenPos, p.user_id === userToUse.id);
+    });
+
+    // ball
+    if (ents.ball) {
+      const ballScreen = worldToScreen({ x: ents.ball.x, y: ents.ball.y }, camera, tileCount, worldSize);
+      drawBall(ctx, ents.ball, ballScreen);
+    }
+
+    // HUD, minimap, stamina, etc
+    drawHUD(ctx, camera);
+
+    rafId = requestAnimationFrame(draw);
+  };
+
+  rafId = requestAnimationFrame(draw);
+  return () => cancelAnimationFrame(rafId);
+}, [players, tileCount, worldSize]);
+
+// --- Helper: Camera centrada en player ---
+const getCameraForPlayer = () => {
+  const playerPos = playerPositionRef.current || { x: 0, y: 0 };
+  const viewport = { w: 800, h: 600 }; // adapt to container size
+  const px = (playerPos.x / (tileCount.x)) * worldSize.width;
+  const py = (playerPos.y / (tileCount.y)) * worldSize.height;
+  return {
+    x: px - viewport.w / 2,
+    y: py - viewport.h / 2,
+    w: viewport.w,
+    h: viewport.h
+  };
+};
+
+// --- Conversiones simple mundo -> screen ---
+const worldToScreen = (pos, camera, tileCount, worldSize) => {
+  const sx = (pos.x / tileCount.x) * worldSize.width - camera.x;
+  const sy = (pos.y / tileCount.y) * worldSize.height - camera.y;
+  return { x: sx, y: sy };
+};
+
+// --- DIBUJOS simples ---
+const drawWorldGrid = (ctx, camera, tileCount, worldSize) => {
+  // opcional: un tiled background o imagen
+  ctx.save();
+  // fondo
+  ctx.fillStyle = '#081229';
+  ctx.fillRect(0, 0, camera.w, camera.h);
+  ctx.restore();
+};
+
+const drawPlayerSprite = (ctx, player, screenPos, isSelf) => {
+  ctx.save();
+  const size = 32;
+  // shadow
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = isSelf ? '#4fe' : '#fff';
+  ctx.beginPath();
+  ctx.arc(screenPos.x + size/2, screenPos.y + size*0.9, 12, 0, Math.PI*2);
+  ctx.fill();
+
+  // avatar image if exists (synchronous simple method)
+  if (player.avatar_url) {
+    const img = new Image();
+    img.src = player.avatar_url;
+    img.onload = () => {
+      ctx.drawImage(img, screenPos.x, screenPos.y, size, size);
+    };
+    img.onerror = () => {
+      // fallback: circle
+      ctx.fillStyle = isSelf ? '#0ff' : '#ccc';
+      ctx.beginPath();
+      ctx.arc(screenPos.x + size/2, screenPos.y + size/2, size/2, 0, Math.PI*2);
+      ctx.fill();
+    };
+  } else {
+    ctx.fillStyle = isSelf ? '#0ff' : '#ccc';
+    ctx.beginPath();
+    ctx.arc(screenPos.x + size/2, screenPos.y + size/2, size/2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // name
+  ctx.fillStyle = '#fff';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(player.username || 'Player', screenPos.x, screenPos.y - 6);
+  ctx.restore();
+};
+
+const drawBall = (ctx, ball, screenPos) => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.fillStyle = '#fff';
+  ctx.arc(screenPos.x + 8, screenPos.y + 8, 8, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+};
+
+const drawHUD = (ctx, camera) => {
+  // ejemplo: contador de jugadores
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(10, 10, 160, 40);
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`Jugadores: ${Object.values(players).flat().length}`, 20, 34);
+  ctx.restore();
+};
+
+// --- Movimiento: prediction + enviar menos frecuentemente ---
+const localMovePlayer = (dx, dy) => {
+  // aplicar movimiento local inmediato (predicción)
+  const cur = playerPositionRef.current || { x: 0, y: 0 };
+  const nx = Math.max(0, Math.min(tileCount.x - 1, cur.x + dx));
+  const ny = Math.max(0, Math.min(tileCount.y - 1, cur.y + dy));
+  playerPositionRef.current = { x: nx, y: ny };
+
+  // actualizar UI local (players state)
+  setPlayers(prev => {
+    const p = prev[userToUse.id]?.[0] || {};
+    return {
+      ...prev,
+      [userToUse.id]: [{
+        ...p,
+        x: nx,
+        y: ny,
+        last_activity: new Date().toISOString()
+      }]
+    };
+  });
+
+  // enviar update al servidor cada 100ms (throttle)
+  if (outgoingThrottleRef.current) return;
+  outgoingThrottleRef.current = setTimeout(async () => {
+    outgoingThrottleRef.current = null;
+    try {
+      await supabaseClient
+        .from('room_players')
+        .update({ x: nx, y: ny, last_activity: new Date().toISOString() })
+        .eq('user_id', userToUse.id);
+    } catch (err) {
+      console.error('Error sending move:', err);
+    }
+  }, 100);
+};
+
+// función para buscar la entidad ball y patearla si estás cerca
+const kickBall = (playerId, angleRad, force = 5) => {
+  const ents = { ...entitiesRef.current };
+  if (!ents.ball) return;
+  const p = players[playerId]?.[0];
+  if (!p) return;
+  const dx = ents.ball.x - p.x;
+  const dy = ents.ball.y - p.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > 1.5) return; // no está lo suficientemente cerca
+
+  // aplicar impulso
+  ents.ball.vx += Math.cos(angleRad) * force;
+  ents.ball.vy += Math.sin(angleRad) * force;
+
+  setEntitiesWithRef(ents);
+
+  // enviar acción al servidor (log y validación de servidor)
+  supabaseClient.from('room_actions').insert({
+    user_id: playerId,
+    action_type: 'kick',
+    payload: { ball_id: ents.ball.id, vx: ents.ball.vx, vy: ents.ball.vy }
+  });
+};
+
+const checkProximity = () => {
+  const me = playerPositionRef.current;
+  const nearby = Object.values(players).flat().filter(p => {
+    if (p.user_id === userToUse.id) return false;
+    const dx = p.x - me.x; const dy = p.y - me.y;
+    return Math.sqrt(dx*dx + dy*dy) < 1.5;
+  });
+  return nearby;
+};
+
+
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
 
