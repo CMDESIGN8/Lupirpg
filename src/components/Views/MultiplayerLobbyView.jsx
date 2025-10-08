@@ -17,9 +17,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const keys = useRef({});
   const movementInterval = useRef(null);
   const chatInputRef = useRef(null);
-  const gameContainerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
   const initializationRef = useRef(false);
   const socketRef = useRef(null);
+
+  // Constantes del juego
+  const CANVAS_WIDTH = 800;
+  const CANVAS_HEIGHT = 600;
+  const PLAYER_SIZE = 40;
+  const OTHER_PLAYER_SIZE = 35;
+  const MOVEMENT_SPEED = 5;
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
@@ -54,7 +62,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }, 5000);
   }, [players]);
 
-  // CONEXIÓN CORREGIDA - Sin bucle infinito
+  // CONEXIÓN AL SERVIDOR
   useEffect(() => {
     if (!userToUse?.id) {
       showMessage('Error: Usuario no disponible');
@@ -73,7 +81,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       try {
         console.log('🔗 Conectando al servidor...');
 
-        // Configuración de Socket.IO
         const newSocket = io('https://lupirpgbackend.onrender.com', {
           transports: ['websocket', 'polling'],
           timeout: 10000,
@@ -92,8 +99,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           const userData = {
             userId: userToUse.id,
             username: userToUse.username || userToUse.email?.split('@')[0] || `Jugador_${Date.now()}`,
-            x: Math.floor(Math.random() * 400) + 100,
-            y: Math.floor(Math.random() * 400) + 100,
+            x: Math.floor(Math.random() * (CANVAS_WIDTH - 100)) + 50,
+            y: Math.floor(Math.random() * (CANVAS_HEIGHT - 100)) + 50,
             avatar_url: userToUse.avatar_url || null
           };
           
@@ -125,7 +132,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           const playersArray = Object.values(playersData);
           setPlayers(playersArray);
           
-          // Encontrar nuestro jugador actual
           const currentPlayer = playersArray.find(p => p.userId === userToUse.id);
           if (currentPlayer && !player) {
             console.log('✅ Jugador identificado:', currentPlayer);
@@ -147,7 +153,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             return newMessages.slice(-50);
           });
           
-          // Mostrar burbuja de chat
           const playersArray = Object.values(players);
           const sender = playersArray.find(p => p.username === messageData.user);
           if (sender && sender.userId !== userToUse.id) {
@@ -175,7 +180,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     connectToServer();
 
-    // Limpieza CORREGIDA
+    // Limpieza
     return () => {
       console.log('🧹 Limpiando componente...');
       initializationRef.current = false;
@@ -184,15 +189,19 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         clearInterval(movementInterval.current);
       }
       
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      
       if (socketRef.current) {
         console.log('🔌 Desconectando socket...');
         socketRef.current.disconnect();
         socketRef.current = null;
       }
     };
-  }, [userToUse?.id]); // SOLO userToUse.id como dependencia
+  }, [userToUse?.id]);
 
-  // Sistema de movimiento
+  // SISTEMA DE MOVIMIENTO CON CANVAS
   const handleKeyDown = useCallback((e) => {
     if (document.activeElement === chatInputRef.current) return;
 
@@ -208,11 +217,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     keys.current[key] = false;
   }, []);
 
-  // Loop de movimiento
+  // Loop de movimiento con requestAnimationFrame
   useEffect(() => {
     if (!socket || !player) return;
 
-    const handleMovement = () => {
+    const movePlayer = () => {
       if (!keys.current || !player) return;
 
       let newX = player.x;
@@ -220,26 +229,25 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       let moved = false;
 
       if (keys.current['w'] || keys.current['arrowup']) {
-        newY -= 5;
+        newY -= MOVEMENT_SPEED;
         moved = true;
       }
       if (keys.current['s'] || keys.current['arrowdown']) {
-        newY += 5;
+        newY += MOVEMENT_SPEED;
         moved = true;
       }
       if (keys.current['a'] || keys.current['arrowleft']) {
-        newX -= 5;
+        newX -= MOVEMENT_SPEED;
         moved = true;
       }
       if (keys.current['d'] || keys.current['arrowright']) {
-        newX += 5;
+        newX += MOVEMENT_SPEED;
         moved = true;
       }
 
-      const worldWidth = 800;
-      const worldHeight = 600;
-      newX = Math.max(0, Math.min(worldWidth - 50, newX));
-      newY = Math.max(0, Math.min(worldHeight - 50, newY));
+      // Limitar al canvas
+      newX = Math.max(PLAYER_SIZE/2, Math.min(CANVAS_WIDTH - PLAYER_SIZE/2, newX));
+      newY = Math.max(PLAYER_SIZE/2, Math.min(CANVAS_HEIGHT - PLAYER_SIZE/2, newY));
 
       if (moved && (newX !== player.x || newY !== player.y)) {
         const updatedPlayer = { ...player, x: newX, y: newY };
@@ -248,11 +256,16 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       }
     };
 
-    movementInterval.current = setInterval(handleMovement, 16);
+    const gameLoop = () => {
+      movePlayer();
+      animationRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    animationRef.current = requestAnimationFrame(gameLoop);
 
     return () => {
-      if (movementInterval.current) {
-        clearInterval(movementInterval.current);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
     };
   }, [socket, player]);
@@ -267,6 +280,133 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [handleKeyDown, handleKeyUp]);
+
+  // DIBUJAR EN EL CANVAS
+  useEffect(() => {
+    if (!canvasRef.current || !player) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    const draw = () => {
+      // Limpiar canvas
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // Dibujar fondo
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      
+      // Dibujar suelo
+      ctx.fillStyle = '#98FB98';
+      ctx.fillRect(0, CANVAS_HEIGHT - 100, CANVAS_WIDTH, 100);
+
+      // Dibujar zona central
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(200, 200, 400, 200);
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = 'rgba(144, 238, 144, 0.3)';
+      ctx.fillRect(200, 200, 400, 200);
+
+      // Dibujar etiqueta de zona
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(205, 205, 80, 20);
+      ctx.fillStyle = 'white';
+      ctx.font = '10px Arial';
+      ctx.fillText('Plaza Central', 210, 218);
+
+      // Dibujar otros jugadores
+      players.filter(p => p.userId !== player.userId).forEach(otherPlayer => {
+        ctx.fillStyle = '#FF6B6B';
+        ctx.beginPath();
+        ctx.arc(otherPlayer.x, otherPlayer.y, OTHER_PLAYER_SIZE/2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Nombre del jugador
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(otherPlayer.x - 20, otherPlayer.y - 25, 40, 12);
+        ctx.fillStyle = 'white';
+        ctx.font = '8px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(otherPlayer.username, otherPlayer.x, otherPlayer.y - 15);
+        ctx.textAlign = 'left';
+      });
+
+      // Dibujar jugador actual
+      ctx.fillStyle = '#4ECDC4';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, PLAYER_SIZE/2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Efecto de brillo del jugador
+      const gradient = ctx.createRadialGradient(
+        player.x, player.y, PLAYER_SIZE/2,
+        player.x, player.y, PLAYER_SIZE
+      );
+      gradient.addColorStop(0, 'rgba(255,255,255,0.3)');
+      gradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Nombre del jugador actual
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(player.x - 25, player.y - 30, 50, 14);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 9px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(player.username, player.x, player.y - 20);
+      ctx.textAlign = 'left';
+
+      // Dibujar burbujas de chat
+      Object.values(activeChatBubbles).forEach(bubble => {
+        const bubblePlayer = players.find(p => p.userId === bubble.userId);
+        if (!bubblePlayer) return;
+
+        const bubbleX = bubblePlayer.x;
+        const bubbleY = bubblePlayer.y - 50;
+
+        // Fondo de burbuja
+        ctx.fillStyle = bubble.userId === player.userId ? '#4CAF50' : 'white';
+        ctx.beginPath();
+        ctx.roundRect(bubbleX - 60, bubbleY - 30, 120, 25, 10);
+        ctx.fill();
+
+        // Triángulo de la burbuja
+        ctx.beginPath();
+        ctx.moveTo(bubbleX - 5, bubbleY);
+        ctx.lineTo(bubbleX + 5, bubbleY);
+        ctx.lineTo(bubbleX, bubbleY + 5);
+        ctx.fill();
+
+        // Texto de la burbuja
+        ctx.fillStyle = bubble.userId === player.userId ? 'white' : 'black';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        
+        // Nombre de usuario (solo para otros jugadores)
+        if (bubble.userId !== player.userId) {
+          ctx.fillText(bubble.username, bubbleX, bubbleY - 15);
+        }
+        
+        // Mensaje
+        ctx.fillText(
+          bubble.message.length > 15 ? bubble.message.substring(0, 15) + '...' : bubble.message,
+          bubbleX,
+          bubble.userId === player.userId ? bubbleY - 10 : bubbleY - 5
+        );
+        ctx.textAlign = 'left';
+      });
+    };
+
+    draw();
+  }, [player, players, activeChatBubbles]);
 
   // Enviar mensaje de chat
   const sendMessage = useCallback(() => {
@@ -297,8 +437,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const handleExit = useCallback(() => {
     console.log('🚪 Saliendo del MMORPG...');
     
-    if (movementInterval.current) {
-      clearInterval(movementInterval.current);
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
     }
     
     if (socketRef.current) {
@@ -315,8 +455,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     const move = (dx, dy) => {
       if (!player || !socket) return;
       
-      const newX = Math.max(0, Math.min(800 - 50, player.x + dx * 25));
-      const newY = Math.max(0, Math.min(600 - 50, player.y + dy * 25));
+      const newX = Math.max(PLAYER_SIZE/2, Math.min(CANVAS_WIDTH - PLAYER_SIZE/2, player.x + dx * 25));
+      const newY = Math.max(PLAYER_SIZE/2, Math.min(CANVAS_HEIGHT - PLAYER_SIZE/2, player.y + dy * 25));
       
       const updatedPlayer = { ...player, x: newX, y: newY };
       setPlayer(updatedPlayer);
@@ -371,138 +511,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               🎮
             </button>
           </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Renderizar burbujas de chat
-  const renderChatBubbles = () => {
-    return Object.entries(activeChatBubbles).map(([bubbleId, bubble]) => {
-      const playerData = players.find(p => p.userId === bubble.userId);
-      if (!playerData) return null;
-
-      return (
-        <div
-          key={bubbleId}
-          className={`chat-bubble ${bubble.userId === player?.userId ? 'own-chat-bubble' : 'other-chat-bubble'}`}
-          style={{
-            left: `${playerData.x}px`,
-            top: `${playerData.y - 60}px`,
-            transform: 'translate(-50%, -100%)'
-          }}
-        >
-          <div className="chat-bubble-content">
-            {bubble.userId !== player?.userId && (
-              <div className="chat-bubble-username">{bubble.username}</div>
-            )}
-            <div className="chat-bubble-message">{bubble.message}</div>
-          </div>
-          <div className="chat-bubble-tail"></div>
-        </div>
-      );
-    });
-  };
-
-  // Renderizar juego (mantener tu código existente)
-  const renderGameWorld = () => {
-    // ... (mantener tu código de renderGameWorld igual)
-    if (!player) return null;
-
-    const viewportWidth = 800;
-    const viewportHeight = 600;
-    const offsetX = player.x - viewportWidth / 2;
-    const offsetY = player.y - viewportHeight / 2;
-
-    return (
-      <div className="game-container">
-        <div className="game-ui">
-          <div className="player-info-card">
-            <h3>{player.username}</h3>
-            <div className="player-stats">
-              <div className="stat-item">
-                <span className="stat-label">Posición:</span>
-                <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Jugadores:</span>
-                <span className="stat-value">{players.length}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="action-buttons">
-            <button 
-              onClick={() => setShowMobileControls(!showMobileControls)}
-              className="btn-mobile-controls"
-            >
-              {showMobileControls ? '❌ Controles' : '🎮 Controles'}
-            </button>
-          </div>
-        </div>
-
-        <div 
-          ref={gameContainerRef}
-          className="game-world"
-          style={{
-            width: viewportWidth,
-            height: viewportHeight,
-            position: 'relative',
-            overflow: 'hidden',
-            background: 'linear-gradient(135deg, #87CEEB, #98FB98)',
-            border: '3px solid #2E8B57',
-            borderRadius: '10px',
-          }}
-        >
-          {/* Zona central */}
-          <div
-            className="zone"
-            style={{
-              position: 'absolute',
-              left: 200 - offsetX,
-              top: 200 - offsetY,
-              width: 400,
-              height: 200,
-              border: '2px dashed rgba(255,255,255,0.4)',
-              background: 'rgba(144, 238, 144, 0.3)',
-            }}
-          >
-            <div className="zone-label">
-              Plaza Central
-            </div>
-          </div>
-
-          {/* Otros jugadores */}
-          {players.filter(p => p.userId !== player?.userId).map(otherPlayer => (
-            <div
-              key={otherPlayer.userId}
-              className="other-player"
-              style={{
-                left: otherPlayer.x - offsetX,
-                top: otherPlayer.y - offsetY,
-              }}
-              title={otherPlayer.username}
-            >
-              <div className="player-name-tag">
-                {otherPlayer.username}
-              </div>
-            </div>
-          ))}
-
-          {/* Jugador actual */}
-          {player && (
-            <div
-              className="current-player"
-              style={{
-                left: viewportWidth / 2 - 22,
-                top: viewportHeight / 2 - 22,
-              }}
-            >
-              <div className="player-glow" />
-            </div>
-          )}
-
-          {renderChatBubbles()}
         </div>
       </div>
     );
@@ -585,7 +593,42 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {renderGameWorld()}
+      {/* CANVAS DEL JUEGO */}
+      <div className="game-container">
+        <div className="game-ui">
+          <div className="player-info-card">
+            <h3>{player.username}</h3>
+            <div className="player-stats">
+              <div className="stat-item">
+                <span className="stat-label">Posición:</span>
+                <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Jugadores:</span>
+                <span className="stat-value">{players.length}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="action-buttons">
+            <button 
+              onClick={() => setShowMobileControls(!showMobileControls)}
+              className="btn-mobile-controls"
+            >
+              {showMobileControls ? '❌ Controles' : '🎮 Controles'}
+            </button>
+          </div>
+        </div>
+
+        <div className="game-world-container">
+          <canvas
+            ref={canvasRef}
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            className="game-canvas"
+          />
+        </div>
+      </div>
 
       <div className="lobby-chat-panel">
         <div className="chat-header">
