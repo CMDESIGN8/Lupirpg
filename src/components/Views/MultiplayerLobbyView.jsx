@@ -82,9 +82,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
         const newSocket = io('https://lupirpgbackend.onrender.com', {
           transports: ['websocket', 'polling'],
-          timeout: 30000, // Aumentado de 10s a 30s
-          reconnectionAttempts: 5, // Aumentado de 3 a 5
-          reconnectionDelay: 2000, // Aumentado de 1s a 2s
+          timeout: 10000,
+          reconnectionAttempts: 3,
+          reconnectionDelay: 1000,
         });
 
         socketRef.current = newSocket;
@@ -159,14 +159,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           }
         });
 
-        // Timeout de conexión aumentado
+        // Timeout de conexión
         const connectionTimeout = setTimeout(() => {
           if (loading && connectionStatus === 'connecting') {
             console.log('⏰ Timeout de conexión');
             setConnectionStatus('error');
             setLoading(false);
           }
-        }, 15000); // Aumentado de 10s a 15s
+        }, 10000);
 
         return () => clearTimeout(connectionTimeout);
 
@@ -561,61 +561,76 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   return (
     <div className="lobby-container">
-      {/* HEADER CON INFORMACIÓN DEL JUGADOR */}
       <div className="lobby-header">
         <div className="lobby-title">
           <h1>🎮 LupiRPG Multiplayer</h1>
+          <p>¡Explora el mundo y chatea con otros jugadores!</p>
         </div>
-        
-        {/* TARJETA DEL JUGADOR EN EL HEADER */}
-        <div className="player-info-card">
-          <h3>{player.username}</h3>
-          <div className="player-stats">
-            <div className="stat-item">
-              <span className="stat-label">Posición:</span>
-              <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Jugadores:</span>
-              <span className="stat-value">{players.length}</span>
-            </div>
+        <div className="lobby-info">
+          <div className="lobby-stats">
+            <span className="stat-badge">👥 Jugadores: {players.length}</span>
+            <ConnectionStatus />
           </div>
-        </div>
-        
-        <div className="lobby-control-buttons">
-          <ConnectionStatus />
-          {isMobile && (
-            <button 
-              onClick={() => setShowMobileControls(!showMobileControls)}
-              className="lobby-mobile-controls-btn"
-            >
-              {showMobileControls ? '❌ Ocultar' : '🎮 Controles'}
+          
+          <div className="lobby-control-buttons">
+            {isMobile && (
+              <button 
+                onClick={() => setShowMobileControls(!showMobileControls)}
+                className="lobby-mobile-controls-btn"
+              >
+                {showMobileControls ? '❌ Ocultar' : '🎮 Controles'}
+              </button>
+            )}
+            <button onClick={handleExit} className="lobby-back-btn">
+              🏠 Salir
             </button>
-          )}
-          <button onClick={handleExit} className="lobby-back-btn">
-            🏠 Salir
-          </button>
+          </div>
         </div>
       </div>
 
-      {/* CONTENIDO PRINCIPAL QUE OCUPA TODO EL ESPACIO DISPONIBLE */}
-      <div className="main-content-full">
-        {/* CANVAS DEL JUEGO */}
-        <div className="game-section-full">
-          <div className="game-container-full">
-            <div className="game-world-container-full">
+      {/* LAYOUT PRINCIPAL 70%/30% */}
+      <div className="main-content">
+        {/* CANVAS DEL JUEGO - 70% */}
+        <div className="game-section">
+          <div className="game-container">
+            <div className="game-ui">
+              <div className="player-info-card">
+                <h3>{player.username}</h3>
+                <div className="player-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">Posición:</span>
+                    <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Jugadores:</span>
+                    <span className="stat-value">{players.length}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="action-buttons">
+                <button 
+                  onClick={() => setShowMobileControls(!showMobileControls)}
+                  className="btn-mobile-controls"
+                >
+                  {showMobileControls ? '❌ Controles' : '🎮 Controles'}
+                </button>
+              </div>
+            </div>
+
+            <div className="game-world-container">
               <canvas
                 ref={canvasRef}
                 width={CANVAS_WIDTH}
                 height={CANVAS_HEIGHT}
-                className="game-canvas-full"
+                className="game-canvas"
               />
             </div>
           </div>
         </div>
 
-        {/* PANEL LATERAL */}
-        <div className="sidebar-section-full">
+        {/* PANEL LATERAL - 30% */}
+        <div className="sidebar-section">
           {/* Estadísticas del Jugador */}
           <div className="stats-panel">
             <h3>📊 Estadísticas</h3>
