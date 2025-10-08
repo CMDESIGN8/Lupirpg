@@ -82,9 +82,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
         const newSocket = io('https://lupirpgbackend.onrender.com', {
           transports: ['websocket', 'polling'],
-          timeout: 10000,
-          reconnectionAttempts: 3,
-          reconnectionDelay: 1000,
+          timeout: 30000, // Aumentado de 10s a 30s
+          reconnectionAttempts: 5, // Aumentado de 3 a 5
+          reconnectionDelay: 2000, // Aumentado de 1s a 2s
         });
 
         socketRef.current = newSocket;
@@ -159,14 +159,14 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           }
         });
 
-        // Timeout de conexión
+        // Timeout de conexión aumentado
         const connectionTimeout = setTimeout(() => {
           if (loading && connectionStatus === 'connecting') {
             console.log('⏰ Timeout de conexión');
             setConnectionStatus('error');
             setLoading(false);
           }
-        }, 10000);
+        }, 15000); // Aumentado de 10s a 15s
 
         return () => clearTimeout(connectionTimeout);
 
@@ -561,76 +561,61 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   return (
     <div className="lobby-container">
+      {/* HEADER CON INFORMACIÓN DEL JUGADOR */}
       <div className="lobby-header">
         <div className="lobby-title">
           <h1>🎮 LupiRPG Multiplayer</h1>
-          <p>¡Explora el mundo y chatea con otros jugadores!</p>
         </div>
-        <div className="lobby-info">
-          <div className="lobby-stats">
-            <span className="stat-badge">👥 Jugadores: {players.length}</span>
-            <ConnectionStatus />
+        
+        {/* TARJETA DEL JUGADOR EN EL HEADER */}
+        <div className="player-info-card">
+          <h3>{player.username}</h3>
+          <div className="player-stats">
+            <div className="stat-item">
+              <span className="stat-label">Posición:</span>
+              <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Jugadores:</span>
+              <span className="stat-value">{players.length}</span>
+            </div>
           </div>
-          
-          <div className="lobby-control-buttons">
-            {isMobile && (
-              <button 
-                onClick={() => setShowMobileControls(!showMobileControls)}
-                className="lobby-mobile-controls-btn"
-              >
-                {showMobileControls ? '❌ Ocultar' : '🎮 Controles'}
-              </button>
-            )}
-            <button onClick={handleExit} className="lobby-back-btn">
-              🏠 Salir
+        </div>
+        
+        <div className="lobby-control-buttons">
+          <ConnectionStatus />
+          {isMobile && (
+            <button 
+              onClick={() => setShowMobileControls(!showMobileControls)}
+              className="lobby-mobile-controls-btn"
+            >
+              {showMobileControls ? '❌ Ocultar' : '🎮 Controles'}
             </button>
-          </div>
+          )}
+          <button onClick={handleExit} className="lobby-back-btn">
+            🏠 Salir
+          </button>
         </div>
       </div>
 
-      {/* LAYOUT PRINCIPAL 70%/30% */}
-      <div className="main-content">
-        {/* CANVAS DEL JUEGO - 70% */}
-        <div className="game-section">
-          <div className="game-container">
-            <div className="game-ui">
-              <div className="player-info-card">
-                <h3>{player.username}</h3>
-                <div className="player-stats">
-                  <div className="stat-item">
-                    <span className="stat-label">Posición:</span>
-                    <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Jugadores:</span>
-                    <span className="stat-value">{players.length}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="action-buttons">
-                <button 
-                  onClick={() => setShowMobileControls(!showMobileControls)}
-                  className="btn-mobile-controls"
-                >
-                  {showMobileControls ? '❌ Controles' : '🎮 Controles'}
-                </button>
-              </div>
-            </div>
-
-            <div className="game-world-container">
+      {/* CONTENIDO PRINCIPAL QUE OCUPA TODO EL ESPACIO DISPONIBLE */}
+      <div className="main-content-full">
+        {/* CANVAS DEL JUEGO */}
+        <div className="game-section-full">
+          <div className="game-container-full">
+            <div className="game-world-container-full">
               <canvas
                 ref={canvasRef}
                 width={CANVAS_WIDTH}
                 height={CANVAS_HEIGHT}
-                className="game-canvas"
+                className="game-canvas-full"
               />
             </div>
           </div>
         </div>
 
-        {/* PANEL LATERAL - 30% */}
-        <div className="sidebar-section">
+        {/* PANEL LATERAL */}
+        <div className="sidebar-section-full">
           {/* Estadísticas del Jugador */}
           <div className="stats-panel">
             <h3>📊 Estadísticas</h3>
