@@ -15,7 +15,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   
   // Referencias
   const keys = useRef({});
-  const movementInterval = useRef(null);
   const chatInputRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
@@ -184,10 +183,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return () => {
       console.log('🧹 Limpiando componente...');
       initializationRef.current = false;
-      
-      if (movementInterval.current) {
-        clearInterval(movementInterval.current);
-      }
       
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -593,102 +588,147 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* CANVAS DEL JUEGO */}
-      <div className="game-container">
-        <div className="game-ui">
-          <div className="player-info-card">
-            <h3>{player.username}</h3>
-            <div className="player-stats">
-              <div className="stat-item">
-                <span className="stat-label">Posición:</span>
-                <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
+      {/* LAYOUT PRINCIPAL 70%/30% */}
+      <div className="main-content">
+        {/* CANVAS DEL JUEGO - 70% */}
+        <div className="game-section">
+          <div className="game-container">
+            <div className="game-ui">
+              <div className="player-info-card">
+                <h3>{player.username}</h3>
+                <div className="player-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">Posición:</span>
+                    <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Jugadores:</span>
+                    <span className="stat-value">{players.length}</span>
+                  </div>
+                </div>
               </div>
-              <div className="stat-item">
-                <span className="stat-label">Jugadores:</span>
-                <span className="stat-value">{players.length}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="action-buttons">
-            <button 
-              onClick={() => setShowMobileControls(!showMobileControls)}
-              className="btn-mobile-controls"
-            >
-              {showMobileControls ? '❌ Controles' : '🎮 Controles'}
-            </button>
-          </div>
-        </div>
-
-        <div className="game-world-container">
-          <canvas
-            ref={canvasRef}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            className="game-canvas"
-          />
-        </div>
-      </div>
-
-      <div className="lobby-chat-panel">
-        <div className="chat-header">
-          <h4>💬 Chat Global</h4>
-          <span className="chat-count">{chatMessages.length} mensajes</span>
-        </div>
-        <div className="chat-messages">
-          {chatMessages.map((msg, index) => (
-            <div key={index} className={`chat-message ${msg.user === player.username ? 'own-message' : ''}`}>
-              <div className="message-header">
-                <span className="message-username">{msg.user}</span>
-                <span className="message-time">{msg.timestamp}</span>
-              </div>
-              <div className="message-content">{msg.message}</div>
-            </div>
-          ))}
-        </div>
-        <div className="chat-input-container">
-          <input
-            ref={chatInputRef}
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDownChat}
-            placeholder="Escribe un mensaje... (Enter para enviar)"
-            className="chat-input"
-          />
-          <button onClick={sendMessage} className="chat-send-btn">
-            ➤
-          </button>
-        </div>
-      </div>
-
-      <div className="lobby-players-panel">
-        <h3>👥 Jugadores ({players.length})</h3>
-        <div className="lobby-players-list">
-          {players.map(otherPlayer => (
-            <div 
-              key={otherPlayer.userId} 
-              className={`lobby-player-item ${otherPlayer.userId === player.userId ? 'current-player' : ''}`}
-            >
-              <div className="lobby-player-info">
-                <div 
-                  className="lobby-player-avatar"
-                  style={{ backgroundColor: otherPlayer.userId === player.userId ? '#4ECDC4' : '#FF6B6B' }}
+              
+              <div className="action-buttons">
+                <button 
+                  onClick={() => setShowMobileControls(!showMobileControls)}
+                  className="btn-mobile-controls"
                 >
-                  {otherPlayer.username.charAt(0).toUpperCase()}
+                  {showMobileControls ? '❌ Controles' : '🎮 Controles'}
+                </button>
+              </div>
+            </div>
+
+            <div className="game-world-container">
+              <canvas
+                ref={canvasRef}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                className="game-canvas"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* PANEL LATERAL - 30% */}
+        <div className="sidebar-section">
+          {/* Estadísticas del Jugador */}
+          <div className="stats-panel">
+            <h3>📊 Estadísticas</h3>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon">🎯</div>
+                <div className="stat-info">
+                  <div className="stat-value">{player.username}</div>
+                  <div className="stat-label">Jugador</div>
                 </div>
-                <div className="lobby-player-details">
-                  <span className="lobby-player-name">
-                    {otherPlayer.username}
-                    {otherPlayer.userId === player.userId && <span className="lobby-you-badge">(Tú)</span>}
-                  </span>
-                  <span className="lobby-player-position">
-                    {Math.floor(otherPlayer.x)}, {Math.floor(otherPlayer.y)}
-                  </span>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">👥</div>
+                <div className="stat-info">
+                  <div className="stat-value">{players.length}</div>
+                  <div className="stat-label">En línea</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">📍</div>
+                <div className="stat-info">
+                  <div className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</div>
+                  <div className="stat-label">Posición</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">💬</div>
+                <div className="stat-info">
+                  <div className="stat-value">{chatMessages.length}</div>
+                  <div className="stat-label">Mensajes</div>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Chat */}
+          <div className="lobby-chat-panel">
+            <div className="chat-header">
+              <h4>💬 Chat Global</h4>
+              <span className="chat-count">{chatMessages.length}</span>
+            </div>
+            <div className="chat-messages">
+              {chatMessages.map((msg, index) => (
+                <div key={index} className={`chat-message ${msg.user === player.username ? 'own-message' : ''}`}>
+                  <div className="message-header">
+                    <span className="message-username">{msg.user}</span>
+                    <span className="message-time">{msg.timestamp}</span>
+                  </div>
+                  <div className="message-content">{msg.message}</div>
+                </div>
+              ))}
+            </div>
+            <div className="chat-input-container">
+              <input
+                ref={chatInputRef}
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDownChat}
+                placeholder="Escribe un mensaje..."
+                className="chat-input"
+              />
+              <button onClick={sendMessage} className="chat-send-btn">
+                ➤
+              </button>
+            </div>
+          </div>
+
+          {/* Jugadores Online */}
+          <div className="lobby-players-panel">
+            <h3>👥 Jugadores Online ({players.length})</h3>
+            <div className="lobby-players-list">
+              {players.map(otherPlayer => (
+                <div 
+                  key={otherPlayer.userId} 
+                  className={`lobby-player-item ${otherPlayer.userId === player.userId ? 'current-player' : ''}`}
+                >
+                  <div className="lobby-player-info">
+                    <div 
+                      className="lobby-player-avatar"
+                      style={{ backgroundColor: otherPlayer.userId === player.userId ? '#4ECDC4' : '#FF6B6B' }}
+                    >
+                      {otherPlayer.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="lobby-player-details">
+                      <span className="lobby-player-name">
+                        {otherPlayer.username}
+                        {otherPlayer.userId === player.userId && <span className="lobby-you-badge">(Tú)</span>}
+                      </span>
+                      <span className="lobby-player-position">
+                        {Math.floor(otherPlayer.x)}, {Math.floor(otherPlayer.y)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
