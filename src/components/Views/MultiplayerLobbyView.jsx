@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
-import LoadingScreen from '../UI/LoadingScreen';
 import '../styles/MultiplayerLobby.css';
 
 const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData, showMessage }) => {
@@ -20,6 +19,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const chatInputRef = useRef(null);
   const gameContainerRef = useRef(null);
   const initializationRef = useRef(false);
+  const socketRef = useRef(null);
 
   // Determinar usuario actual
   const userToUse = currentUser || playerData;
@@ -45,7 +45,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       }
     }));
 
-    // Auto-remover la burbuja después de 5 segundos
     setTimeout(() => {
       setActiveChatBubbles(prev => {
         const newBubbles = { ...prev };
@@ -55,7 +54,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }, 5000);
   }, [players]);
 
-  // Conectar al servidor Socket.IO - AJUSTADO PARA TU BACKEND
+  // CONEXIÓN CORREGIDA - Sin bucle infinito
   useEffect(() => {
     if (!userToUse?.id) {
       showMessage('Error: Usuario no disponible');
@@ -64,48 +63,36 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     if (initializationRef.current) {
-      console.log('⚠️ Ya está inicializando, omitiendo...');
       return;
     }
 
     initializationRef.current = true;
     console.log('🔗 Iniciando conexión al servidor MMORPG...');
 
-    const connectToServer = async () => {
+    const connectToServer = () => {
       try {
-        console.log('🔗 Conectando al servidor MMORPG...');
-        
-        // Health check simplificado para tu backend
-        try {
-          const healthCheck = await fetch('https://lupirpgbackend.onrender.com/');
-          if (healthCheck.ok) {
-            console.log('✅ Servidor backend disponible');
-          }
-        } catch (error) {
-          console.warn('⚠️ Health check falló, pero intentando conectar de todos modos:', error.message);
-        }
+        console.log('🔗 Conectando al servidor...');
 
-        // Configuración de Socket.IO para tu backend
+        // Configuración de Socket.IO
         const newSocket = io('https://lupirpgbackend.onrender.com', {
           transports: ['websocket', 'polling'],
           timeout: 10000,
-          reconnectionAttempts: 5,
+          reconnectionAttempts: 3,
           reconnectionDelay: 1000,
-          forceNew: true
         });
 
+        socketRef.current = newSocket;
         setSocket(newSocket);
 
         // Listeners de conexión
         newSocket.on('connect', () => {
-          console.log('✅ Conectado al servidor MMORPG, Socket ID:', newSocket.id);
+          console.log('✅ Conectado al servidor, Socket ID:', newSocket.id);
           setConnectionStatus('connected');
           
-          // Unirse al juego usando el evento que tu backend espera: "newPlayer"
           const userData = {
             userId: userToUse.id,
             username: userToUse.username || userToUse.email?.split('@')[0] || `Jugador_${Date.now()}`,
-            x: Math.floor(Math.random() * 400) + 100, // Posición inicial aleatoria
+            x: Math.floor(Math.random() * 400) + 100,
             y: Math.floor(Math.random() * 400) + 100,
             avatar_url: userToUse.avatar_url || null
           };
@@ -115,31 +102,26 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         });
 
         newSocket.on('disconnect', (reason) => {
-          console.log('❌ Desconectado del servidor:', reason);
+          console.log('❌ Desconectado:', reason);
           setConnectionStatus('disconnected');
-          showMessage('Desconectado del servidor');
           if (reason === 'io server disconnect') {
-            newSocket.connect();
+            setTimeout(() => newSocket.connect(), 2000);
           }
         });
 
         newSocket.on('connect_error', (error) => {
           console.error('❌ Error de conexión:', error);
           setConnectionStatus('error');
-          showMessage('Error de conexión con el servidor: ' + error.message);
         });
 
-        newSocket.on('reconnect', (attemptNumber) => {
-          console.log('🔁 Reconectado al servidor, intento:', attemptNumber);
+        newSocket.on('reconnect', () => {
+          console.log('🔁 Reconectado al servidor');
           setConnectionStatus('connected');
-          showMessage('Reconectado al servidor');
         });
 
-        // LISTENERS ESPECÍFICOS PARA TU BACKEND
-
-        // Actualización de jugadores - Tu backend emite "updatePlayers"
+        // Listeners del juego
         newSocket.on('updatePlayers', (playersData) => {
-          console.log('👥 Lista de jugadores actualizada:', Object.values(playersData).length);
+          console.log('👥 Jugadores actualizados:', Object.values(playersData).length);
           const playersArray = Object.values(playersData);
           setPlayers(playersArray);
           
@@ -154,7 +136,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           }
         });
 
-        // Mensajes de chat - Tu backend emite "chatMessage"
         newSocket.on('chatMessage', (messageData) => {
           console.log('💬 Mensaje recibido:', messageData);
           setChatMessages(prev => {
@@ -162,69 +143,63 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               user: messageData.user,
               message: messageData.message,
               timestamp: new Date().toLocaleTimeString(),
-              level: 0
             }];
             return newMessages.slice(-50);
           });
           
           // Mostrar burbuja de chat
-          const sender = Object.values(players).find(p => p.username === messageData.user);
+          const playersArray = Object.values(players);
+          const sender = playersArray.find(p => p.username === messageData.user);
           if (sender && sender.userId !== userToUse.id) {
             showChatBubble(sender.userId, messageData.message, messageData.user);
           }
         });
 
-        // Timeout para conexión inicial
+        // Timeout de conexión
         const connectionTimeout = setTimeout(() => {
-          if (loading) {
+          if (loading && connectionStatus === 'connecting') {
             console.log('⏰ Timeout de conexión');
             setConnectionStatus('error');
-            showMessage('Timeout al conectar con el servidor');
             setLoading(false);
           }
-        }, 15000);
+        }, 10000);
 
         return () => clearTimeout(connectionTimeout);
 
       } catch (error) {
         console.error('❌ Error en la conexión:', error);
         setConnectionStatus('error');
-        showMessage('Error al conectar con el servidor MMORPG');
         setLoading(false);
       }
     };
 
     connectToServer();
 
-    // Limpieza al desmontar
+    // Limpieza CORREGIDA
     return () => {
-      console.log('🧹 Componente desmontándose, limpiando...');
+      console.log('🧹 Limpiando componente...');
       initializationRef.current = false;
       
       if (movementInterval.current) {
         clearInterval(movementInterval.current);
-        movementInterval.current = null;
       }
       
-      if (socket) {
+      if (socketRef.current) {
         console.log('🔌 Desconectando socket...');
-        socket.disconnect();
-        setSocket(null);
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
-  }, [userToUse?.id, setView, showMessage, loading]);
+  }, [userToUse?.id]); // SOLO userToUse.id como dependencia
 
-  // Sistema de movimiento - AJUSTADO PARA TU BACKEND
+  // Sistema de movimiento
   const handleKeyDown = useCallback((e) => {
-    if (document.activeElement === chatInputRef.current) {
-      return;
-    }
+    if (document.activeElement === chatInputRef.current) return;
 
     const key = e.key.toLowerCase();
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
       e.preventDefault();
     }
-
     keys.current[key] = true;
   }, []);
 
@@ -233,7 +208,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     keys.current[key] = false;
   }, []);
 
-  // Loop de movimiento - ENVIANDO SOLO X,Y COMO TU BACKEND ESPERA
+  // Loop de movimiento
   useEffect(() => {
     if (!socket || !player) return;
 
@@ -242,41 +217,34 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
       let newX = player.x;
       let newY = player.y;
-      let isMoving = false;
+      let moved = false;
 
-      // Movimiento con WASD o flechas
       if (keys.current['w'] || keys.current['arrowup']) {
         newY -= 5;
-        isMoving = true;
+        moved = true;
       }
       if (keys.current['s'] || keys.current['arrowdown']) {
         newY += 5;
-        isMoving = true;
+        moved = true;
       }
       if (keys.current['a'] || keys.current['arrowleft']) {
         newX -= 5;
-        isMoving = true;
+        moved = true;
       }
       if (keys.current['d'] || keys.current['arrowright']) {
         newX += 5;
-        isMoving = true;
+        moved = true;
       }
 
-      // Limitar al mundo (ajusta según necesites)
       const worldWidth = 800;
       const worldHeight = 600;
       newX = Math.max(0, Math.min(worldWidth - 50, newX));
       newY = Math.max(0, Math.min(worldHeight - 50, newY));
 
-      if (newX !== player.x || newY !== player.y) {
-        const updatedPlayer = { ...player, x: newX, y: newY, isMoving };
+      if (moved && (newX !== player.x || newY !== player.y)) {
+        const updatedPlayer = { ...player, x: newX, y: newY };
         setPlayer(updatedPlayer);
-        
-        // Enviar movimiento - SOLO X,Y como tu backend espera
-        socket.emit('move', {
-          x: newX,
-          y: newY
-        });
+        socket.emit('move', { x: newX, y: newY });
       }
     };
 
@@ -285,12 +253,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return () => {
       if (movementInterval.current) {
         clearInterval(movementInterval.current);
-        movementInterval.current = null;
       }
     };
   }, [socket, player]);
 
-  // Event listeners para teclado
+  // Event listeners de teclado
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -301,32 +268,24 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     };
   }, [handleKeyDown, handleKeyUp]);
 
-  // Enviar mensaje de chat - AJUSTADO PARA TU BACKEND
+  // Enviar mensaje de chat
   const sendMessage = useCallback(() => {
-    if (!newMessage.trim() || !socket) {
-      console.log('No message to send or no socket');
-      return;
-    }
+    if (!newMessage.trim() || !socket) return;
 
     console.log('Enviando mensaje:', newMessage.trim());
     
-    // Mostrar burbuja local inmediatamente
     if (player) {
       showChatBubble(player.userId, newMessage.trim(), player.username);
     }
 
-    // Tu backend espera solo el mensaje como string
     socket.emit('chatMessage', newMessage.trim());
     setNewMessage('');
     
     if (chatInputRef.current) {
-      setTimeout(() => {
-        chatInputRef.current.focus();
-      }, 100);
+      setTimeout(() => chatInputRef.current.focus(), 100);
     }
   }, [newMessage, socket, player, showChatBubble]);
 
-  // Manejar envío con Enter
   const handleKeyDownChat = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -334,22 +293,20 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [sendMessage]);
 
-  // Función para salir correctamente
+  // Función para salir
   const handleExit = useCallback(() => {
     console.log('🚪 Saliendo del MMORPG...');
     
     if (movementInterval.current) {
       clearInterval(movementInterval.current);
-      movementInterval.current = null;
     }
     
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
+    if (socketRef.current) {
+      socketRef.current.disconnect();
     }
     
     setView('dashboard');
-  }, [socket, setView]);
+  }, [setView]);
 
   // Joystick virtual para móvil
   const renderMobileControls = () => {
@@ -361,18 +318,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       const newX = Math.max(0, Math.min(800 - 50, player.x + dx * 25));
       const newY = Math.max(0, Math.min(600 - 50, player.y + dy * 25));
       
-      setPlayer(prev => ({ ...prev, x: newX, y: newY, isMoving: true }));
-      
-      socket.emit('move', {
-        x: newX,
-        y: newY
-      });
-
-      setTimeout(() => {
-        if (socket && player) {
-          setPlayer(prev => ({ ...prev, isMoving: false }));
-        }
-      }, 200);
+      const updatedPlayer = { ...player, x: newX, y: newY };
+      setPlayer(updatedPlayer);
+      socket.emit('move', { x: newX, y: newY });
     };
 
     return (
@@ -383,7 +331,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               <button 
                 className="joystick-btn up"
                 onTouchStart={() => move(0, -1)}
-                onTouchEnd={() => {}}
                 aria-label="Mover arriba"
               >
                 ↑
@@ -392,7 +339,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 <button 
                   className="joystick-btn left"
                   onTouchStart={() => move(-1, 0)}
-                  onTouchEnd={() => {}}
                   aria-label="Mover izquierda"
                 >
                   ←
@@ -401,7 +347,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 <button 
                   className="joystick-btn right"
                   onTouchStart={() => move(1, 0)}
-                  onTouchEnd={() => {}}
                   aria-label="Mover derecha"
                 >
                   →
@@ -410,7 +355,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               <button 
                 className="joystick-btn down"
                 onTouchStart={() => move(0, 1)}
-                onTouchEnd={() => {}}
                 aria-label="Mover abajo"
               >
                 ↓
@@ -434,8 +378,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Renderizar burbujas de chat
   const renderChatBubbles = () => {
-    if (!gameContainerRef.current) return null;
-
     return Object.entries(activeChatBubbles).map(([bubbleId, bubble]) => {
       const playerData = players.find(p => p.userId === bubble.userId);
       if (!playerData) return null;
@@ -462,14 +404,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     });
   };
 
-  // Renderizar el mundo del juego - SIMPLIFICADO
+  // Renderizar juego (mantener tu código existente)
   const renderGameWorld = () => {
+    // ... (mantener tu código de renderGameWorld igual)
     if (!player) return null;
 
     const viewportWidth = 800;
     const viewportHeight = 600;
-    
-    // Calcular offset para que el jugador esté centrado
     const offsetX = player.x - viewportWidth / 2;
     const offsetY = player.y - viewportHeight / 2;
 
@@ -511,7 +452,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             background: 'linear-gradient(135deg, #87CEEB, #98FB98)',
             border: '3px solid #2E8B57',
             borderRadius: '10px',
-            boxShadow: '0 0 20px rgba(46, 139, 87, 0.5)'
           }}
         >
           {/* Zona central */}
@@ -525,94 +465,43 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
               height: 200,
               border: '2px dashed rgba(255,255,255,0.4)',
               background: 'rgba(144, 238, 144, 0.3)',
-              pointerEvents: 'none'
             }}
-            title="Plaza Central"
           >
-            <div className="zone-label" style={{
-              position: 'absolute',
-              top: '5px',
-              left: '5px',
-              background: 'rgba(0,0,0,0.7)',
-              color: 'white',
-              padding: '2px 6px',
-              borderRadius: '3px',
-              fontSize: '10px',
-              pointerEvents: 'none'
-            }}>
+            <div className="zone-label">
               Plaza Central
             </div>
           </div>
 
-          {/* Renderizar otros jugadores */}
+          {/* Otros jugadores */}
           {players.filter(p => p.userId !== player?.userId).map(otherPlayer => (
             <div
               key={otherPlayer.userId}
               className="other-player"
               style={{
-                position: 'absolute',
                 left: otherPlayer.x - offsetX,
                 top: otherPlayer.y - offsetY,
-                width: 35,
-                height: 35,
-                background: '#FF6B6B',
-                borderRadius: '50%',
-                border: '2px solid #fff',
-                boxShadow: '0 0 5px rgba(0,0,0,0.5)',
-                transform: `scale(${otherPlayer.isMoving ? 1.1 : 1})`,
-                transition: 'transform 0.2s'
               }}
-              title={`${otherPlayer.username}`}
+              title={otherPlayer.username}
             >
-              <div className="player-name-tag" style={{
-                position: 'absolute',
-                bottom: '-20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'rgba(0,0,0,0.7)',
-                color: 'white',
-                padding: '1px 4px',
-                borderRadius: '2px',
-                fontSize: '9px',
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none'
-              }}>
+              <div className="player-name-tag">
                 {otherPlayer.username}
               </div>
             </div>
           ))}
 
-          {/* Renderizar jugador actual */}
+          {/* Jugador actual */}
           {player && (
             <div
               className="current-player"
               style={{
-                position: 'absolute',
                 left: viewportWidth / 2 - 22,
                 top: viewportHeight / 2 - 22,
-                width: 44,
-                height: 44,
-                background: '#4ECDC4',
-                borderRadius: '50%',
-                border: '3px solid #fff',
-                boxShadow: '0 0 15px rgba(255,255,255,0.8)',
-                animation: player.isMoving ? 'pulse 0.5s infinite alternate' : 'none'
               }}
             >
-              <div className="player-glow" style={{
-                position: 'absolute',
-                top: '-5px',
-                left: '-5px',
-                right: '-5px',
-                bottom: '-5px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
+              <div className="player-glow" />
             </div>
           )}
 
-          {/* Renderizar burbujas de chat */}
           {renderChatBubbles()}
         </div>
       </div>
@@ -622,26 +511,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   // Componente de estado de conexión
   const ConnectionStatus = () => {
     const statusConfig = {
-      connecting: { 
-        message: '🔄 Conectando al servidor...', 
-        className: 'connecting' 
-      },
-      connected: { 
-        message: '✅ Conectado, uniéndose al juego...', 
-        className: 'connected' 
-      },
-      ready: { 
-        message: '🎮 Conectado al MMORPG', 
-        className: 'ready' 
-      },
-      disconnected: { 
-        message: '❌ Desconectado del servidor', 
-        className: 'disconnected' 
-      },
-      error: { 
-        message: '❌ Error de conexión', 
-        className: 'error' 
-      }
+      connecting: { message: '🔄 Conectando...', className: 'connecting' },
+      connected: { message: '✅ Conectado...', className: 'connected' },
+      ready: { message: '🎮 Conectado', className: 'ready' },
+      disconnected: { message: '❌ Desconectado', className: 'disconnected' },
+      error: { message: '❌ Error', className: 'error' }
     };
 
     const currentStatus = statusConfig[connectionStatus] || statusConfig.connecting;
@@ -650,10 +524,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       <div className={`connection-status ${currentStatus.className}`}>
         {currentStatus.message}
         {connectionStatus === 'error' && (
-          <button 
-            onClick={() => window.location.reload()}
-            className="retry-button"
-          >
+          <button onClick={() => window.location.reload()} className="retry-button">
             Reintentar
           </button>
         )}
@@ -667,22 +538,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <div className="loading-content">
           <h2>🎮 Cargando LupiRPG Multiplayer</h2>
           <ConnectionStatus />
-          {connectionStatus === 'error' && (
-            <div className="troubleshooting">
-              <p>Solucionar problemas:</p>
-              <ol>
-                <li>Verifica que el servidor backend esté funcionando</li>
-                <li>Revisa tu conexión a internet</li>
-                <li>Intenta recargar la página</li>
-              </ol>
-              <button 
-                onClick={() => window.location.reload()}
-                className="retry-button-large"
-              >
-                🔄 Reintentar Conexión
-              </button>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -720,27 +575,24 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 onClick={() => setShowMobileControls(!showMobileControls)}
                 className="lobby-mobile-controls-btn"
               >
-                {showMobileControls ? '❌ Ocultar Controles' : '🎮 Mostrar Controles'}
+                {showMobileControls ? '❌ Ocultar' : '🎮 Controles'}
               </button>
             )}
-            
             <button onClick={handleExit} className="lobby-back-btn">
-              🏠 Salir al Dashboard
+              🏠 Salir
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mundo del juego */}
       {renderGameWorld()}
 
-      {/* Panel de chat */}
       <div className="lobby-chat-panel">
         <div className="chat-header">
           <h4>💬 Chat Global</h4>
           <span className="chat-count">{chatMessages.length} mensajes</span>
         </div>
-        <div className="chat-messages" id="chat-messages">
+        <div className="chat-messages">
           {chatMessages.map((msg, index) => (
             <div key={index} className={`chat-message ${msg.user === player.username ? 'own-message' : ''}`}>
               <div className="message-header">
@@ -760,21 +612,15 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             onKeyDown={handleKeyDownChat}
             placeholder="Escribe un mensaje... (Enter para enviar)"
             className="chat-input"
-            maxLength={200}
           />
-          <button 
-            onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            className="chat-send-btn"
-          >
+          <button onClick={sendMessage} className="chat-send-btn">
             ➤
           </button>
         </div>
       </div>
 
-      {/* Panel de jugadores */}
       <div className="lobby-players-panel">
-        <h3>👥 Jugadores en Línea ({players.length})</h3>
+        <h3>👥 Jugadores ({players.length})</h3>
         <div className="lobby-players-list">
           {players.map(otherPlayer => (
             <div 
@@ -794,7 +640,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                     {otherPlayer.userId === player.userId && <span className="lobby-you-badge">(Tú)</span>}
                   </span>
                   <span className="lobby-player-position">
-                    Pos: {Math.floor(otherPlayer.x)}, {Math.floor(otherPlayer.y)}
+                    {Math.floor(otherPlayer.x)}, {Math.floor(otherPlayer.y)}
                   </span>
                 </div>
               </div>
@@ -803,17 +649,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* Controles móviles */}
       {renderMobileControls()}
-
-      <div className="lobby-controls-help">
-        <p>
-          {isMobile 
-            ? '🕹️ Usa los controles táctiles para moverte | 💬 Toca el chat para escribir' 
-            : '🕹️ WASD o Flechas para moverte | 💬 Escribe para chatear'
-          }
-        </p>
-      </div>
     </div>
   );
 };
