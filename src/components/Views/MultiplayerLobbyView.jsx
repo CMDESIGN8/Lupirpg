@@ -8,10 +8,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [socket, setSocket] = useState(null);
   const [player, setPlayer] = useState(null);
   const [players, setPlayers] = useState([]);
-  const [gameWorld, setGameWorld] = useState(null);
-  const [npcs, setNpcs] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
-  const [currentZone, setCurrentZone] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [newMessage, setNewMessage] = useState('');
   const [activeChatBubbles, setActiveChatBubbles] = useState({});
@@ -58,7 +55,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }, 5000);
   }, [players]);
 
-  // Conectar al servidor Socket.IO
+  // Conectar al servidor Socket.IO - AJUSTADO PARA TU BACKEND
   useEffect(() => {
     if (!userToUse?.id) {
       showMessage('Error: Usuario no disponible');
@@ -78,21 +75,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       try {
         console.log('🔗 Conectando al servidor MMORPG...');
         
-        // Primero verificar que el servidor esté disponible
+        // Health check simplificado para tu backend
         try {
-          const healthCheck = await fetch('https://lupirpgbackend.onrender.com/api/health');
-          if (!healthCheck.ok) {
-            throw new Error('Servidor no disponible');
+          const healthCheck = await fetch('https://lupirpgbackend.onrender.com/');
+          if (healthCheck.ok) {
+            console.log('✅ Servidor backend disponible');
           }
-          console.log('✅ Servidor backend disponible');
         } catch (error) {
-          console.error('❌ Servidor no disponible:', error);
-          setConnectionStatus('error');
-          showMessage('Error: Servidor MMORPG no disponible. Asegúrate de que el servidor esté corriendo en puerto 5000.');
-          setLoading(false);
-          return;
+          console.warn('⚠️ Health check falló, pero intentando conectar de todos modos:', error.message);
         }
 
+        // Configuración de Socket.IO para tu backend
         const newSocket = io('https://lupirpgbackend.onrender.com', {
           transports: ['websocket', 'polling'],
           timeout: 10000,
@@ -108,16 +101,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           console.log('✅ Conectado al servidor MMORPG, Socket ID:', newSocket.id);
           setConnectionStatus('connected');
           
-          // Unirse al juego después de conectar
+          // Unirse al juego usando el evento que tu backend espera: "newPlayer"
           const userData = {
             userId: userToUse.id,
-            username: userToUse.username || userToUse.email?.split('@')[0] || `Jugador_${Date.now()}`
+            username: userToUse.username || userToUse.email?.split('@')[0] || `Jugador_${Date.now()}`,
+            x: Math.floor(Math.random() * 400) + 100, // Posición inicial aleatoria
+            y: Math.floor(Math.random() * 400) + 100,
+            avatar_url: userToUse.avatar_url || null
           };
           
-          console.log('🎮 Enviando joinGame:', userData);
-          setTimeout(() => {
-            newSocket.emit('joinGame', userData);
-          }, 500);
+          console.log('🎮 Enviando newPlayer:', userData);
+          newSocket.emit('newPlayer', userData);
         });
 
         newSocket.on('disconnect', (reason) => {
@@ -125,7 +119,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           setConnectionStatus('disconnected');
           showMessage('Desconectado del servidor');
           if (reason === 'io server disconnect') {
-            // El servidor forzó la desconexión, reconectar
             newSocket.connect();
           }
         });
@@ -142,112 +135,56 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           showMessage('Reconectado al servidor');
         });
 
-        newSocket.on('reconnect_attempt', (attemptNumber) => {
-          console.log('🔄 Intentando reconectar, intento:', attemptNumber);
-          setConnectionStatus('connecting');
+        // LISTENERS ESPECÍFICOS PARA TU BACKEND
+
+        // Actualización de jugadores - Tu backend emite "updatePlayers"
+        newSocket.on('updatePlayers', (playersData) => {
+          console.log('👥 Lista de jugadores actualizada:', Object.values(playersData).length);
+          const playersArray = Object.values(playersData);
+          setPlayers(playersArray);
+          
+          // Encontrar nuestro jugador actual
+          const currentPlayer = playersArray.find(p => p.userId === userToUse.id);
+          if (currentPlayer && !player) {
+            console.log('✅ Jugador identificado:', currentPlayer);
+            setPlayer(currentPlayer);
+            setConnectionStatus('ready');
+            setLoading(false);
+            showMessage(`¡Bienvenido a LupiRPG, ${currentPlayer.username}!`);
+          }
         });
 
-        // Listeners del juego
-        newSocket.on('joinSuccess', (playerData) => {
-          console.log('✅ Unido al juego exitosamente:', playerData);
-          setPlayer(playerData);
-          setConnectionStatus('ready');
-          setLoading(false);
-          showMessage(`¡Bienvenido a Deportes MMORPG, ${playerData.username}!`);
-        });
-
-        newSocket.on('joinError', (error) => {
-          console.error('❌ Error al unirse:', error);
-          setConnectionStatus('error');
-          showMessage('Error al unirse al juego: ' + (error.error || 'Error desconocido'));
-          setLoading(false);
-        });
-
-        newSocket.on('gameWorld', (world) => {
-          console.log('🗺️ Mundo recibido:', world);
-          setGameWorld(world);
-        });
-
-        newSocket.on('npcsList', (npcsList) => {
-          console.log('👥 NPCs recibidos:', npcsList.length);
-          setNpcs(npcsList);
-        });
-
-        newSocket.on('playersList', (playersList) => {
-          console.log('👥 Lista de jugadores actualizada:', playersList.length);
-          setPlayers(playersList);
-        });
-
-        newSocket.on('playerMoved', (data) => {
-          setPlayers(prev => prev.map(p => 
-            p.id === data.id ? { ...p, x: data.x, y: data.y, direction: data.direction, isMoving: data.isMoving } : p
-          ));
-        });
-
+        // Mensajes de chat - Tu backend emite "chatMessage"
         newSocket.on('chatMessage', (messageData) => {
           console.log('💬 Mensaje recibido:', messageData);
           setChatMessages(prev => {
-            const newMessages = [...prev, messageData];
-            // Mantener solo los últimos 50 mensajes
+            const newMessages = [...prev, {
+              user: messageData.user,
+              message: messageData.message,
+              timestamp: new Date().toLocaleTimeString(),
+              level: 0
+            }];
             return newMessages.slice(-50);
           });
           
           // Mostrar burbuja de chat
-          const sender = Array.from(players.values()).find(p => p.username === messageData.user);
-          if (sender && sender.userId !== player?.userId) {
+          const sender = Object.values(players).find(p => p.username === messageData.user);
+          if (sender && sender.userId !== userToUse.id) {
             showChatBubble(sender.userId, messageData.message, messageData.user);
           }
         });
 
-        newSocket.on('zoneChanged', (data) => {
-          console.log('🗺️ Cambio de zona:', data.zone);
-          setCurrentZone(data.zone);
-          showMessage(`Entraste a: ${data.zone}`);
-        });
-
-        newSocket.on('trainingResult', (result) => {
-          console.log('🎯 Resultado de entrenamiento:', result);
-          if (result.leveledUp) {
-            showMessage(`🎉 ¡Subiste al nivel ${result.newLevel}! Ganaste 100 LupiCoins y 5 puntos de habilidad`);
-            setPlayer(prev => ({
-              ...prev,
-              level: result.newLevel,
-              experience: result.newExperience,
-              lupiCoins: prev.lupiCoins + (result.rewards?.lupiCoins || 0),
-              skillPoints: (prev.skillPoints || 0) + (result.rewards?.skillPoints || 0)
-            }));
-          } else {
-            showMessage(`➕ Ganaste ${result.xpGained} EXP`);
-            setPlayer(prev => ({
-              ...prev,
-              experience: result.newExperience
-            }));
+        // Timeout para conexión inicial
+        const connectionTimeout = setTimeout(() => {
+          if (loading) {
+            console.log('⏰ Timeout de conexión');
+            setConnectionStatus('error');
+            showMessage('Timeout al conectar con el servidor');
+            setLoading(false);
           }
-        });
+        }, 15000);
 
-        newSocket.on('playerLevelUp', (data) => {
-          showMessage(`🎊 ${data.username} subió al nivel ${data.newLevel}!`);
-        });
-
-        newSocket.on('npcDialog', (dialogData) => {
-          console.log('💬 Diálogo de NPC:', dialogData);
-          showMessage(`${dialogData.npcName}: ${dialogData.dialog[0]}`);
-          
-          // Mostrar diálogo completo en el chat
-          const npcMessages = dialogData.dialog.map((text, index) => ({
-            user: dialogData.npcName,
-            message: text,
-            timestamp: new Date().toLocaleTimeString(),
-            level: 0,
-            isNPC: true
-          }));
-          
-          setChatMessages(prev => [...prev, ...npcMessages]);
-        });
-
-        newSocket.on('interactionError', (error) => {
-          showMessage(`❌ ${error.error}`);
-        });
+        return () => clearTimeout(connectionTimeout);
 
       } catch (error) {
         console.error('❌ Error en la conexión:', error);
@@ -269,26 +206,20 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         movementInterval.current = null;
       }
       
-      // Limpiar keys
-      keys.current = {};
-      
-      // Desconectar socket solo si existe
       if (socket) {
         console.log('🔌 Desconectando socket...');
         socket.disconnect();
         setSocket(null);
       }
     };
-  }, [userToUse?.id, setView, showMessage]);
+  }, [userToUse?.id, setView, showMessage, loading]);
 
-  // Sistema de movimiento
+  // Sistema de movimiento - AJUSTADO PARA TU BACKEND
   const handleKeyDown = useCallback((e) => {
-    // Si está escribiendo en el chat, no mover al jugador
     if (document.activeElement === chatInputRef.current) {
       return;
     }
 
-    // Prevenir comportamiento por defecto para teclas de movimiento
     const key = e.key.toLowerCase();
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
       e.preventDefault();
@@ -300,24 +231,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const handleKeyUp = useCallback((e) => {
     const key = e.key.toLowerCase();
     keys.current[key] = false;
-    
-    // Detener movimiento si no hay teclas presionadas
-    if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
-      const movingKeys = ['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'];
-      const isStillMoving = movingKeys.some(k => keys.current[k]);
-      
-      if (!isStillMoving && socket && player) {
-        socket.emit('move', {
-          x: player.x,
-          y: player.y,
-          direction: player.direction,
-          isMoving: false
-        });
-      }
-    }
-  }, [socket, player]);
+  }, []);
 
-  // Loop de movimiento
+  // Loop de movimiento - ENVIANDO SOLO X,Y COMO TU BACKEND ESPERA
   useEffect(() => {
     if (!socket || !player) return;
 
@@ -326,51 +242,45 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
       let newX = player.x;
       let newY = player.y;
-      let direction = player.direction;
       let isMoving = false;
 
       // Movimiento con WASD o flechas
       if (keys.current['w'] || keys.current['arrowup']) {
         newY -= 5;
-        direction = 'up';
         isMoving = true;
       }
       if (keys.current['s'] || keys.current['arrowdown']) {
         newY += 5;
-        direction = 'down';
         isMoving = true;
       }
       if (keys.current['a'] || keys.current['arrowleft']) {
         newX -= 5;
-        direction = 'left';
         isMoving = true;
       }
       if (keys.current['d'] || keys.current['arrowright']) {
         newX += 5;
-        direction = 'right';
         isMoving = true;
       }
 
-      // Limitar al mundo
-      if (gameWorld) {
-        newX = Math.max(0, Math.min(gameWorld.width - 50, newX));
-        newY = Math.max(0, Math.min(gameWorld.height - 50, newY));
-      }
+      // Limitar al mundo (ajusta según necesites)
+      const worldWidth = 800;
+      const worldHeight = 600;
+      newX = Math.max(0, Math.min(worldWidth - 50, newX));
+      newY = Math.max(0, Math.min(worldHeight - 50, newY));
 
-      if (newX !== player.x || newY !== player.y || isMoving !== player.isMoving) {
-        const updatedPlayer = { ...player, x: newX, y: newY, direction, isMoving };
+      if (newX !== player.x || newY !== player.y) {
+        const updatedPlayer = { ...player, x: newX, y: newY, isMoving };
         setPlayer(updatedPlayer);
         
+        // Enviar movimiento - SOLO X,Y como tu backend espera
         socket.emit('move', {
           x: newX,
-          y: newY,
-          direction: direction,
-          isMoving: isMoving
+          y: newY
         });
       }
     };
 
-    movementInterval.current = setInterval(handleMovement, 16); // ~60 FPS
+    movementInterval.current = setInterval(handleMovement, 16);
 
     return () => {
       if (movementInterval.current) {
@@ -378,7 +288,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         movementInterval.current = null;
       }
     };
-  }, [socket, player, gameWorld]);
+  }, [socket, player]);
 
   // Event listeners para teclado
   useEffect(() => {
@@ -391,7 +301,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     };
   }, [handleKeyDown, handleKeyUp]);
 
-  // Enviar mensaje de chat
+  // Enviar mensaje de chat - AJUSTADO PARA TU BACKEND
   const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !socket) {
       console.log('No message to send or no socket');
@@ -405,10 +315,10 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       showChatBubble(player.userId, newMessage.trim(), player.username);
     }
 
-    socket.emit('chatMessage', { message: newMessage.trim() });
+    // Tu backend espera solo el mensaje como string
+    socket.emit('chatMessage', newMessage.trim());
     setNewMessage('');
     
-    // Enfocar el input de nuevo para seguir escribiendo
     if (chatInputRef.current) {
       setTimeout(() => {
         chatInputRef.current.focus();
@@ -424,48 +334,20 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
   }, [sendMessage]);
 
-  // Interacción con NPCs
-  const handleInteractWithNPC = useCallback((npcId) => {
-    if (!socket || !player) return;
-    
-    // Verificar distancia con el NPC
-    const npc = npcs.find(n => n.id === npcId);
-    if (npc) {
-      const distance = Math.sqrt(
-        Math.pow(player.x - npc.x, 2) + Math.pow(player.y - npc.y, 2)
-      );
-      
-      if (distance <= 100) {
-        socket.emit('interactWithNPC', { npcId });
-      } else {
-        showMessage('Acércate más al NPC para interactuar');
-      }
-    }
-  }, [socket, player, npcs, showMessage]);
-
-  // Acciones del jugador
-  const handlePlayerAction = useCallback((actionType, data = {}) => {
-    if (!socket) return;
-    socket.emit('playerAction', { type: actionType, ...data });
-  }, [socket]);
-
   // Función para salir correctamente
   const handleExit = useCallback(() => {
     console.log('🚪 Saliendo del MMORPG...');
     
-    // Limpiar intervalos
     if (movementInterval.current) {
       clearInterval(movementInterval.current);
       movementInterval.current = null;
     }
     
-    // Desconectar socket
     if (socket) {
       socket.disconnect();
       setSocket(null);
     }
     
-    // Cambiar vista
     setView('dashboard');
   }, [socket, setView]);
 
@@ -476,34 +358,19 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     const move = (dx, dy) => {
       if (!player || !socket) return;
       
-      const newX = Math.max(0, Math.min(gameWorld?.width - 50 || 1950, player.x + dx * 25));
-      const newY = Math.max(0, Math.min(gameWorld?.height - 50 || 1950, player.y + dy * 25));
+      const newX = Math.max(0, Math.min(800 - 50, player.x + dx * 25));
+      const newY = Math.max(0, Math.min(600 - 50, player.y + dy * 25));
       
-      const direction = 
-        dx > 0 ? 'right' : 
-        dx < 0 ? 'left' : 
-        dy > 0 ? 'down' : 'up';
-      
-      const isMoving = true;
-      
-      setPlayer(prev => ({ ...prev, x: newX, y: newY, direction, isMoving }));
+      setPlayer(prev => ({ ...prev, x: newX, y: newY, isMoving: true }));
       
       socket.emit('move', {
         x: newX,
-        y: newY,
-        direction: direction,
-        isMoving: isMoving
+        y: newY
       });
 
-      // Detener movimiento después de un tiempo
       setTimeout(() => {
         if (socket && player) {
-          socket.emit('move', {
-            x: newX,
-            y: newY,
-            direction: direction,
-            isMoving: false
-          });
+          setPlayer(prev => ({ ...prev, isMoving: false }));
         }
       }, 200);
     };
@@ -553,13 +420,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
           <div className="action-buttons-game">
             <button 
-              className="action-btn-game train-btn"
-              onClick={() => handlePlayerAction('train')}
-              aria-label="Entrenar"
-            >
-              🏋️
-            </button>
-            <button 
               className="action-btn-game exit-btn"
               onClick={() => setShowMobileControls(false)}
               aria-label="Ocultar controles"
@@ -602,9 +462,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     });
   };
 
-  // Renderizar el mundo del juego
+  // Renderizar el mundo del juego - SIMPLIFICADO
   const renderGameWorld = () => {
-    if (!gameWorld || !player) return null;
+    if (!player) return null;
 
     const viewportWidth = 800;
     const viewportHeight = 600;
@@ -617,35 +477,20 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       <div className="game-container">
         <div className="game-ui">
           <div className="player-info-card">
-            <h3>{player.username} {player.isTemporary && '(Temporal)'}</h3>
+            <h3>{player.username}</h3>
             <div className="player-stats">
               <div className="stat-item">
-                <span className="stat-label">Nivel:</span>
-                <span className="stat-value">{player.level}</span>
+                <span className="stat-label">Posición:</span>
+                <span className="stat-value">{Math.floor(player.x)}, {Math.floor(player.y)}</span>
               </div>
               <div className="stat-item">
-                <span className="stat-label">EXP:</span>
-                <span className="stat-value">{player.experience}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">LupiCoins:</span>
-                <span className="stat-value">{player.lupiCoins}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Zona:</span>
-                <span className="stat-value">{currentZone}</span>
+                <span className="stat-label">Jugadores:</span>
+                <span className="stat-value">{players.length}</span>
               </div>
             </div>
           </div>
           
           <div className="action-buttons">
-            <button 
-              onClick={() => handlePlayerAction('train')} 
-              className="btn-training"
-              disabled={!socket}
-            >
-              🏋️ Entrenar
-            </button>
             <button 
               onClick={() => setShowMobileControls(!showMobileControls)}
               className="btn-mobile-controls"
@@ -669,90 +514,40 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             boxShadow: '0 0 20px rgba(46, 139, 87, 0.5)'
           }}
         >
-          {/* Renderizar zonas */}
-          {gameWorld.zones.map(zone => (
-            <div
-              key={zone.name}
-              className="zone"
-              style={{
-                position: 'absolute',
-                left: zone.x - offsetX,
-                top: zone.y - offsetY,
-                width: zone.width,
-                height: zone.height,
-                border: '2px dashed rgba(255,255,255,0.4)',
-                background: getZoneColor(zone.type),
-                pointerEvents: 'none'
-              }}
-              title={zone.name}
-            >
-              <div className="zone-label" style={{
-                position: 'absolute',
-                top: '5px',
-                left: '5px',
-                background: 'rgba(0,0,0,0.7)',
-                color: 'white',
-                padding: '2px 6px',
-                borderRadius: '3px',
-                fontSize: '10px',
-                pointerEvents: 'none'
-              }}>
-                {zone.name}
-              </div>
+          {/* Zona central */}
+          <div
+            className="zone"
+            style={{
+              position: 'absolute',
+              left: 200 - offsetX,
+              top: 200 - offsetY,
+              width: 400,
+              height: 200,
+              border: '2px dashed rgba(255,255,255,0.4)',
+              background: 'rgba(144, 238, 144, 0.3)',
+              pointerEvents: 'none'
+            }}
+            title="Plaza Central"
+          >
+            <div className="zone-label" style={{
+              position: 'absolute',
+              top: '5px',
+              left: '5px',
+              background: 'rgba(0,0,0,0.7)',
+              color: 'white',
+              padding: '2px 6px',
+              borderRadius: '3px',
+              fontSize: '10px',
+              pointerEvents: 'none'
+            }}>
+              Plaza Central
             </div>
-          ))}
-
-          {/* Renderizar NPCs */}
-          {npcs.map(npc => (
-            <div
-              key={npc.id}
-              className="npc"
-              style={{
-                position: 'absolute',
-                left: npc.x - offsetX,
-                top: npc.y - offsetY,
-                width: 45,
-                height: 45,
-                background: getNPCColor(npc.type),
-                borderRadius: '50%',
-                border: '3px solid #000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '20px',
-                boxShadow: '0 0 10px rgba(0,0,0,0.3)',
-                transform: 'scale(1)',
-                transition: 'transform 0.2s'
-              }}
-              onClick={() => handleInteractWithNPC(npc.id)}
-              onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-              title={`${npc.name} (${getNPCTypeName(npc.type)})`}
-            >
-              {getNPCSymbol(npc.type)}
-              <div className="npc-name-tag" style={{
-                position: 'absolute',
-                bottom: '-25px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'rgba(0,0,0,0.8)',
-                color: 'white',
-                padding: '2px 6px',
-                borderRadius: '3px',
-                fontSize: '10px',
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none'
-              }}>
-                {npc.name}
-              </div>
-            </div>
-          ))}
+          </div>
 
           {/* Renderizar otros jugadores */}
-          {players.filter(p => p.id !== player?.id).map(otherPlayer => (
+          {players.filter(p => p.userId !== player?.userId).map(otherPlayer => (
             <div
-              key={otherPlayer.id}
+              key={otherPlayer.userId}
               className="other-player"
               style={{
                 position: 'absolute',
@@ -760,29 +555,15 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 top: otherPlayer.y - offsetY,
                 width: 35,
                 height: 35,
-                background: otherPlayer.color,
+                background: '#FF6B6B',
                 borderRadius: '50%',
                 border: '2px solid #fff',
                 boxShadow: '0 0 5px rgba(0,0,0,0.5)',
                 transform: `scale(${otherPlayer.isMoving ? 1.1 : 1})`,
                 transition: 'transform 0.2s'
               }}
-              title={`${otherPlayer.username} (Nvl ${otherPlayer.level}) - ${otherPlayer.position}`}
+              title={`${otherPlayer.username}`}
             >
-              <div 
-                className="player-direction"
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderBottom: `12px solid #333`,
-                  transform: `rotate(${getRotation(otherPlayer.direction)}deg)`,
-                  position: 'absolute',
-                  top: '-10px',
-                  left: '12px'
-                }}
-              />
               <div className="player-name-tag" style={{
                 position: 'absolute',
                 bottom: '-20px',
@@ -811,27 +592,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
                 top: viewportHeight / 2 - 22,
                 width: 44,
                 height: 44,
-                background: player.color,
+                background: '#4ECDC4',
                 borderRadius: '50%',
                 border: '3px solid #fff',
                 boxShadow: '0 0 15px rgba(255,255,255,0.8)',
                 animation: player.isMoving ? 'pulse 0.5s infinite alternate' : 'none'
               }}
             >
-              <div 
-                className="player-direction"
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '7px solid transparent',
-                  borderRight: '7px solid transparent',
-                  borderBottom: `14px solid #333`,
-                  transform: `rotate(${getRotation(player.direction)}deg)`,
-                  position: 'absolute',
-                  top: '-12px',
-                  left: '15px'
-                }}
-              />
               <div className="player-glow" style={{
                 position: 'absolute',
                 top: '-5px',
@@ -850,56 +617,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
     );
-  };
-
-  // Funciones auxiliares de renderizado
-  const getZoneColor = (type) => {
-    const colors = {
-      starter: 'rgba(144, 238, 144, 0.3)',
-      training: 'rgba(255, 215, 0, 0.3)',
-      arena: 'rgba(255, 99, 71, 0.3)',
-      market: 'rgba(135, 206, 250, 0.3)',
-      quest: 'rgba(147, 112, 219, 0.3)',
-      club: 'rgba(50, 205, 50, 0.3)'
-    };
-    return colors[type] || 'rgba(128, 128, 128, 0.3)';
-  };
-
-  const getNPCColor = (type) => {
-    const colors = {
-      trainer: '#FFD700',
-      merchant: '#FF6347',
-      quest_giver: '#9370DB'
-    };
-    return colors[type] || '#666';
-  };
-
-  const getNPCTypeName = (type) => {
-    const names = {
-      trainer: 'Entrenador',
-      merchant: 'Comerciante',
-      quest_giver: 'Dador de Misiones'
-    };
-    return names[type] || 'NPC';
-  };
-
-  const getNPCSymbol = (type) => {
-    const symbols = {
-      trainer: '🏆',
-      merchant: '🏪',
-      quest_giver: '📜'
-    };
-    return symbols[type] || '👤';
-  };
-
-  const getRotation = (direction) => {
-    const rotations = {
-      up: 0,
-      right: 90,
-      down: 180,
-      left: 270
-    };
-    return rotations[direction] || 180;
   };
 
   // Componente de estado de conexión
@@ -948,15 +665,15 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     return (
       <div className="loading-screen">
         <div className="loading-content">
-          <h2>🎮 Cargando MMORPG Deportivo</h2>
+          <h2>🎮 Cargando LupiRPG Multiplayer</h2>
           <ConnectionStatus />
           {connectionStatus === 'error' && (
             <div className="troubleshooting">
               <p>Solucionar problemas:</p>
               <ol>
-                <li>Asegúrate de que el servidor esté corriendo en puerto 5000</li>
-                <li>Verifica que no haya errores en la consola del servidor</li>
-                <li>Revisa la conexión a internet</li>
+                <li>Verifica que el servidor backend esté funcionando</li>
+                <li>Revisa tu conexión a internet</li>
+                <li>Intenta recargar la página</li>
               </ol>
               <button 
                 onClick={() => window.location.reload()}
@@ -988,13 +705,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     <div className="lobby-container">
       <div className="lobby-header">
         <div className="lobby-title">
-          <h1>🎮 MMORPG Deportivo</h1>
-          <p>¡Explora el mundo, interactúa con otros jugadores y mejora tus habilidades!</p>
+          <h1>🎮 LupiRPG Multiplayer</h1>
+          <p>¡Explora el mundo y chatea con otros jugadores!</p>
         </div>
         <div className="lobby-info">
           <div className="lobby-stats">
             <span className="stat-badge">👥 Jugadores: {players.length}</span>
-            <span className="stat-badge">🗺️ Zona: {currentZone}</span>
             <ConnectionStatus />
           </div>
           
@@ -1026,10 +742,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
         <div className="chat-messages" id="chat-messages">
           {chatMessages.map((msg, index) => (
-            <div key={index} className={`chat-message ${msg.user === player.username ? 'own-message' : ''} ${msg.isNPC ? 'npc-message' : ''}`}>
+            <div key={index} className={`chat-message ${msg.user === player.username ? 'own-message' : ''}`}>
               <div className="message-header">
                 <span className="message-username">{msg.user}</span>
-                {msg.level > 0 && <span className="message-level">Nvl {msg.level}</span>}
                 <span className="message-time">{msg.timestamp}</span>
               </div>
               <div className="message-content">{msg.message}</div>
@@ -1043,7 +758,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDownChat}
-            placeholder="Escribe un mensaje... (Enter para enviar, / para comandos)"
+            placeholder="Escribe un mensaje... (Enter para enviar)"
             className="chat-input"
             maxLength={200}
           />
@@ -1063,32 +778,25 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <div className="lobby-players-list">
           {players.map(otherPlayer => (
             <div 
-              key={otherPlayer.id} 
+              key={otherPlayer.userId} 
               className={`lobby-player-item ${otherPlayer.userId === player.userId ? 'current-player' : ''}`}
             >
               <div className="lobby-player-info">
                 <div 
                   className="lobby-player-avatar"
-                  style={{ backgroundColor: otherPlayer.color }}
+                  style={{ backgroundColor: otherPlayer.userId === player.userId ? '#4ECDC4' : '#FF6B6B' }}
                 >
-                  <div className="player-avatar-direction" style={{
-                    transform: `rotate(${getRotation(otherPlayer.direction)}deg)`
-                  }}></div>
+                  {otherPlayer.username.charAt(0).toUpperCase()}
                 </div>
                 <div className="lobby-player-details">
                   <span className="lobby-player-name">
                     {otherPlayer.username}
                     {otherPlayer.userId === player.userId && <span className="lobby-you-badge">(Tú)</span>}
-                    {otherPlayer.isTemporary && <span className="temporary-badge">Temporal</span>}
                   </span>
                   <span className="lobby-player-position">
-                    Nvl {otherPlayer.level} | {otherPlayer.position}
+                    Pos: {Math.floor(otherPlayer.x)}, {Math.floor(otherPlayer.y)}
                   </span>
                 </div>
-              </div>
-              <div className="lobby-player-status">
-                <div className={`status-indicator ${otherPlayer.isMoving ? 'moving' : 'idle'}`}></div>
-                <span className="player-zone">{otherPlayer.currentZone}</span>
               </div>
             </div>
           ))}
@@ -1102,10 +810,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         <p>
           {isMobile 
             ? '🕹️ Usa los controles táctiles para moverte | 💬 Toca el chat para escribir' 
-            : '🕹️ WASD o Flechas para moverte | 💬 Escribe para chatear | 🏋️ Click en Entrenar'
+            : '🕹️ WASD o Flechas para moverte | 💬 Escribe para chatear'
           }
         </p>
-        <p>Comandos de chat: /stats, /emote, /help, /players</p>
       </div>
     </div>
   );
