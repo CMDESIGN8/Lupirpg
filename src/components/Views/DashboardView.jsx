@@ -543,7 +543,11 @@ const loadInventory = async () => {
     <div className="inventory-grid">
       {inventory.map((slot) => (
         <div key={slot.id} className={`inventory-item ${slot.is_equipped ? 'equipped' : ''}`}>
-  <img src={slot.items.image_url} alt={slot.items.name} className="item-img" />
+          <img
+            src={slot.items.image_url || "/assets/items/default.png"}
+            alt={slot.items.name}
+            className="item-img"
+          />
           <div className="item-info">
             <span className="item-name">{slot.items.name}</span>
             <span className="item-bonus">
@@ -551,22 +555,32 @@ const loadInventory = async () => {
             </span>
           </div>
           <button
-    className="equip-btn"
-    onClick={async () => {
-      const res = await fetch("https://lupirpgbackend.onrender.com/api/inventory/equip", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player_item_id: slot.id, equip: !slot.is_equipped }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        showMessage(slot.is_equipped ? "Ítem desequipado" : "Ítem equipado");
-        loadInventory();
-      }
-    }}
-  >
-    {slot.is_equipped ? "✅ Equipado" : "⚙️ Equipar"}
-  </button>
+            className="equip-btn"
+            onClick={async () => {
+              try {
+                const res = await fetch(
+                  "https://lupirpgbackend.onrender.com/api/inventory/equip",
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ player_item_id: slot.id, equip: !slot.is_equipped }),
+                  }
+                );
+                const result = await res.json();
+                if (result.success) {
+                  showMessage(slot.is_equipped ? "Ítem desequipado" : "Ítem equipado");
+                  loadInventory(); // recarga el inventario actualizado
+                } else {
+                  showMessage("Error al equipar/desequipar el ítem");
+                }
+              } catch (err) {
+                console.error("Error equipando ítem:", err);
+                showMessage("Error al comunicarse con el servidor");
+              }
+            }}
+          >
+            {slot.is_equipped ? "✅ Equipado" : "⚙️ Equipar"}
+          </button>
         </div>
       ))}
     </div>
