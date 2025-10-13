@@ -11,7 +11,7 @@ import ClubChat from '../Clubs/ClubChat.jsx';
 import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
 import CommonRoomModal from "./CommonRoomModal";
-
+import { apiService } from '../../services/apiService';
 
 
 const DashboardView = ({ 
@@ -231,8 +231,7 @@ useEffect(() => {
 
 const loadInventory = async () => {
   try {
-    const res = await fetch(`http://localhost:5000/api/inventory/${playerData.id}`);
-    const data = await res.json();
+    const data = await apiService.getInventory(playerData.id);
     setInventoryState(data);
   } catch (err) {
     console.error("Error cargando inventario:", err);
