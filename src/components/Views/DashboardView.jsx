@@ -222,6 +222,25 @@ const handleBuyItem = async (listing) => {
   }
 };
 
+  // === INVENTARIO ===
+const [inventory, setInventoryState] = useState([]);
+
+useEffect(() => {
+  if (playerData?.id) loadInventory();
+}, [playerData]);
+
+const loadInventory = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/inventory/${playerData.id}`);
+    const data = await res.json();
+    setInventoryState(data);
+  } catch (err) {
+    console.error("Error cargando inventario:", err);
+    showMessage("Error al cargar el inventario");
+  }
+};
+
+
   return (
     <div className="game-dashboard">
       {/* Header */}
@@ -514,6 +533,47 @@ const handleBuyItem = async (listing) => {
 </div>
   </section>
 )}
+      {/* 🎒 INVENTARIO DEL JUGADOR */}
+<section className="inventory-section">
+  <h2 className="inventory-title">INVENTARIO</h2>
+  <div className="header-line"></div>
+
+  {inventory.length === 0 ? (
+    <p className="empty-inventory">Aún no tienes objetos</p>
+  ) : (
+    <div className="inventory-grid">
+      {inventory.map((slot) => (
+        <div key={slot.id} className={`inventory-item ${slot.equipped ? 'equipped' : ''}`}>
+          <img src={slot.items.image_url} alt={slot.items.name} className="item-img" />
+          <div className="item-info">
+            <span className="item-name">{slot.items.name}</span>
+            <span className="item-bonus">
+              {slot.items.skill_bonus} +{slot.items.bonus_value}
+            </span>
+          </div>
+          <button
+            className="equip-btn"
+            onClick={async () => {
+              const res = await fetch("http://localhost:5000/api/inventory/equip", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ player_item_id: slot.id, equip: !slot.equipped }),
+              });
+              const result = await res.json();
+              if (result.success) {
+                showMessage(slot.equipped ? "Ítem desequipado" : "Ítem equipado");
+                loadInventory();
+              }
+            }}
+          >
+            {slot.equipped ? "✅ Equipado" : "⚙️ Equipar"}
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+</section>
+
     <section className="Market-section">
          <div className="Market-line"></div>
   <MarketView 
