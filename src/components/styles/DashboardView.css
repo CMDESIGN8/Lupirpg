@@ -1,0 +1,62 @@
+.inventory-section {
+  margin-top: 40px;
+  text-align: center;
+  color: #fff;
+}
+
+.inventory-title {
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+  text-shadow: 0 0 8px #00ff99;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  padding: 10px;
+}
+
+.inventory-item {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 10px;
+  transition: 0.3s;
+}
+
+.inventory-item.equipped {
+  border-color: #00ff99;
+  box-shadow: 0 0 10px #00ff99;
+}
+
+.item-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+}
+
+.item-info {
+  font-size: 0.85rem;
+}
+
+.item-bonus {
+  color: #00ff99;
+}
+
+.equip-btn {
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: 0.2s;
+}
+
+.equip-btn:hover {
+  background: #00ff99;
+  color: #000;
+}
