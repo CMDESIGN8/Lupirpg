@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Copy, ChevronUp } from 'lucide-react';
 import MessageDisplay from '../UI/MessageDisplay';
 import LoadingScreen from '../UI/LoadingScreen';
-import InventoryView from '../Inventory/InventoryView';
+import InventoryView from './InventoryView';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
 import LupiMiniGame from '../game/LupiMiniGame';
 import RewardChest from '../game/RewardChest';
