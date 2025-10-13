@@ -554,7 +554,7 @@ const loadInventory = async () => {
           <button
             className="equip-btn"
             onClick={async () => {
-              const res = await fetch("http://localhost:5000/api/inventory/equip", {
+              const res = await fetch("https://lupirpgbackend.onrender.com/api/inventory/equip", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ player_item_id: slot.id, equip: !slot.equipped }),
