@@ -1,5 +1,5 @@
 // src/services/apiService.js
-const API_BASE = "http://localhost:5000"; // Cambiar cuando lo deployes
+const API_BASE = "https://lupirpgbackend.onrender.com"; // Cambiar cuando lo deployes
 
 export const apiService = {
   // === PLAYER ===
