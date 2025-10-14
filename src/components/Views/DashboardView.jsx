@@ -10,8 +10,6 @@ import CommonRoom from '../game/CommonRoom.jsx';
 import ClubChat from '../Clubs/ClubChat.jsx';
 import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
-import CommonRoomModal from "./CommonRoomModal";
-import { apiService } from '../../services/apiService';
 
 
 const DashboardView = ({ 
@@ -41,14 +39,6 @@ const DashboardView = ({
   const [activeGame, setActiveGame] = useState(false);
   const [reward, setReward] = useState(null);
   const [gameLoading, setGameLoading] = useState(false);
-
-  const [showLobby, setShowLobby] = useState(false);
-    const [user] = useState({
-      id: 'user-id',
-      username: 'TuUsuario',
-      color: '#2E8B57',
-      sport: 'fútbol'
-    });
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
@@ -222,24 +212,6 @@ const handleBuyItem = async (listing) => {
   }
 };
 
-  // === INVENTARIO ===
-const [inventory, setInventoryState] = useState([]);
-
-useEffect(() => {
-  if (playerData?.id) loadInventory();
-}, [playerData]);
-
-const loadInventory = async () => {
-  try {
-    const data = await apiService.getInventory(playerData.id);
-    setInventoryState(data);
-  } catch (err) {
-    console.error("Error cargando inventario:", err);
-    showMessage("Error al cargar el inventario");
-  }
-};
-
-
   return (
     <div className="game-dashboard">
       {/* Header */}
@@ -410,24 +382,12 @@ const loadInventory = async () => {
             <h2>ACCIÓN RÁPIDA</h2>
             <div className="header-line"></div>
           </div>
-
-          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
-            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
-              <span className="nav-icon">🗺️</span>
-              <span>Mundo Lupi</span>
-            </button>
           
           <div className="action-buttons">
             <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
               <span className="nav-icon">⚡</span>
               <span>Entrenar</span>
             </button>
-
-          
-<button className="action-btn primary" onClick={() => setView('sports_mmorpg')} disabled={loading}>
-  <span className="nav-icon">🏆</span>
-  <span>MMORPG Deportivo</span>
-</button>
             
             <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
               <span className="nav-icon">🔍</span>
@@ -442,13 +402,10 @@ const loadInventory = async () => {
               <span>Misiones</span>
             </button>
 
-           <button 
-        className="action-btn secondary" 
-        onClick={() => setShowCommonRoom(true)}
-      >
-        <span className="nav-icon">🏠</span>
-        <span>SALA COMUN</span>
-      </button>
+           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+  <span className="nav-icon">🏠</span>
+  <span>SALA COMUN</span>
+</button>
 
 <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
             <span className="nav-icon">➡️</span>
@@ -527,66 +484,11 @@ const loadInventory = async () => {
     <div class="salacomun">
     <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
   <span className="nav-icon">🏠</span>
-  <span>SALA COMUN</span>
+  <span>INGRESAR A LA SALA DE EQUIPO</span>
 </button>
 </div>
   </section>
 )}
-      {/* 🎒 INVENTARIO DEL JUGADOR */}
-<section className="inventory-section">
-  <h2 className="inventory-title">INVENTARIO</h2>
-  <div className="header-line"></div>
-
-  {inventory.length === 0 ? (
-    <p className="empty-inventory">Aún no tienes objetos</p>
-  ) : (
-    <div className="inventory-grid">
-      {inventory.map((slot) => (
-        <div key={slot.id} className={`inventory-item ${slot.is_equipped ? 'equipped' : ''}`}>
-          <img
-            src={slot.items.image_url || "/assets/items/default.png"}
-            alt={slot.items.name}
-            className="item-img"
-          />
-          <div className="item-info">
-            <span className="item-name">{slot.items.name}</span>
-            <span className="item-bonus">
-              {slot.items.skill_bonus} +{slot.items.bonus_value}
-            </span>
-          </div>
-          <button
-            className="equip-btn"
-            onClick={async () => {
-              try {
-                const res = await fetch(
-                  "https://lupirpgbackend.onrender.com/api/inventory/equip",
-                  {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ player_item_id: slot.id, equip: !slot.is_equipped }),
-                  }
-                );
-                const result = await res.json();
-                if (result.success) {
-                  showMessage(slot.is_equipped ? "Ítem desequipado" : "Ítem equipado");
-                  loadInventory(); // recarga el inventario actualizado
-                } else {
-                  showMessage("Error al equipar/desequipar el ítem");
-                }
-              } catch (err) {
-                console.error("Error equipando ítem:", err);
-                showMessage("Error al comunicarse con el servidor");
-              }
-            }}
-          >
-            {slot.is_equipped ? "✅ Equipado" : "⚙️ Equipar"}
-          </button>
-        </div>
-      ))}
-    </div>
-  )}
-</section>
-
     <section className="Market-section">
          <div className="Market-line"></div>
   <MarketView 

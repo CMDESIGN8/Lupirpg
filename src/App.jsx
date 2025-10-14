@@ -20,9 +20,6 @@ import { supabaseClient } from './services/supabase'; // Importación correcta
 import LupiMiniGame from "./components/game/LupiMiniGame";
 import RewardChest from "./components/game/RewardChest";
 import ClubsSystem from './components/Clubs/ClubsSystem';
-import MultiplayerLobbyView from './components/Views/MultiplayerLobbyView.jsx';
-import SportsMMORPGView from './components/Views/SportsMMORPGView .jsx';
-
 
 
 const App = () => {
@@ -1158,18 +1155,6 @@ case 'clubs': return <ClubsSystem
   showMessage={showMessage}
   setLoading={setLoading}
 />;
-      case 'multiplayer_lobby': return <MultiplayerLobbyView {...props} />;
-
-      case 'sports_mmorpg':
-  return (
-    <SportsMMORPGView 
-      playerData={playerData}
-      setView={setView}
-      supabaseClient={supabaseClient}
-      showMessage={showMessage}
-    />
-  );
-
       case 'club_missions': return <ClubMissionsView {...props} />; // ✅ Asegúrate de que esté incluido
       case 'create_club': return <CreateClubView {...props} />;
       case 'club_details': return <ClubDetailsView {...props} />;

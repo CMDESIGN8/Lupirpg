@@ -1,5 +1,3 @@
-import "./load.css";
-
 const LoadingScreen = () => (
   <div className="loading-stadium">
     <div className="loading-content">
