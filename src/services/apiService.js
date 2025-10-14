@@ -13,25 +13,34 @@ export const apiService = {
 
   getAvatars: async (userId) => {
     const { data, error } = await supabaseClient
-      .from('avatars')
-      .select('*')
+      .from('player_avatars')
+      .select('*, avatars(*)')
       .eq('player_id', userId);
     return { data, error };
   },
 
   getClub: async (userId) => {
     const { data, error } = await supabaseClient
-      .from('club_members')
-      .select('clubs(*)')
-      .eq('player_id', userId)
+      .from('players')
+      .select('club_id')
+      .eq('id', userId)
       .single();
-    return { data: data?.clubs, error };
+    
+    if (error || !data?.club_id) return { data: null, error };
+    
+    const { data: clubData, error: clubError } = await supabaseClient
+      .from('clubs')
+      .select('*')
+      .eq('id', data.club_id)
+      .single();
+    
+    return { data: clubData, error: clubError };
   },
 
   // === INVENTORY ===
   getInventory: async (userId) => {
     const { data, error } = await supabaseClient
-      .from('player_inventory')
+      .from('player_items')
       .select('*, items(*)')
       .eq('player_id', userId);
     return { data, error };
@@ -39,7 +48,7 @@ export const apiService = {
 
   addItem: async (player_id, item_id) => {
     const { data, error } = await supabaseClient
-      .from('player_inventory')
+      .from('player_items')
       .insert([{ player_id, item_id }])
       .select();
     return { data, error };
@@ -47,8 +56,8 @@ export const apiService = {
 
   equipItem: async (player_item_id, equip) => {
     const { data, error } = await supabaseClient
-      .from('player_inventory')
-      .update({ equipped: equip })
+      .from('player_items')
+      .update({ is_equipped: equip })
       .eq('id', player_item_id)
       .select();
     return { data, error };
