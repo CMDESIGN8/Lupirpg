@@ -1,61 +1,80 @@
-// src/services/apiService.js
-const API_BASE = "https://lupirpgbackend.onrender.com"; // Cambiar cuando lo deployes
+import { supabaseClient } from './supabase.js';
 
 export const apiService = {
   // === PLAYER ===
   getPlayer: async (userId) => {
-    const res = await fetch(`${API_BASE}/api/player/${userId}`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('players')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    return { data, error };
   },
 
   getAvatars: async (userId) => {
-    const res = await fetch(`${API_BASE}/api/player/${userId}/avatars`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('avatars')
+      .select('*')
+      .eq('player_id', userId);
+    return { data, error };
   },
 
   getClub: async (userId) => {
-    const res = await fetch(`${API_BASE}/api/player/${userId}/club`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('club_members')
+      .select('clubs(*)')
+      .eq('player_id', userId)
+      .single();
+    return { data: data?.clubs, error };
   },
 
   // === INVENTORY ===
   getInventory: async (userId) => {
-    const res = await fetch(`${API_BASE}/api/inventory/${userId}`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('player_inventory')
+      .select('*, items(*)')
+      .eq('player_id', userId);
+    return { data, error };
   },
 
   addItem: async (player_id, item_id) => {
-    const res = await fetch(`${API_BASE}/api/inventory/add`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id, item_id }),
-    });
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('player_inventory')
+      .insert([{ player_id, item_id }])
+      .select();
+    return { data, error };
   },
 
   equipItem: async (player_item_id, equip) => {
-    const res = await fetch(`${API_BASE}/api/inventory/equip`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_item_id, equip }),
-    });
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('player_inventory')
+      .update({ equipped: equip })
+      .eq('id', player_item_id)
+      .select();
+    return { data, error };
   },
 
   // === MISSIONS ===
   getPlayerMissions: async (userId) => {
-    const res = await fetch(`${API_BASE}/api/player/${userId}/missions`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('player_missions')
+      .select('*, missions(*)')
+      .eq('player_id', userId);
+    return { data, error };
   },
 
   getAllMissions: async () => {
-    const res = await fetch(`${API_BASE}/api/missions`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('missions')
+      .select('*');
+    return { data, error };
   },
 
   // === ITEMS ===
   getAllItems: async () => {
-    const res = await fetch(`${API_BASE}/api/items`);
-    return res.json();
+    const { data, error } = await supabaseClient
+      .from('items')
+      .select('*');
+    return { data, error };
   },
 };
