@@ -617,6 +617,7 @@ const handleBuyItem = async (listing) => {
       )}
     </div>
       </div>
+       </div>
   );
 };
 
