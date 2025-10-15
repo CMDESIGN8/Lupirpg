@@ -332,107 +332,78 @@ const handleBuyItem = async (listing) => {
           </div>
         </div>
 
-        {/* Centro - Habilidades */}
-        <div className="skills-card">
-          <div className="card-header">
-            <h2>ESTADÍSTICAS</h2>
-            <div className="header-line"></div>
-            <div className="skill-points">
-              Puntos disponibles: <span className="points-count">{playerData.skill_points}</span>
-            </div>
+        {/* Centro - Habilidades + Acciones rápidas */}
+<div className="skills-card full-width">
+  <div className="card-header">
+    <h2>ESTADÍSTICAS</h2>
+    <div className="header-line"></div>
+    <div className="skill-points">
+      Puntos disponibles: <span className="points-count">{playerData.skill_points}</span>
+    </div>
+  </div>
+  
+  <div className="skills-grid">
+    {playerData.skills?.map(skill => {
+      const bonusItem = equippedItems[skill.skill_name];
+      const bonus = bonusItem ? bonusItem.bonus_value : 0;
+      const totalValue = skill.skill_value + bonus;
+
+      const skillNamesMap = {
+        "Fuerza": "⚽ Potencia",
+        "Resistencia": "🏃 Resistencia",
+        "Técnica": "🔧 Técnica",
+        "Velocidad": "💨 Velocidad",
+        "Dribling": "🎯 Regate",
+        "Pase": "📨 Pase",
+        "Tiro": "🥅 Tiro",
+        "Defensa": "🛡️ Defensa",
+        "Liderazgo": "👑 Liderazgo",
+        "Estrategia": "🧠 Estrategia",
+        "Inteligencia": "📈 Inteligencia"
+      };
+
+      const skillDisplayName = skillNamesMap[skill.skill_name] || skill.skill_name;
+
+      return (
+        <div key={skill.skill_name} className="skill-item">
+          <div className="skill-info">
+            <span className="skill-name">{skillDisplayName}</span>
+            <span className="skill-value">
+              {totalValue} {bonus > 0 && <span className="skill-bonus">+{bonus}</span>}
+            </span>
           </div>
-          
-          <div className="skills-grid">
-            {playerData.skills?.map(skill => {
-              const bonusItem = equippedItems[skill.skill_name];
-              const bonus = bonusItem ? bonusItem.bonus_value : 0;
-              const totalValue = skill.skill_value + bonus;
-              
-              const skillNamesMap = {
-                "Fuerza": "⚽ Potencia",
-                "Resistencia": "🏃 Resistencia",
-                "Técnica": "🔧 Técnica",
-                "Velocidad": "💨 Velocidad",
-                "Dribling": "🎯 Regate",
-                "Pase": "📨 Pase",
-                "Tiro": "🥅 Tiro",
-                "Defensa": "🛡️ Defensa",
-                "Liderazgo": "👑 Liderazgo",
-                "Estrategia": "🧠 Estrategia",
-                "Inteligencia": "📈 Inteligencia"
-              };
-              
-              const skillDisplayName = skillNamesMap[skill.skill_name] || skill.skill_name;
-              
-              return (
-                <div key={skill.skill_name} className="skill-item">
-                  <div className="skill-info">
-                    <span className="skill-name">{skillDisplayName}</span>
-                    <span className="skill-value">
-                      {totalValue} {bonus > 0 && <span className="skill-bonus">+{bonus}</span>}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={() => handleUpgradeSkill(skill.skill_name)} 
-                    disabled={loading || playerData.skill_points <= 0} 
-                    className="skill-upgrade-btn" 
-                    title="Mejorar habilidad"
-                  >
-                    <ChevronUp size={16} />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Derecha - Acciones rápidas */}
-        <div className="actions-card">
-          <div className="card-header">
-            <h2>ACCIÓN RÁPIDA</h2>
-            <div className="header-line"></div>
-          </div>
-
-          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
-            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
-              <span className="nav-icon">🗺️</span>
-              <span>Mundo Lupi</span>
-            </button>
-          
-          <div className="action-buttons">
-            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
-              <span className="nav-icon">⚡</span>
-              <span>Entrenar</span>
-            </button>
-            
-            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
-              <span className="nav-icon">🔍</span>
-              <span>Buscar Objeto</span>
-            </button>
-            
-            <button className="action-btn secondary" onClick={() => { 
-              fetchMissions(); 
-              setView('missions'); 
-            }} disabled={loading}>
-              <span className="nav-icon">⚽</span>
-              <span>Misiones</span>
-            </button>
-
-           <button 
-        className="action-btn secondary" 
-        onClick={() => setShowCommonRoom(true)}
-      >
-        <span className="nav-icon">🏠</span>
-        <span>SALA COMUN</span>
-      </button>
-
-<button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
-            <span className="nav-icon">➡️</span>
-            <span>Transferir</span>
+          <button 
+            onClick={() => handleUpgradeSkill(skill.skill_name)} 
+            disabled={loading || playerData.skill_points <= 0} 
+            className="skill-upgrade-btn" 
+            title="Mejorar habilidad"
+          >
+            <ChevronUp size={16} />
           </button>
-
-          </div>
         </div>
+      );
+    })}
+  </div>
+
+  {/* Acciones rápidas como iconos */}
+  <div className="quick-actions">
+    <button onClick={handleGainXp} title="Entrenar">
+      ⚡
+    </button>
+    <button onClick={handleFindItem} title="Buscar Objeto">
+      🔍
+    </button>
+    <button onClick={() => { fetchMissions(); setView('missions'); }} title="Misiones">
+      ⚽
+    </button>
+    <button onClick={() => setShowCommonRoom(true)} title="Sala Común">
+      🏠
+    </button>
+    <button onClick={() => setView('transfer')} title="Transferir">
+      ➡️
+    </button>
+  </div>
+</div>
       </div>
 
   {/* Nueva sección: Club */}
@@ -620,3 +591,4 @@ const handleBuyItem = async (listing) => {
 };
 
 export default DashboardView;
+
