@@ -394,7 +394,7 @@ const handleBuyItem = async (listing) => {
           </div>
           </div>
         
-    <section>
+    <div>
     {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
             <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
               <span className="nav-icon">🗺️</span>
@@ -433,7 +433,7 @@ const handleBuyItem = async (listing) => {
             <span>Transferir</span>
           </button>
       
-    </section>
+    </div>
       
   {/* Nueva sección: Club */}
 {playerData.clubs && (
