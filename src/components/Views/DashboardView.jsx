@@ -393,8 +393,6 @@ const handleBuyItem = async (listing) => {
             <div className="header-line"></div>
           </div>
           </div>
-        </div>
-      </div>
 
     <section className="acciones">
     <div>
