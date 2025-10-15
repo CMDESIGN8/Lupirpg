@@ -395,7 +395,7 @@ const handleBuyItem = async (listing) => {
           </div>
         </div>
 
-    <section className="acciones">
+    <section>
     {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
             <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
               <span className="nav-icon">🗺️</span>
