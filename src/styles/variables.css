@@ -44,3 +44,7 @@
   0% { box-shadow: 0 0 5px var(--neon-blue); }
   100% { box-shadow: 0 0 15px var(--neon-blue), 0 0 30px var(--neon-blue); }
 }
+
+body{
+  background: linear-gradient(135deg, var(--neon-bg-darker) 0%, var(--neon-bg-dark) 100%);
+}

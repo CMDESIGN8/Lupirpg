@@ -181,23 +181,20 @@
 }
 
 .back-button {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: linear-gradient(135deg, #666, #333);
-  border: none;
-  border-radius: var(--border-radius);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin: 0 auto;
+    background: linear-gradient(135deg, var(--neon-dark-blue) 0%, var(--neon-blue) 100%);
+    border: 2px solid var(--neon-cyan);
+    color: #fff;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    transition: all .3s ease;
+    box-shadow: 0 0 10px var(--neon-blue);
 }
 
 .back-button:hover {
-  background: linear-gradient(135deg, #888, #555);
   transform: translateY(-2px);
+  box-shadow: 0 0 20px var(--neon-cyan);
+  background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-cyan) 100%);
 }
 
 /* Estado de miembro actual */
