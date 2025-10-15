@@ -200,7 +200,7 @@
   100% { opacity: 0; left: 100%; }
 }
 
-/* NUEVA ESTRUCTURA INTEGRADA PARA ESTADÍSTICAS + ACCIONES */
+/* ESTRUCTURA COMPLETAMENTE REDISEÑADA */
 .combined-stats-actions {
   background: rgba(0, 20, 40, 0.7);
   border: 1px solid #00aaff;
@@ -210,10 +210,10 @@
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 30px;
+  grid-template-columns: auto 1fr auto;
+  gap: 25px;
   align-items: start;
-  min-height: 600px;
+  min-height: 500px;
 }
 
 .combined-stats-actions::before {
@@ -226,14 +226,9 @@
   background: linear-gradient(90deg, transparent, #00ccff, transparent);
 }
 
-/* Sección principal del gráfico y estadísticas */
-.stats-main-section {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
+/* Header de estadísticas */
 .stats-header {
+  grid-column: 1 / -1;
   text-align: center;
   margin-bottom: 10px;
 }
@@ -249,7 +244,6 @@
 .skill-points {
   color: #88ddff;
   font-size: 0.9rem;
-  margin-top: 5px;
 }
 
 .points-count {
@@ -257,32 +251,26 @@
   font-weight: bold;
 }
 
-/* Contenedor del gráfico y skills integrados */
-.chart-and-skills {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 25px;
-  align-items: start;
-}
-
-/* Gráfico estilo FIFA - MEJORADO */
-.fifa-chart-section {
+/* Gráfico FIFA - CENTRAL Y VISIBLE */
+.fifa-chart-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  justify-content: center;
+  padding: 15px;
 }
 
 .fifa-radar-chart {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 250px;
+  height: 250px;
   background: rgba(0, 30, 60, 0.3);
   border-radius: 50%;
   border: 2px solid rgba(0, 170, 255, 0.4);
-  box-shadow: 0 0 30px rgba(0, 170, 255, 0.3);
+  box-shadow: 0 0 25px rgba(0, 170, 255, 0.3);
 }
 
+/* Ejes del radar */
 .radar-grid {
   position: absolute;
   top: 0;
@@ -297,29 +285,25 @@
   left: 50%;
   width: 1px;
   height: 100%;
-  background: rgba(0, 170, 255, 0.15);
+  background: rgba(0, 170, 255, 0.2);
   transform-origin: center;
 }
 
 .radar-axis:nth-child(1) { transform: translateX(-50%) rotate(0deg); }
-.radar-axis:nth-child(2) { transform: translateX(-50%) rotate(30deg); }
-.radar-axis:nth-child(3) { transform: translateX(-50%) rotate(60deg); }
-.radar-axis:nth-child(4) { transform: translateX(-50%) rotate(90deg); }
-.radar-axis:nth-child(5) { transform: translateX(-50%) rotate(120deg); }
-.radar-axis:nth-child(6) { transform: translateX(-50%) rotate(150deg); }
-.radar-axis:nth-child(7) { transform: translateX(-50%) rotate(180deg); }
-.radar-axis:nth-child(8) { transform: translateX(-50%) rotate(210deg); }
-.radar-axis:nth-child(9) { transform: translateX(-50%) rotate(240deg); }
-.radar-axis:nth-child(10) { transform: translateX(-50%) rotate(270deg); }
-.radar-axis:nth-child(11) { transform: translateX(-50%) rotate(300deg); }
-.radar-axis:nth-child(12) { transform: translateX(-50%) rotate(330deg); }
+.radar-axis:nth-child(2) { transform: translateX(-50%) rotate(45deg); }
+.radar-axis:nth-child(3) { transform: translateX(-50%) rotate(90deg); }
+.radar-axis:nth-child(4) { transform: translateX(-50%) rotate(135deg); }
+.radar-axis:nth-child(5) { transform: translateX(-50%) rotate(180deg); }
+.radar-axis:nth-child(6) { transform: translateX(-50%) rotate(225deg); }
+.radar-axis:nth-child(7) { transform: translateX(-50%) rotate(270deg); }
+.radar-axis:nth-child(8) { transform: translateX(-50%) rotate(315deg); }
 
 /* Círculos concéntricos */
 .radar-circle {
   position: absolute;
   top: 50%;
   left: 50%;
-  border: 1px solid rgba(0, 170, 255, 0.1);
+  border: 1px solid rgba(0, 170, 255, 0.15);
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
@@ -329,12 +313,13 @@
 .radar-circle:nth-child(3) { width: 40%; height: 40%; }
 .radar-circle:nth-child(4) { width: 20%; height: 20%; }
 
+/* Puntos de habilidades en el radar */
 .skills-radar {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 85%;
-  height: 85%;
+  width: 90%;
+  height: 90%;
   transform: translate(-50%, -50%);
 }
 
@@ -351,192 +336,179 @@
   font-size: 0.7rem;
   font-weight: bold;
   color: #00ccff;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   white-space: nowrap;
-  text-shadow: 0 0 3px rgba(0, 204, 255, 0.5);
-  background: rgba(0, 20, 40, 0.8);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 20, 40, 0.9);
   padding: 2px 6px;
   border-radius: 3px;
+  border: 1px solid rgba(0, 170, 255, 0.3);
 }
 
 .skill-value-badge {
   background: linear-gradient(135deg, #00ccff, #0066ff);
   color: white;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   margin: 0 auto;
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 8px rgba(0, 204, 255, 0.4);
 }
 
-/* Skills Grid Compacto */
-.skills-grid-compact {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 10px;
+/* Panel de Stats a la izquierda del gráfico */
+.stats-panel-left {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 180px;
 }
 
-.skill-item-compact {
+/* Panel de Stats a la derecha del gráfico */
+.stats-panel-right {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 180px;
+}
+
+/* Items de stats individuales */
+.stats-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: rgba(0, 30, 60, 0.4);
   border: 1px solid rgba(0, 170, 255, 0.2);
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
-.skill-item-compact:hover {
+.stats-item:hover {
   background: rgba(0, 100, 200, 0.3);
   border-color: #00ccff;
+  transform: translateY(-1px);
 }
 
-.skill-info-compact {
+.stats-info {
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 
-.skill-name-compact {
-  font-size: 0.75rem;
-  margin-bottom: 2px;
+.stats-name {
+  font-size: 0.8rem;
+  margin-bottom: 3px;
   color: #88ddff;
   font-weight: 500;
 }
 
-.skill-value-compact {
+.stats-value {
   font-weight: bold;
   color: #00ccff;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
-.skill-bonus-compact {
+.stats-bonus {
   color: #00ff99;
   font-size: 0.7rem;
   margin-left: 4px;
 }
 
-.skill-upgrade-btn-compact {
+.stats-upgrade-btn {
   background: linear-gradient(135deg, #00aaff, #0066ff);
   border: none;
   border-radius: 4px;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   flex-shrink: 0;
 }
 
-.skill-upgrade-btn-compact:hover:not(:disabled) {
+.stats-upgrade-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #00ccff, #0088ff);
   transform: scale(1.1);
+  box-shadow: 0 0 6px rgba(0, 204, 255, 0.4);
 }
 
-.skill-upgrade-btn-compact:disabled {
+.stats-upgrade-btn:disabled {
   background: #444;
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-/* Panel de Acciones Rápidas - COMPACTO Y AL COSTADO */
-.quick-actions-sidebar {
+/* Panel de Acciones Rápidas - COMPACTO */
+.quick-actions-panel {
+  grid-column: 1 / -1;
   background: rgba(0, 30, 60, 0.4);
   border: 1px solid rgba(0, 170, 255, 0.3);
   border-radius: 8px;
-  padding: 20px;
-  width: 120px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  padding: 15px;
+  margin-top: 10px;
 }
 
-.quick-actions-sidebar .sidebar-header {
+.quick-actions-panel .panel-header {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
-.quick-actions-sidebar .sidebar-header h3 {
-  font-size: 0.9rem;
+.quick-actions-panel .panel-header h3 {
+  font-size: 1rem;
   color: #00ccff;
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.quick-actions-vertical {
-  display: flex;
-  flex-direction: column;
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 
-.quick-action-btn-compact {
+.quick-action-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 12px 8px;
+  gap: 6px;
+  padding: 10px 8px;
   background: linear-gradient(135deg, #0077ff, #0044aa);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  aspect-ratio: 1;
-  position: relative;
+  color: white;
+  font-size: 0.75rem;
+  text-align: center;
 }
 
-.quick-action-btn-compact:hover:not(:disabled) {
+.quick-action-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #00aaff, #0066ff);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
 }
 
-.quick-action-btn-compact:disabled {
+.quick-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.quick-action-icon-compact {
-  font-size: 1.4rem;
+.quick-action-icon {
+  font-size: 1.3rem;
 }
 
-/* Tooltip para botones */
-.quick-action-btn-compact::after {
-  content: attr(title);
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%) translateX(10px);
-  background: rgba(0, 20, 40, 0.9);
-  color: #00ccff;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  border: 1px solid #00aaff;
-  z-index: 10;
-}
-
-.quick-action-btn-compact:hover::after {
-  opacity: 1;
-  transform: translateY(-50%) translateX(8px);
-}
-
-/* Resto de estilos (club, mercado, navegación, etc.) */
+/* Navegación y otras secciones */
 .nav-panel {
   background: rgba(0, 20, 40, 0.7);
   border: 1px solid #00aaff;
@@ -593,7 +565,7 @@
   font-size: 1.5rem;
 }
 
-/* Estilos para secciones adicionales */
+/* Secciones adicionales */
 .club-section {
   background: rgba(0, 20, 40, 0.7);
   border: 1px solid #00aaff;
@@ -601,15 +573,6 @@
   padding: 20px;
   margin-bottom: 25px;
   box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
-}
-
-.club-title {
-  font-size: 1.4rem;
-  color: #00ccff;
-  text-align: center;
-  margin: 0 0 8px 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .Market-section {
@@ -632,22 +595,17 @@
     gap: 20px;
   }
   
-  .quick-actions-sidebar {
-    width: 100%;
-    flex-direction: row;
-    justify-content: center;
+  .fifa-chart-container {
+    order: -1;
   }
   
-  .quick-actions-vertical {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+  .stats-panel-left,
+  .stats-panel-right {
+    min-width: auto;
   }
   
-  .quick-action-btn-compact {
-    width: 50px;
-    height: 50px;
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -657,15 +615,15 @@
     gap: 15px;
   }
   
-  .chart-and-skills {
+  .combined-stats-actions {
     grid-template-columns: 1fr;
-    gap: 20px;
-    justify-items: center;
   }
   
-  .fifa-radar-chart {
-    width: 250px;
-    height: 250px;
+  .stats-panel-left,
+  .stats-panel-right {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
 
@@ -679,8 +637,13 @@
     height: 220px;
   }
   
-  .skills-grid-compact {
+  .stats-panel-left,
+  .stats-panel-right {
     grid-template-columns: 1fr;
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .skill-label {
@@ -688,9 +651,9 @@
   }
   
   .skill-value-badge {
-    width: 24px;
-    height: 24px;
-    font-size: 0.7rem;
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
   }
   
   .nav-grid {
@@ -704,17 +667,14 @@
     height: 200px;
   }
   
-  .quick-actions-sidebar {
-    padding: 15px;
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
   }
   
-  .quick-action-btn-compact {
-    width: 45px;
-    height: 45px;
-  }
-  
-  .quick-action-icon-compact {
-    font-size: 1.2rem;
+  .quick-action-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 12px 15px;
   }
   
   .nav-grid {
