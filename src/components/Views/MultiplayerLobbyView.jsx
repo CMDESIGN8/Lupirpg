@@ -1,3 +1,5 @@
+// src/components/Views/MultiplayerLobbyView.jsx
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import LoadingScreen from '../UI/LoadingScreen';
 import '../styles/MultiplayerLobby.css';
@@ -9,29 +11,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeChatBubbles, setActiveChatBubbles] = useState({});
-  const [isChatFocused, setIsChatFocused] = useState(false);
   
-  // Estados para gamificación
-  const [playerStats, setPlayerStats] = useState({
-    level: 1,
-    xp: 0,
-    xpToNextLevel: 100,
-    streak: 0,
-    totalMoves: 0,
-    cellsVisited: new Set()
-  });
-  
-  const [achievements, setAchievements] = useState([
-    { id: 1, name: "Primeros Pasos", description: "Realiza 10 movimientos", icon: "👣", progress: 0, target: 10, unlocked: false },
-    { id: 2, name: "Explorador", description: "Visita 20 celdas diferentes", icon: "🗺️", progress: 0, target: 20, unlocked: false },
-    { id: 3, name: "Social", description: "Envía 5 mensajes", icon: "💬", progress: 0, target: 5, unlocked: false },
-    { id: 4, name: "Racha", description: "Mantén una racha de 5 movimientos", icon: "🔥", progress: 0, target: 5, unlocked: false }
-  ]);
-  
-  const [notifications, setNotifications] = useState([]);
-  const [combo, setCombo] = useState({ count: 0, timer: 0, active: false });
-  const [specialCells, setSpecialCells] = useState([]);
-
   // Referencias
   const playerPositionRef = useRef({ x: 0, y: 0 });
   const channelRef = useRef(null);
@@ -47,22 +27,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Detectar si es móvil
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // Generar celdas especiales
-  useEffect(() => {
-    const generateSpecialCells = () => {
-      const specials = [];
-      for (let i = 0; i < 5; i++) {
-        specials.push({
-          x: Math.floor(Math.random() * 15),
-          y: Math.floor(Math.random() * 15),
-          type: ['xp', 'streak', 'bonus'][Math.floor(Math.random() * 3)]
-        });
-      }
-      setSpecialCells(specials);
-    };
-    generateSpecialCells();
-  }, []);
 
   // Obtener avatar equipado
   useEffect(() => {
@@ -97,10 +61,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
   // Función para mostrar burbuja de chat
   const showChatBubble = useCallback((userId, message, username) => {
     const bubbleId = `${userId}-${Date.now()}`;
-    const player = players[userId]?.[0];
     
-    if (!player) return;
-
     setActiveChatBubbles(prev => ({
       ...prev,
       [bubbleId]: {
@@ -108,7 +69,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         message,
         username,
         timestamp: Date.now(),
-        position: { x: player.x, y: player.y }
+        position: players[userId]?.[0] || { x: 0, y: 0 }
       }
     }));
 
@@ -122,97 +83,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }, 5000);
   }, [players]);
 
-  // Sistema de notificaciones
-  const addNotification = useCallback((message, type = 'info') => {
-    const id = Date.now();
-    setNotifications(prev => [...prev, { id, message, type }]);
-    
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(notif => notif.id !== id));
-    }, 3000);
-  }, []);
-
-  // Sistema de XP y Niveles
-  const addXP = useCallback((amount) => {
-    setPlayerStats(prev => {
-      const newXP = prev.xp + amount;
-      const xpToNextLevel = prev.level * 100;
-      
-      if (newXP >= xpToNextLevel) {
-        // Subir de nivel
-        const newLevel = prev.level + 1;
-        addNotification(`🎊 Nivel ${newLevel} desbloqueado!`, 'level');
-        return {
-          ...prev,
-          level: newLevel,
-          xp: newXP - xpToNextLevel,
-          xpToNextLevel: newLevel * 100
-        };
-      }
-      
-      return { ...prev, xp: newXP };
-    });
-  }, [addNotification]);
-
-  // Manejar bonificación de celdas especiales
-  const handleSpecialCellBonus = useCallback((cell) => {
-    let xpGained = 0;
-    let message = '';
-    
-    switch (cell.type) {
-      case 'xp':
-        xpGained = 25;
-        message = `+${xpGained} XP!`;
-        break;
-      case 'streak':
-        setPlayerStats(prev => ({ ...prev, streak: prev.streak + 2 }));
-        message = '🔥 Racha mejorada!';
-        break;
-      case 'bonus':
-        xpGained = 50;
-        setPlayerStats(prev => ({ ...prev, streak: prev.streak + 1 }));
-        message = `🎉 Bonus +${xpGained} XP!`;
-        break;
-    }
-
-    if (xpGained > 0) {
-      addXP(xpGained);
-    }
-    
-    addNotification(message, cell.type);
-  }, [addXP, addNotification]);
-
-  // Verificar logros
-  const checkAchievements = useCallback(() => {
-    setAchievements(prev => prev.map(achievement => {
-      let newProgress = achievement.progress;
-      
-      switch (achievement.id) {
-        case 1: // Primeros Pasos
-          newProgress = playerStats.totalMoves;
-          break;
-        case 2: // Explorador
-          newProgress = playerStats.cellsVisited.size;
-          break;
-        case 3: // Social (se actualiza en sendMessage)
-          break;
-        case 4: // Racha
-          newProgress = playerStats.streak;
-          break;
-      }
-      
-      const unlocked = newProgress >= achievement.target && !achievement.unlocked;
-      
-      if (unlocked) {
-        addNotification(`🏆 Logro: ${achievement.name}`, 'achievement');
-        addXP(50); // Recompensa por logro
-      }
-      
-      return { ...achievement, progress: newProgress, unlocked: unlocked || achievement.unlocked };
-    }));
-  }, [playerStats, addNotification, addXP]);
-
-  // Función para mover al jugador con gamificación
+  // Función para mover al jugador
   const movePlayer = useCallback(async (dx, dy) => {
     if (!userToUse?.id) return;
 
@@ -221,38 +92,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     let newY = Math.max(0, Math.min(14, currentPos.y + dy));
 
     if (newX === currentPos.x && newY === currentPos.y) return;
-
-    // Actualizar stats de movimiento
-    setPlayerStats(prev => {
-      const newCellsVisited = new Set(prev.cellsVisited);
-      const cellKey = `${newX},${newY}`;
-      newCellsVisited.add(cellKey);
-      
-      const newStats = {
-        ...prev,
-        totalMoves: prev.totalMoves + 1,
-        cellsVisited: newCellsVisited,
-        streak: prev.streak + 1
-      };
-
-      return newStats;
-    });
-
-    // Sistema de combo
-    if (combo.active) {
-      setCombo(prev => ({ ...prev, count: prev.count + 1, timer: 3 }));
-    } else {
-      setCombo({ count: 1, timer: 3, active: true });
-    }
-
-    // Verificar celdas especiales
-    const isSpecialCell = specialCells.find(cell => cell.x === newX && cell.y === newY);
-    if (isSpecialCell) {
-      handleSpecialCellBonus(isSpecialCell);
-    }
-
-    // Verificar logros
-    checkAchievements();
 
     playerPositionRef.current = { x: newX, y: newY };
 
@@ -290,32 +129,17 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     } catch (error) {
       console.error('Move error:', error);
     }
-  }, [supabaseClient, userToUse, combo, specialCells, handleSpecialCellBonus, checkAchievements]);
+  }, [supabaseClient, userToUse]);
 
   // Movimiento con teclado
   const handleKeyDown = useCallback((e) => {
     // Si está escribiendo en el chat, no mover al jugador
-    if (isChatFocused) {
-      // Solo permitir Escape para salir del chat
-      if (e.key === 'Escape') {
-        chatInputRef.current?.blur();
-        setIsChatFocused(false);
-      }
+    if (document.activeElement === chatInputRef.current) {
       return;
     }
 
-    // Activar chat con Enter o T
-    if (e.key === 'Enter' || e.key === 't' || e.key === 'T') {
-      e.preventDefault();
-      chatInputRef.current?.focus();
-      setIsChatFocused(true);
-      return;
-    }
-
-    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) return;
-    
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].includes(e.key)) return;
     e.preventDefault();
-    e.stopPropagation();
 
     if (moveTimeoutRef.current) return;
 
@@ -345,7 +169,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     moveTimeoutRef.current = setTimeout(() => {
       moveTimeoutRef.current = null;
     }, 150);
-  }, [movePlayer, isChatFocused]);
+  }, [movePlayer]);
 
   // Enviar mensaje de chat
   const sendMessage = useCallback(async () => {
@@ -376,20 +200,13 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       // Mostrar burbuja local inmediatamente
       showChatBubble(userToUse.id, newMessage.trim(), userToUse.username);
       
-      // Actualizar logro social
-      setAchievements(prev => prev.map(ach => 
-        ach.id === 3 ? { ...ach, progress: ach.progress + 1 } : ach
-      ));
-      
       // Limpiar input
       setNewMessage('');
       
-      // Mantener el foco en el input para seguir escribiendo
-      setTimeout(() => {
-        if (chatInputRef.current) {
-          chatInputRef.current.focus();
-        }
-      }, 10);
+      // Enfocar el input de nuevo para seguir escribiendo
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -399,34 +216,12 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Manejar envío con Enter
   const handleKeyDownChat = useCallback((e) => {
-    console.log('Key pressed in chat:', e.key);
-    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      e.stopPropagation();
       console.log('Enter pressed, sending message...');
       sendMessage();
-      return;
-    }
-    
-    // Permitir Escape para salir del chat
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      chatInputRef.current?.blur();
-      setIsChatFocused(false);
     }
   }, [sendMessage]);
-
-  // Manejar focus del chat
-  const handleChatFocus = useCallback(() => {
-    console.log('Chat focused');
-    setIsChatFocused(true);
-  }, []);
-
-  const handleChatBlur = useCallback(() => {
-    console.log('Chat blurred');
-    setIsChatFocused(false);
-  }, []);
 
   // Configurar Realtime para mensajes
   const setupMessagesRealtime = useCallback(() => {
@@ -500,22 +295,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
     touchStartRef.current = null;
   }, [movePlayer]);
-
-  // Efecto para el combo timer
-  useEffect(() => {
-    if (combo.active && combo.timer > 0) {
-      const timer = setTimeout(() => {
-        setCombo(prev => ({ ...prev, timer: prev.timer - 1 }));
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (combo.active && combo.timer === 0) {
-      setCombo({ count: 0, timer: 0, active: false });
-      if (combo.count >= 3) {
-        addXP(combo.count * 5);
-        addNotification(`🎯 Combo x${combo.count}! +${combo.count * 5} XP`, 'xp');
-      }
-    }
-  }, [combo, addXP, addNotification]);
 
   // Joystick virtual para móvil
   const renderMobileControls = () => {
@@ -592,8 +371,8 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
           key={bubbleId}
           className={`chat-bubble ${bubble.userId === userToUse?.id ? 'own-chat-bubble' : 'other-chat-bubble'}`}
           style={{
-            left: `${(player.x + 0.5) * 6.66}%`,
-            top: `${player.y * 6.66 - 8}%`,
+            left: `${player.x * 6.66}%`,
+            top: `${player.y * 6.66 - 15}%`,
           }}
         >
           <div className="chat-bubble-content">
@@ -873,11 +652,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
 
   // Event listeners para teclado y touch
   useEffect(() => {
-    const handleKeyDownWrapper = (e) => {
-      handleKeyDown(e);
-    };
-    
-    window.addEventListener('keydown', handleKeyDownWrapper, true);
+    window.addEventListener('keydown', handleKeyDown);
     
     if (isMobile) {
       window.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -885,7 +660,7 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     }
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDownWrapper, true);
+      window.removeEventListener('keydown', handleKeyDown);
       if (isMobile) {
         window.removeEventListener('touchstart', handleTouchStart);
         window.removeEventListener('touchend', handleTouchEnd);
@@ -919,16 +694,11 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       player.x === x && player.y === y
     );
     
-    const isSpecial = specialCells.find(cell => cell.x === x && cell.y === y);
-    const isVisited = playerStats.cellsVisited.has(`${x},${y}`);
-    
     return (
       <div 
         key={`${x}-${y}`} 
-        className={`lobby-map-cell ${playersInCell.length > 0 ? 'occupied' : ''} ${isVisited ? 'visited' : ''} ${isSpecial ? 'special' : ''}`}
+        className={`lobby-map-cell ${playersInCell.length > 0 ? 'occupied' : ''}`}
       >
-        {isSpecial && <div className="cell-bonus"></div>}
-        
         {playersInCell.length > 0 && (
           <div className="lobby-players-in-cell">
             {playersInCell.map(player => (
@@ -962,15 +732,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
     );
   };
 
-  // Renderizar notificaciones
-  const renderNotifications = () => {
-    return notifications.map(notification => (
-      <div key={notification.id} className={`game-notification notification-${notification.type}`}>
-        {notification.message}
-      </div>
-    ));
-  };
-
   if (loading) {
     return <LoadingScreen message="Conectando al Mundo Lupi..." />;
   }
@@ -994,31 +755,6 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
       <div className="lobby-header">
         <h1>🏟️ Mundo Lupi</h1>
         <p>¡Muévete con las flechas del teclado y chatea con otros jugadores!</p>
-        
-        {/* Stats del Jugador */}
-        <div className="player-stats">
-          <div className="stat-item">
-            <span>Nivel</span>
-            <div className="level-badge">{playerStats.level}</div>
-          </div>
-          <div className="stat-item">
-            <span>XP</span>
-            <div className="xp-bar-container">
-              <div 
-                className="xp-bar" 
-                style={{ 
-                  width: `${(playerStats.xp / playerStats.xpToNextLevel) * 100}%` 
-                }}
-              ></div>
-            </div>
-            <span>{playerStats.xp}/{playerStats.xpToNextLevel}</span>
-          </div>
-          <div className="stat-item">
-            <span>Racha</span>
-            <div className="streak-counter">🔥 {playerStats.streak}</div>
-          </div>
-        </div>
-
         <div className="lobby-info">
           <span>Jugadores activos: {activePlayers.length}</span>
           <span>Tu posición: ({playerPositionRef.current.x}, {playerPositionRef.current.y})</span>
@@ -1052,33 +788,29 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* Panel de Logros */}
-      <div className="achievements-panel">
-        <h3>Progreso</h3>
-        <div className="achievements-grid">
-          {achievements.map(achievement => (
-            <div 
-              key={achievement.id} 
-              className={`achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`}
-            >
-              <div className="achievement-icon">{achievement.icon}</div>
-              <div className="achievement-name">{achievement.name}</div>
-              <div className="achievement-desc">{achievement.description}</div>
-              <div className="achievement-progress">
-                <div 
-                  className="progress-bar" 
-                  style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
-                ></div>
-              </div>
-              <div className="achievement-progress-text">
-                {achievement.progress}/{achievement.target}
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Input de chat fijo */}
+      <div className="lobby-chat-input-container">
+        <input
+          ref={chatInputRef}
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={handleKeyDownChat}
+          placeholder="Escribe un mensaje y presiona Enter..."
+          className="lobby-chat-input"
+          maxLength={100}
+        />
+        <button 
+          onClick={sendMessage}
+          disabled={!newMessage.trim()}
+          className="lobby-chat-send-btn"
+        >
+          💬
+        </button>
       </div>
 
-      {/* Panel de Jugadores */}
+      {renderMobileControls()}
+
       <div className="lobby-players-panel">
         <h3>👥 Jugadores en Línea ({activePlayers.length})</h3>
         <div className="lobby-players-list">
@@ -1106,61 +838,9 @@ const MultiplayerLobbyView = ({ currentUser, setView, supabaseClient, playerData
         </div>
       </div>
 
-      {/* Input de chat fijo */}
-      <div className={`lobby-chat-input-container ${isChatFocused ? 'chat-focused' : ''}`}>
-        {isChatFocused && (
-          <div className="chat-status-indicator">
-            💬 Escribiendo... (Enter enviar, Escape salir)
-          </div>
-        )}
-        <input
-          ref={chatInputRef}
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={handleKeyDownChat}
-          onFocus={handleChatFocus}
-          onBlur={handleChatBlur}
-          placeholder={isChatFocused ? "Escribe tu mensaje..." : "Presiona Enter o T para chatear..."}
-          className="lobby-chat-input"
-          maxLength={100}
-        />
-        <button 
-          onClick={sendMessage}
-          disabled={!newMessage.trim()}
-          className="lobby-chat-send-btn"
-        >
-          💬
-        </button>
-      </div>
-
-      {/* Elementos de Gamificación */}
-      {combo.active && (
-        <div className="combo-meter">
-          <div className="combo-count">Combo x{combo.count}</div>
-          <div className="combo-timer">
-            <div 
-              className="combo-progress" 
-              style={{ width: `${(combo.timer / 3) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
-
-      <div className="sound-visualizer">
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="visualizer-bar"></div>
-        ))}
-      </div>
-
-      {renderMobileControls()}
-      {renderNotifications()}
-
       <div className="lobby-controls-help">
         <p>
-          {isMobile 
-            ? '🕹️ Desliza para moverte | 💬 Toca abajo para chatear' 
-            : `🕹️ Flechas/WASD para moverte | 💬 ${isChatFocused ? 'Enter para enviar, Escape para salir' : 'Enter o T para chatear'}`}
+          {isMobile ? '🕹️ Desliza para moverte | 💬 Escribe abajo para chatear' : '🕹️ Flechas o WASD para moverte | 💬 Escribe abajo para chatear'}
         </p>
       </div>
     </div>

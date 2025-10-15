@@ -547,87 +547,73 @@ const getDailyMissionsCompleted = async (playerId) => {
   };
 
   const handleEquipItem = async (playerItemId, skillBonus) => {
-  setLoading(true);
-  try {
-    // Buscar item actualmente equipado con el mismo skill_bonus
-    const currentEquippedItem = inventory.find(item => 
-      item.is_equipped && (item.items ? item.items.skill_bonus : item.skill_bonus) === skillBonus
-    );
-
-    // Desequipar si existe
-    if (currentEquippedItem) {
+    setLoading(true);
+    try {
+      const currentEquippedItem = inventory.find(item => 
+        item.is_equipped && item.items.skill_bonus === skillBonus
+      );
+      
+      if (currentEquippedItem) {
+        await supabaseClient
+          .from('player_items')
+          .update({ is_equipped: false })
+          .eq('id', currentEquippedItem.id);
+      }
+      
       await supabaseClient
         .from('player_items')
-        .update({ is_equipped: false })
-        .eq('id', currentEquippedItem.id);
+        .update({ is_equipped: true })
+        .eq('id', playerItemId);
+      
+      const updatedInventory = inventory.map(item => {
+        if (item.id === playerItemId) return { ...item, is_equipped: true };
+        if (currentEquippedItem && item.id === currentEquippedItem.id) return { ...item, is_equipped: false };
+        return item;
+      });
+      
+      const updatedEquipped = {};
+      updatedInventory.forEach(item => { 
+        if (item.is_equipped) updatedEquipped[item.items.skill_bonus] = item.items; 
+      });
+      
+      setInventory(updatedInventory);
+      setEquippedItems(updatedEquipped);
+      showMessage("¡Objeto equipado con éxito!");
+    } catch (err) {
+      showMessage(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    // Equipar el nuevo item
-    await supabaseClient
-      .from('player_items')
-      .update({ is_equipped: true })
-      .eq('id', playerItemId);
-
-    // Actualizar inventario local
-    const updatedInventory = inventory.map(item => {
-      if (item.id === playerItemId) return { ...item, is_equipped: true };
-      if (currentEquippedItem && item.id === currentEquippedItem.id) return { ...item, is_equipped: false };
-      return item;
-    });
-
-    // Actualizar items equipados
-    const updatedEquipped = {};
-    updatedInventory.forEach(item => { 
-      const actualItem = item.items ? item.items : item;
-      if (item.is_equipped) updatedEquipped[actualItem.skill_bonus] = actualItem;
-    });
-
-    setInventory(updatedInventory);
-    setEquippedItems(updatedEquipped);
-    showMessage("¡Objeto equipado con éxito!");
-  } catch (err) {
-    showMessage(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleUnequipItem = async (playerItemId) => {
-  setLoading(true);
-  try {
-    // 1️⃣ Solo hacer el PATCH para actualizar el campo is_equipped
-    const { error } = await supabaseClient
-      .from('player_items')
-      .update({ is_equipped: false })
-      .eq('id', playerItemId);
-
-    if (error) throw error;
-
-    // 2️⃣ Actualizar el inventario local
-    const updatedInventory = inventory.map(item => 
-      item.id === playerItemId ? { ...item, is_equipped: false } : item
-    );
-
-    // 3️⃣ Actualizar el estado de items equipados
-    const updatedEquipped = { ...equippedItems };
-    const targetItem = inventory.find(item => item.id === playerItemId);
-    if (targetItem) {
-      const actualItem = targetItem.items ? targetItem.items : targetItem;
-      delete updatedEquipped[actualItem.skill_bonus];
+    setLoading(true);
+    try {
+      const { data, error } = await supabaseClient
+        .from('player_items')
+        .update({ is_equipped: false })
+        .eq('id', playerItemId)
+        .select('*, items(*)')
+        .single();
+      
+      if (error) throw error;
+      
+      const updatedInventory = inventory.map(item => 
+        item.id === playerItemId ? { ...item, is_equipped: false } : item
+      );
+      
+      const updatedEquipped = { ...equippedItems };
+      delete updatedEquipped[data.items.skill_bonus];
+      
+      setInventory(updatedInventory);
+      setEquippedItems(updatedEquipped);
+      showMessage("¡Objeto desequipado con éxito!");
+    } catch (err) {
+      showMessage(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    // 4️⃣ Guardar los cambios en el estado
-    setInventory(updatedInventory);
-    setEquippedItems(updatedEquipped);
-
-    showMessage("¡Objeto desequipado con éxito!");
-  } catch (err) {
-    showMessage(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleTransferCoins = async (e) => {
     e.preventDefault();
@@ -1182,6 +1168,4 @@ case 'clubs': return <ClubsSystem
   return <div className="bg-gray-100 min-h-screen">{renderContent()}</div>;
 };
 
-
 export default App;
-
