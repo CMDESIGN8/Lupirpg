@@ -370,6 +370,7 @@ const DashboardView = ({
               <div className="xp-glow"></div>
             </div>
           </div>
+        </div>
 
         {/* Columna derecha - Inventario */}
         <div className="dashboard-right-column">
