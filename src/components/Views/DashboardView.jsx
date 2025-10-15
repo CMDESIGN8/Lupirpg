@@ -66,6 +66,34 @@ const DashboardView = ({
     return { x, y };
   };
 
+  // Misiones activas de ejemplo
+  const activeMissions = [
+    {
+      id: 1,
+      title: "Goleador Nato",
+      description: "Anota 10 goles en partidos amistosos",
+      progress: 7,
+      total: 10,
+      reward: "1000 LUPI"
+    },
+    {
+      id: 2,
+      title: "Asistente Perfecto",
+      description: "Da 5 asistencias a tus compañeros",
+      progress: 3,
+      total: 5,
+      reward: "500 LUPI"
+    },
+    {
+      id: 3,
+      title: "Entrenamiento Intenso",
+      description: "Completa 3 sesiones de entrenamiento",
+      progress: 2,
+      total: 3,
+      reward: "300 LUPI"
+    }
+  ];
+
   // Premios disponibles para canjear
   const availableRewards = [
     {
@@ -88,13 +116,6 @@ const DashboardView = ({
       description: "Contiene items raros y exclusivos",
       cost: 8000,
       icon: "🎁"
-    },
-    {
-      id: 4,
-      name: "Título Especial",
-      description: "Título único para tu perfil",
-      cost: 2000,
-      icon: "🏆"
     }
   ];
 
@@ -295,8 +316,9 @@ const DashboardView = ({
 
       <MessageDisplay message={message} />
 
-      <div className="dashboard-content">
-        {/* Columna izquierda - Ficha del personaje */}
+      {/* PANEL SUPERIOR: Ficha + Estadísticas + Gráfico + Misiones */}
+      <div className="top-content-panel">
+        {/* Columna 1: Ficha del personaje */}
         <div className="player-card">
           <div className="card-header">
             <h2>FICHA TÉCNICA</h2>
@@ -370,170 +392,230 @@ const DashboardView = ({
               <div className="xp-glow"></div>
             </div>
           </div>
+
+          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
+          <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
+            <span className="nav-icon">🗺️</span>
+            <span>Mundo Lupi</span>
+          </button>
+
+          {/* Botones de Acción */}
+          <div className="action-buttons">
+            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
+              <span className="nav-icon">⚡</span>
+              <span>Entrenar</span>
+            </button>
+            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
+              <span className="nav-icon">🔍</span>
+              <span>Buscar Objeto</span>
+            </button>
+            <button className="action-btn secondary" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
+              <span className="nav-icon">⚽</span>
+              <span>Misiones</span>
+            </button>
+            <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)}>
+              <span className="nav-icon">🏠</span>
+              <span>SALA COMUN</span>
+            </button>
+            <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
+              <span className="nav-icon">➡️</span>
+              <span>Transferir</span>
+            </button>
+          </div>
         </div>
 
-        {/* Columna derecha - Inventario */}
-        <div className="dashboard-right-column">
-          {/* Inventario */}
-          <div className="inventory-card">
+        {/* Columna 2: Estadísticas y Gráfico */}
+        <div className="stats-radar-panel">
+          {/* Estadísticas */}
+          <div className="stats-column">
             <div className="card-header">
-              <h2>INVENTARIO</h2>
+              <h2>ESTADÍSTICAS</h2>
+              <div className="header-line"></div>
+              <div className="skill-points">
+                Puntos disponibles: <span className="points-count">{playerData.skill_points}</span>
+              </div>
+            </div>
+            
+            <div className="stats-list">
+              {playerData.skills?.map(skill => {
+                const bonusItem = equippedItems[skill.skill_name];
+                const bonus = bonusItem ? bonusItem.bonus_value : 0;
+                const totalValue = skill.skill_value + bonus;
+
+                const skillNamesMap = {
+                  "Fuerza": "⚽ Potencia",
+                  "Resistencia": "🏃 Resistencia",
+                  "Técnica": "🔧 Técnica",
+                  "Velocidad": "💨 Velocidad",
+                  "Dribling": "🎯 Regate",
+                  "Pase": "📨 Pase",
+                  "Tiro": "🥅 Tiro",
+                  "Defensa": "🛡️ Defensa",
+                  "Liderazgo": "👑 Liderazgo",
+                  "Estrategia": "🧠 Estrategia",
+                  "Inteligencia": "📈 Inteligencia"
+                };
+
+                const skillDisplayName = skillNamesMap[skill.skill_name] || skill.skill_name;
+
+                return (
+                  <div key={skill.skill_name} className="stat-item">
+                    <span className="stat-name">{skillDisplayName}</span>
+                    <div>
+                      <span className="stat-value">
+                        {totalValue} 
+                        {bonus > 0 && <span className="stat-bonus">+{bonus}</span>}
+                      </span>
+                      <button 
+                        onClick={() => handleUpgradeSkill(skill.skill_name)} 
+                        disabled={loading || playerData.skill_points <= 0} 
+                        className="skill-upgrade-btn" 
+                        title="Mejorar habilidad"
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Gráfico FIFA */}
+          <div className="radar-column">
+            <div className="card-header">
+              <h2>PERFIL DE JUGADOR</h2>
               <div className="header-line"></div>
             </div>
             
-            <div className="inventory-grid">
-              {inventory && inventory.length > 0 ? (
-                inventory.map((item, index) => (
-                  <div key={index} className="inventory-item">
-                    <div className="item-icon">🎯</div>
-                    <div className="item-name">{item.items?.name || 'Item'}</div>
-                    {item.items?.bonus_value && (
-                      <div className="item-bonus">+{item.items.bonus_value}</div>
-                    )}
+            <div className="fifa-radar-chart">
+              <div className="radar-container">
+                {/* Grid del radar */}
+                <div className="radar-grid"></div>
+                <div className="radar-grid"></div>
+                <div className="radar-grid"></div>
+                
+                {/* Ejes */}
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="radar-axis"></div>
+                ))}
+                
+                {/* Polígono del radar */}
+                <svg viewBox="0 0 200 200" className="radar-polygon">
+                  <polygon points={radarStats.map((stat, i) => {
+                    const point = calculateRadarPoint(stat, i, radarStats.length);
+                    return `${point.x},${point.y}`;
+                  }).join(' ')} />
+                </svg>
+                
+                {/* Puntos del radar */}
+                {radarStats.map((stat, i) => {
+                  const point = calculateRadarPoint(stat, i, radarStats.length);
+                  return (
+                    <div 
+                      key={i}
+                      className="radar-point"
+                      style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                    ></div>
+                  );
+                })}
+              </div>
+              
+              {/* Leyenda */}
+              <div className="radar-legend">
+                {radarStats.map((stat, i) => (
+                  <div key={i} className="legend-item">
+                    <span className="legend-dot"></span>
+                    <span className="legend-name">{stat.name}: {stat.value}</span>
                   </div>
-                ))
-              ) : (
-                <div className="no-items">No hay items en el inventario</div>
-              )}
+                ))}
+              </div>
             </div>
+          </div>
+        </div>
 
-            {/* Acciones rápidas debajo del inventario */}
-            <div className="quick-actions-panel">
-              <button className="quick-action-btn" onClick={handleGainXp}>
-                <span className="quick-action-icon">⚡</span>
-                <span className="quick-action-label">Entrenar</span>
-              </button>
-              <button className="quick-action-btn" onClick={handleFindItem}>
-                <span className="quick-action-icon">🔍</span>
-                <span className="quick-action-label">Buscar</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => { fetchMissions(); setView('missions'); }}>
-                <span className="quick-action-icon">⚽</span>
-                <span className="quick-action-label">Misiones</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setShowCommonRoom(true)}>
-                <span className="quick-action-icon">🏠</span>
-                <span className="quick-action-label">Sala Común</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setView('transfer')}>
-                <span className="quick-action-icon">➡️</span>
-                <span className="quick-action-label">Transferir</span>
-              </button>
-            </div>
+        {/* Columna 3: Misiones Activas */}
+        <div className="missions-column">
+          <div className="card-header">
+            <h2>MISIONES ACTIVAS</h2>
+            <div className="header-line"></div>
+          </div>
+          
+          <div className="missions-list">
+            {activeMissions.map(mission => (
+              <div key={mission.id} className="mission-item">
+                <div className="mission-header">
+                  <div className="mission-title">{mission.title}</div>
+                  <div className="mission-reward">{mission.reward}</div>
+                </div>
+                <div className="mission-description">{mission.description}</div>
+                <div className="mission-progress">
+                  <span>Progreso</span>
+                  <span>{mission.progress}/{mission.total}</span>
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${(mission.progress / mission.total) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Panel de 3 columnas: Estadísticas, Gráfico y Premios */}
-      <div className="stats-premium-panel">
-        {/* Columna 1: Estadísticas */}
-        <div className="stats-column">
+      {/* PANEL INFERIOR: Inventario + Premios (70% - 30%) */}
+      <div className="bottom-content-panel">
+        {/* Inventario (70%) */}
+        <div className="inventory-card">
           <div className="card-header">
-            <h2>ESTADÍSTICAS</h2>
-            <div className="header-line"></div>
-            <div className="skill-points">
-              Puntos disponibles: <span className="points-count">{playerData.skill_points}</span>
-            </div>
-          </div>
-          
-          <div className="stats-list">
-            {playerData.skills?.map(skill => {
-              const bonusItem = equippedItems[skill.skill_name];
-              const bonus = bonusItem ? bonusItem.bonus_value : 0;
-              const totalValue = skill.skill_value + bonus;
-
-              const skillNamesMap = {
-                "Fuerza": "⚽ Potencia",
-                "Resistencia": "🏃 Resistencia",
-                "Técnica": "🔧 Técnica",
-                "Velocidad": "💨 Velocidad",
-                "Dribling": "🎯 Regate",
-                "Pase": "📨 Pase",
-                "Tiro": "🥅 Tiro",
-                "Defensa": "🛡️ Defensa",
-                "Liderazgo": "👑 Liderazgo",
-                "Estrategia": "🧠 Estrategia",
-                "Inteligencia": "📈 Inteligencia"
-              };
-
-              const skillDisplayName = skillNamesMap[skill.skill_name] || skill.skill_name;
-
-              return (
-                <div key={skill.skill_name} className="stat-item">
-                  <span className="stat-name">{skillDisplayName}</span>
-                  <div>
-                    <span className="stat-value">
-                      {totalValue} 
-                      {bonus > 0 && <span className="stat-bonus">+{bonus}</span>}
-                    </span>
-                    <button 
-                      onClick={() => handleUpgradeSkill(skill.skill_name)} 
-                      disabled={loading || playerData.skill_points <= 0} 
-                      className="skill-upgrade-btn" 
-                      title="Mejorar habilidad"
-                    >
-                      <ChevronUp size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Columna 2: Gráfico FIFA */}
-        <div className="radar-column">
-          <div className="card-header">
-            <h2>PERFIL DE JUGADOR</h2>
+            <h2>INVENTARIO</h2>
             <div className="header-line"></div>
           </div>
           
-          <div className="fifa-radar-chart">
-            <div className="radar-container">
-              {/* Grid del radar */}
-              <div className="radar-grid"></div>
-              <div className="radar-grid"></div>
-              <div className="radar-grid"></div>
-              
-              {/* Ejes */}
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="radar-axis"></div>
-              ))}
-              
-              {/* Polígono del radar */}
-              <svg viewBox="0 0 200 200" className="radar-polygon">
-                <polygon points={radarStats.map((stat, i) => {
-                  const point = calculateRadarPoint(stat, i, radarStats.length);
-                  return `${point.x},${point.y}`;
-                }).join(' ')} />
-              </svg>
-              
-              {/* Puntos del radar */}
-              {radarStats.map((stat, i) => {
-                const point = calculateRadarPoint(stat, i, radarStats.length);
-                return (
-                  <div 
-                    key={i}
-                    className="radar-point"
-                    style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                  ></div>
-                );
-              })}
-            </div>
-            
-            {/* Leyenda */}
-            <div className="radar-legend">
-              {radarStats.map((stat, i) => (
-                <div key={i} className="legend-item">
-                  <span className="legend-dot"></span>
-                  <span className="legend-name">{stat.name}: {stat.value}</span>
+          <div className="inventory-grid">
+            {inventory && inventory.length > 0 ? (
+              inventory.map((item, index) => (
+                <div key={index} className="inventory-item">
+                  <div className="item-icon">🎯</div>
+                  <div className="item-name">{item.items?.name || 'Item'}</div>
+                  {item.items?.bonus_value && (
+                    <div className="item-bonus">+{item.items.bonus_value}</div>
+                  )}
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <div className="no-items">No hay items en el inventario</div>
+            )}
+          </div>
+
+          {/* Acciones rápidas debajo del inventario */}
+          <div className="quick-actions-panel">
+            <button className="quick-action-btn" onClick={handleGainXp}>
+              <span className="quick-action-icon">⚡</span>
+              <span className="quick-action-label">Entrenar</span>
+            </button>
+            <button className="quick-action-btn" onClick={handleFindItem}>
+              <span className="quick-action-icon">🔍</span>
+              <span className="quick-action-label">Buscar</span>
+            </button>
+            <button className="quick-action-btn" onClick={() => { fetchMissions(); setView('missions'); }}>
+              <span className="quick-action-icon">⚽</span>
+              <span className="quick-action-label">Misiones</span>
+            </button>
+            <button className="quick-action-btn" onClick={() => setShowCommonRoom(true)}>
+              <span className="quick-action-icon">🏠</span>
+              <span className="quick-action-label">Sala Común</span>
+            </button>
+            <button className="quick-action-btn" onClick={() => setView('transfer')}>
+              <span className="quick-action-icon">➡️</span>
+              <span className="quick-action-label">Transferir</span>
+            </button>
           </div>
         </div>
 
-        {/* Columna 3: Premios Disponibles */}
+        {/* Premios (30%) */}
         <div className="rewards-column">
           <div className="card-header">
             <h2>PREMIOS DISPONIBLES</h2>
