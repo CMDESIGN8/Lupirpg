@@ -1,154 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { supabaseClient } from '../../services/supabase'; 
-import { ArrowLeft, Target, Sword, Shield, Zap, Crown } from 'lucide-react';
-import { useClubMissions } from '../../hooks/useClubMissions';
+import { ChevronDown } from 'lucide-react';
 import ThemedButton from '../UI/ThemedButton';
-import CreateMissionModal from './CreateMissionModal';
-import '../styles/ClubMissionsView.css'; // ← CSS con prefijos únicos
 
-// Progress Bar RPG personalizada para no usar el componente principal
-const ClubMissionProgress = ({ progress, goal }) => {
-  const percentage = Math.min(100, (progress / goal) * 100);
-  
-  return (
-    <div className="club-rpg-progress-container">
-      <div className="club-rpg-progress-info">
-        <span>Progreso: {progress}/{goal}</span>
-        <span>{Math.round(percentage)}%</span>
-      </div>
+const ClubMissionsView = ({ clubMissions, loading, setView }) => (
+  <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 font-sans">
+    <div className="w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl border border-gray-300">
+      <h2 className="text-3xl font-bold text-center mb-6 text-blue-600">Misiones del Club</h2>
       
-      <div className="club-rpg-progress-bar">
-        <div 
-          className="club-rpg-progress-fill"
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-    </div>
-  );
-};
-
-const ClubMissionsView = ({ 
-  currentClub, 
-  setView, 
-  isLeader, 
-  onBackToClubDetails 
-}) => {
-  const { missions, loading, error, contributeToMission, createMission } = useClubMissions(currentClub?.id);
-  const [currentPlayerId, setCurrentPlayerId] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (user) {
-        setCurrentPlayerId(user.id);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  const handleContribute = async (missionId) => {
-    if (!currentPlayerId) {
-      alert("¡Se requiere identificación de guerrero! Por favor, recarga la página.");
-      return;
-    }
-    const success = await contributeToMission(missionId, currentPlayerId);
-    if (success) {
-      console.log('¡Contribución exitosa!');
-    }
-  };
-
-  const handleCreateMission = async (missionData) => {
-    if (!currentClub?.id) return false;
-    return await createMission(currentClub.id, missionData);
-  };
-
-  const getMissionIcon = (missionType) => {
-    switch (missionType) {
-      case 'combat': return <Sword className="club-rpg-mission-icon" />;
-      case 'defense': return <Shield className="club-rpg-mission-icon" />;
-      case 'speed': return <Zap className="club-rpg-mission-icon" />;
-      case 'royal': return <Crown className="club-rpg-mission-icon" />;
-      default: return <Target className="club-rpg-mission-icon" />;
-    }
-  };
-
-  if (loading) return <p className="club-rpg-loading">🛡️ Cargando misiones épicas...</p>;
-  if (error) return <p className="club-rpg-error">⚡ {error}</p>;
-
-  return (
-    <div className="club-rpg-container">
-      <div className="club-rpg-header">
-        <h2 className="club-rpg-title">🛡️ Misiones de {currentClub?.name}</h2>
-        
-        {isLeader && (
-          <ThemedButton 
-            onClick={() => setShowCreateModal(true)}
-            className="club-rpg-create-btn"
-          >
-            🎯 Crear Misión Épica
-          </ThemedButton>
-        )}
-      </div>
-      
-      <div className="club-rpg-content">
-        <div className="club-rpg-grid">
-          {missions && missions.length > 0 ? (
-            missions.map(mission => (
-              <div key={mission.id} className="club-rpg-card">
-                <div className="club-rpg-card-header">
-                  {getMissionIcon(mission.mission_type)}
-                  <h3 className="club-rpg-card-title">{mission.name}</h3>
-                </div>
-                
-                <p className="club-rpg-description">"{mission.description}"</p>
-                
-                <ClubMissionProgress 
-                  progress={mission.total_progress || mission.progress || 0} 
-                  goal={mission.goal} 
-                />
-                
-                <div className="club-rpg-reward">
-                  <span className="club-rpg-reward-text">Recompensa:</span>
-                  <span className="club-rpg-reward-value">🏆 {mission.reward}</span>
-                </div>
-                
-                <div className="club-rpg-actions">
-                  {mission.is_active ? (
-                    <ThemedButton 
-                      onClick={() => handleContribute(mission.id)}
-                      className="club-rpg-contribute-btn"
-                    >
-                      ⚔️ Contribuir (+1)
-                    </ThemedButton>
-                  ) : (
-                    <span className="club-rpg-completed">✅ ¡Misión Completada!</span>
-                  )}
-                </div>
+      {loading ? <p className="text-center text-gray-500">Cargando misiones...</p> : (
+        <div className="space-y-4">
+          {clubMissions.length > 0 ? clubMissions.map(mission => (
+            <div key={mission.id} className="bg-gray-100 p-4 rounded-lg shadow-inner border border-gray-300">
+              <h3 className="text-xl font-semibold text-blue-600 mb-2">{mission.name}</h3>
+              <p className="text-gray-700 mb-3">{mission.description}</p>
+              
+              <div className="w-full bg-gray-300 rounded-full h-2.5 mb-2">
+                <div 
+                  className="bg-green-600 h-2.5 rounded-full" 
+                  style={{ width: `${(mission.progress / mission.goal) * 100}%` }}
+                ></div>
               </div>
-            ))
-          ) : (
-            <div className="club-rpg-empty">
-              🏰 Este clan no tiene misiones activas. ¡Sé el primero en crear una!
+              
+              <div className="flex justify-between text-sm text-gray-500 mb-3">
+                <span>Progreso: {mission.progress}/{mission.goal}</span>
+                <span>Recompensa: {mission.reward} puntos</span>
+              </div>
+              
+              <ThemedButton className="w-full bg-green-600 hover:bg-green-500">
+                Contribuir
+              </ThemedButton>
             </div>
-          )}
+          )) : <p className="text-center text-gray-500">No hay misiones disponibles.</p>}
         </div>
+      )}
+      
+      <div className="flex justify-center mt-6">
+        <ThemedButton 
+          onClick={() => setView('club_details')} 
+          icon={<ChevronDown size={20} />}
+        >
+          Volver al Club
+        </ThemedButton>
       </div>
-
-      <ThemedButton 
-        onClick={onBackToClubDetails || (() => setView('club_details'))}
-        className="club-rpg-back-btn"
-      >
-        🏠 Volver al Club
-      </ThemedButton>
-
-      <CreateMissionModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateMission}
-      />
     </div>
-  );
-};
+  </div>
+);
 
 export default ClubMissionsView;

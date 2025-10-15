@@ -1,9 +1,8 @@
 // components/Clubs/ClubsSystem.jsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import ClubsView from '../Views/ClubsView';
 import CreateClubView from '../Views/CreateClubView';
 import ClubDetailsView from '../Views/ClubDetailsView';
-import ClubMissionsView from './ClubMissionsView'; // Asegúrate de que apunte al correcto
 
 const ClubsSystem = ({
   clubs,
@@ -12,8 +11,7 @@ const ClubsSystem = ({
   playerData,
   loading,
   message,
-  setView, // Recibir setView de App
-  currentView, // Recibir la vista actual
+  setView,
   handleViewClubDetails,
   handleJoinClub,
   handleLeaveClub,
@@ -21,92 +19,47 @@ const ClubsSystem = ({
   showMessage,
   setLoading
 }) => {
-  const [selectedClub, setSelectedClub] = useState(null);
-
-  useEffect(() => {
-    if (currentClub) {
-      setSelectedClub(currentClub);
-    }
-  }, [currentClub]);
-
-  const handleSelectClub = (club) => {
-    setSelectedClub(club);
-    handleViewClubDetails(club);
-    setView('club_details'); // Usar setView de App
-  };
-
-  const handleBackToClubsList = () => {
-    setSelectedClub(null);
-    setView('clubs'); // Usar setView de App
-    if (fetchClubs) fetchClubs();
-  };
+  const [internalView, setInternalView] = React.useState('clubs_list');
 
   const renderView = () => {
-    console.log('CLUBSYSTEM - currentView:', currentView); // ✅ DEBUG CRÍTICO
-  console.log('CLUBSYSTEM - selectedClub:', selectedClub); // ✅ DEBUG
-    // Usar currentView en lugar de internalView
-    switch (currentView) {
-      case 'clubs':
-        console.log('Rendering: ClubsView');
+    switch (internalView) {
+      case 'clubs_list':
         return (
           <ClubsView
             clubs={clubs}
-            handleViewClubDetails={handleSelectClub}
+            handleViewClubDetails={(club) => {
+              handleViewClubDetails(club);
+              setInternalView('club_details');
+            }}
             handleJoinClub={handleJoinClub}
             playerData={playerData}
             loading={loading}
             message={message}
-            setView={setView} // Pasar setView
+            setView={setView}
           />
         );
-      
       case 'create_club':
-        console.log('Rendering: CreateClubView');
         return (
           <CreateClubView
-            setView={setView} // Pasar setView
-            onBack={() => setView('clubs')} // Usar setView
+            setView={setInternalView}
+            // pasa las props necesarias
           />
         );
-      
       case 'club_details':
-        console.log('Rendering: ClubDetailsView');
         return (
           <ClubDetailsView
-            currentClub={selectedClub}
+            currentClub={currentClub}
             clubMembers={clubMembers}
             handleLeaveClub={handleLeaveClub}
-            handleJoinClub={handleJoinClub}
             playerData={playerData}
             fetchClubs={fetchClubs}
             loading={loading}
             message={message}
-            setView={setView} // Pasar setView en lugar de setView
-            onBackToClubs={handleBackToClubsList}
+            setView={setInternalView}
           />
         );
-      
-      case 'club_missions':
-        console.log('Rendering: ClubMissionsView'); // ✅ Esto debe aparecer 
-        return (
-          <ClubMissionsView
-            currentClub={selectedClub}
-            setView={setView} // Pasar setView
-            isLeader={playerData.club_id === selectedClub?.id && selectedClub?.owner_id === playerData.id}
-            onBackToClubDetails={() => setView('club_details')} // Usar setView
-          />
-        );
-      
       default:
-        return <ClubsView 
-          clubs={clubs}
-          handleViewClubDetails={handleSelectClub}
-          handleJoinClub={handleJoinClub}
-          playerData={playerData}
-          loading={loading}
-          message={message}
-          setView={setView}
-        />;
+        return <ClubsView {...props} />;
     }
   };
 

@@ -11,7 +11,6 @@ import SellItemView from './components/Views/SellItemView.jsx';
 import ChatView from './components/Views/ChatView.jsx';
 import ClubsView from './components/Views/ClubsView.jsx';
 import CreateClubView from './components/Views/CreateClubView.jsx';
-import ClubMissionsView from './components/Clubs/ClubMissionsView.jsx'
 import ClubDetailsView from './components/Views/ClubDetailsView.jsx';
 import LoadingScreen from './components/UI/LoadingScreen.jsx';
 import React, { useState, useEffect, useRef } from 'react'; // Importación completa
@@ -20,7 +19,6 @@ import { supabaseClient } from './services/supabase'; // Importación correcta
 import LupiMiniGame from "./components/game/LupiMiniGame";
 import RewardChest from "./components/game/RewardChest";
 import ClubsSystem from './components/Clubs/ClubsSystem';
-import MultiplayerLobbyView from './components/Views/MultiplayerLobbyView.jsx';
 
 
 const App = () => {
@@ -1148,7 +1146,6 @@ case 'clubs': return <ClubsSystem
   loading={loading}
   message={message}
   setView={setView}
-  currentView={view} // Pasar la vista actual
   handleViewClubDetails={handleViewClubDetails}
   handleJoinClub={handleJoinClub}
   handleLeaveClub={handleLeaveClub}
@@ -1156,9 +1153,6 @@ case 'clubs': return <ClubsSystem
   showMessage={showMessage}
   setLoading={setLoading}
 />;
-      case 'multiplayer_lobby': return <MultiplayerLobbyView {...props} />;
-
-      case 'club_missions': return <ClubMissionsView {...props} />; // ✅ Asegúrate de que esté incluido
       case 'create_club': return <CreateClubView {...props} />;
       case 'club_details': return <ClubDetailsView {...props} />;
       default: return <DashboardView {...props} />;

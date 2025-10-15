@@ -1,4 +1,4 @@
-import { Wallet,Zap, ShoppingCart, CornerUpRight, Compass, CheckCircle, Shield, Users, MessageCircle, LogOut, ChevronUp, Copy } from 'lucide-react';
+import { Zap, ShoppingCart, CornerUpRight, Compass, CheckCircle, Shield, Users, MessageCircle, LogOut, ChevronUp, Copy } from 'lucide-react';
 import MessageDisplay from '../UI/MessageDisplay.jsx';
 import LoadingScreen from '../UI/LoadingScreen.jsx';
 import { useState, useEffect } from 'react';
@@ -7,11 +7,8 @@ import AvatarSelector from '../AvatarSelector/AvatarSelector';
 import LupiMiniGame from '../game/LupiMiniGame.jsx';
 import RewardChest from '../game/RewardChest.jsx';
 import CommonRoom from '../game/CommonRoom.jsx';
-import ClubChat from '../Clubs/ClubChat.jsx';
-import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
-import CommonRoomModal from "./CommonRoomModal";
-
+import ClubChat from '../Clubs/ClubChat.jsx';
 
 
 const DashboardView = ({ 
@@ -41,14 +38,6 @@ const DashboardView = ({
   const [activeGame, setActiveGame] = useState(false);
   const [reward, setReward] = useState(null);
   const [gameLoading, setGameLoading] = useState(false);
-
-  const [showLobby, setShowLobby] = useState(false);
-    const [user] = useState({
-      id: 'user-id',
-      username: 'TuUsuario',
-      color: '#2E8B57',
-      sport: 'fútbol'
-    });
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
@@ -68,82 +57,6 @@ const DashboardView = ({
       }
     }
   };
-
-  // En DashboardView, añade estos estados y funciones:
-const [marketItems, setMarketItems] = useState([]);
-useEffect(() => {
-  loadMarketItems();
-  loadEquippedAvatar();
-}, []);
-
-const loadMarketItems = async () => {
-  try {
-    const { data, error } = await supabaseClient
-      .from('market_listings')
-      .select(`
-        *,
-        player_items:player_items!inner(
-          items(*)
-        ),
-        players(*)
-      `);
-    
-    if (error) throw error;
-    
-    console.log('Market items data:', data); // ✅ Debug aquí
-    setMarketItems(data || []);
-  } catch (error) {
-    console.error('Error fetching market items:', error);
-    showMessage('Error al cargar el mercado');
-  }
-};
-
-
-const handleBuyItem = async (listing) => {
-  try {
-    // 1. Eliminar del mercado
-    const { error: deleteError } = await supabaseClient
-      .from('market_listings')
-      .delete()
-      .eq('id', listing.id);
-    
-    if (deleteError) throw deleteError;
-
-    // 2. Transferir item al comprador
-    const { error: updateError } = await supabaseClient
-      .from('player_items')
-      .update({ player_id: session.user.id })
-      .eq('id', listing.player_items.id);
-    
-    if (updateError) throw updateError;
-
-    // 3. Actualizar monedas del comprador
-    const { error: coinsError } = await supabaseClient
-      .from('players')
-      .update({ lupi_coins: playerData.lupi_coins - listing.price })
-      .eq('id', session.user.id);
-    
-    if (coinsError) throw coinsError;
-
-    // 4. Dar monedas al vendedor
-    const { error: sellerError } = await supabaseClient
-      .from('players')
-      .update({ lupi_coins: listing.players.lupi_coins + listing.price })
-      .eq('id', listing.seller_id);
-    
-    if (sellerError) throw sellerError;
-
-    // 5. Actualizar estado local
-    setMarketItems(prev => prev.filter(item => item.id !== listing.id));
-    setPlayerData(prev => ({ ...prev, lupi_coins: prev.lupi_coins - listing.price }));
-    setInventory(prev => [...prev, listing.player_items]);
-    
-    showMessage('¡Compra exitosa!');
-  } catch (error) {
-    console.error('Error buying item:', error);
-    showMessage('Error al realizar la compra');
-  }
-};
 
   const handleAvatarClick = () => setShowAvatarSelector(true);
 
@@ -392,12 +305,6 @@ const handleBuyItem = async (listing) => {
             <h2>ACCIÓN RÁPIDA</h2>
             <div className="header-line"></div>
           </div>
-
-          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
-            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
-              <span className="nav-icon">🗺️</span>
-              <span>Mundo Lupi</span>
-            </button>
           
           <div className="action-buttons">
             <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
@@ -418,19 +325,10 @@ const handleBuyItem = async (listing) => {
               <span>Misiones</span>
             </button>
 
-           <button 
-        className="action-btn secondary" 
-        onClick={() => setShowCommonRoom(true)}
-      >
-        <span className="nav-icon">🏠</span>
-        <span>SALA COMUN</span>
-      </button>
-
-<button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
-            <span className="nav-icon">➡️</span>
-            <span>Transferir</span>
-          </button>
-
+           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
+  <span className="nav-icon">🏠</span>
+  <span>SALA COMUN</span>
+</button>
           </div>
         </div>
       </div>
@@ -500,26 +398,9 @@ const handleBuyItem = async (listing) => {
         </div>
       </div>
     </div>
-    <div class="salacomun">
-    <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
-  <span className="nav-icon">🏠</span>
-  <span>SALA COMUN</span>
-</button>
-</div>
   </section>
 )}
-    <section className="Market-section">
-         <div className="Market-line"></div>
-  <MarketView 
-    marketItems={marketItems} // ✅ Pasa los datos, no la función
-    handleBuyItem={handleBuyItem} // ✅ Añade esta prop
-    playerData={playerData} 
-    loading={loading} 
-    message={message} 
-    setView={setView}
-  />
-</section>
-  
+    
      {/* Panel de navegación inferior */}
       <div className="nav-panel">
         <div className="nav-grid">
