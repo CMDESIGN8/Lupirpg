@@ -1211,3 +1211,257 @@
     opacity: 0.5;
   }
 }
+
+/* Estilos para la sección fusionada de estadísticas + acciones */
+.combined-stats-actions {
+  background: rgba(0, 20, 40, 0.7);
+  border: 1px solid #00aaff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.combined-stats-actions::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ccff, transparent);
+}
+
+/* Gráfico estilo FIFA */
+.fifa-chart-section {
+  margin-bottom: 25px;
+}
+
+.fifa-radar-chart {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto 25px;
+  background: rgba(0, 30, 60, 0.3);
+  border-radius: 50%;
+  border: 2px solid rgba(0, 170, 255, 0.3);
+}
+
+.radar-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.radar-axis {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  background: rgba(0, 170, 255, 0.2);
+  transform-origin: center;
+}
+
+.radar-axis:nth-child(1) { transform: translateX(-50%) rotate(0deg); }
+.radar-axis:nth-child(2) { transform: translateX(-50%) rotate(60deg); }
+.radar-axis:nth-child(3) { transform: translateX(-50%) rotate(120deg); }
+.radar-axis:nth-child(4) { transform: translateX(-50%) rotate(180deg); }
+.radar-axis:nth-child(5) { transform: translateX(-50%) rotate(240deg); }
+.radar-axis:nth-child(6) { transform: translateX(-50%) rotate(300deg); }
+
+.skills-radar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  transform: translate(-50%, -50%);
+}
+
+.radar-skill-point {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateX(calc(var(--value) - 50%)) rotate(calc(-1 * var(--angle)));
+  text-align: center;
+}
+
+.skill-label {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #00ccff;
+  margin-bottom: 5px;
+  white-space: nowrap;
+}
+
+.skill-value-badge {
+  background: linear-gradient(135deg, #00ccff, #0066ff);
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin: 0 auto;
+}
+
+/* Skills Grid Mini */
+.skills-grid-mini {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.skill-item-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: rgba(0, 30, 60, 0.5);
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.skill-item-mini:hover {
+  background: rgba(0, 100, 200, 0.3);
+  border-color: #00ccff;
+}
+
+.skill-info-mini {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.skill-name-mini {
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+  color: #88ddff;
+}
+
+.skill-value-mini {
+  font-weight: bold;
+  color: #00ccff;
+  font-size: 0.8rem;
+}
+
+.skill-upgrade-btn-mini {
+  background: linear-gradient(135deg, #00aaff, #0066ff);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.7rem;
+}
+
+.skill-upgrade-btn-mini:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00ccff, #0088ff);
+  transform: scale(1.1);
+}
+
+.skill-upgrade-btn-mini:disabled {
+  background: #444;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Panel de Acciones Rápidas */
+.quick-actions-panel {
+  background: rgba(0, 30, 60, 0.4);
+  border: 1px solid rgba(0, 170, 255, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.quick-actions-panel .card-header h3 {
+  font-size: 1.1rem;
+  color: #00ccff;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #0077ff, #0044aa);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  aspect-ratio: 1;
+}
+
+.quick-action-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00aaff, #0066ff);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
+}
+
+.quick-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quick-action-icon {
+  font-size: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .combined-stats-actions {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .fifa-radar-chart {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .skills-grid-mini {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .skill-label {
+    font-size: 0.6rem;
+  }
+  
+  .skill-value-badge {
+    width: 25px;
+    height: 25px;
+    font-size: 0.7rem;
+  }
+}
