@@ -316,7 +316,7 @@ const DashboardView = ({
 
       <MessageDisplay message={message} />
 
-      {/* PANEL SUPERIOR: Ficha + Estadísticas + Gráfico + Misiones */}
+      {/* PANEL SUPERIOR: Ficha + Estadísticas/Gráfico + Misiones */}
       <div className="top-content-panel">
         {/* Columna 1: Ficha del personaje */}
         <div className="player-card">
@@ -424,19 +424,63 @@ const DashboardView = ({
           </div>
         </div>
 
-        {/* Columna 2: Estadísticas y Gráfico */}
-        <div className="stats-radar-panel">
-          {/* Estadísticas */}
-          <div className="stats-column">
-            <div className="card-header">
-              <h2>ESTADÍSTICAS</h2>
-              <div className="header-line"></div>
-              <div className="skill-points">
-                Puntos disponibles: <span className="points-count">{playerData.skill_points}</span>
-              </div>
+        {/* Columna 2: Estadísticas y Gráfico FUSIONADOS */}
+        <div className="stats-radar-combined">
+          <div className="stats-radar-header">
+            <h2 className="stats-radar-title">PERFIL DE JUGADOR</h2>
+            <div className="skill-points-badge">
+              Puntos: <span className="points-count">{playerData.skill_points}</span>
+            </div>
+          </div>
+
+          {/* Gráfico FIFA Arriba */}
+          <div className="fifa-radar-section">
+            <div className="radar-container">
+              {/* Grid del radar */}
+              <div className="radar-grid"></div>
+              <div className="radar-grid"></div>
+              <div className="radar-grid"></div>
+              
+              {/* Ejes */}
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="radar-axis"></div>
+              ))}
+              
+              {/* Polígono del radar */}
+              <svg viewBox="0 0 200 200" className="radar-polygon">
+                <polygon points={radarStats.map((stat, i) => {
+                  const point = calculateRadarPoint(stat, i, radarStats.length);
+                  return `${point.x},${point.y}`;
+                }).join(' ')} />
+              </svg>
+              
+              {/* Puntos del radar */}
+              {radarStats.map((stat, i) => {
+                const point = calculateRadarPoint(stat, i, radarStats.length);
+                return (
+                  <div 
+                    key={i}
+                    className="radar-point"
+                    style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                  ></div>
+                );
+              })}
             </div>
             
-            <div className="stats-list">
+            {/* Leyenda */}
+            <div className="radar-legend">
+              {radarStats.map((stat, i) => (
+                <div key={i} className="legend-item">
+                  <span className="legend-dot"></span>
+                  <span className="legend-name">{stat.name}: {stat.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Skills Grid Abajo */}
+          <div className="skills-grid-section">
+            <div className="skills-grid">
               {playerData.skills?.map(skill => {
                 const bonusItem = equippedItems[skill.skill_name];
                 const bonus = bonusItem ? bonusItem.bonus_value : 0;
@@ -459,77 +503,25 @@ const DashboardView = ({
                 const skillDisplayName = skillNamesMap[skill.skill_name] || skill.skill_name;
 
                 return (
-                  <div key={skill.skill_name} className="stat-item">
-                    <span className="stat-name">{skillDisplayName}</span>
-                    <div>
-                      <span className="stat-value">
+                  <div key={skill.skill_name} className="skill-item">
+                    <div className="skill-info">
+                      <div className="skill-name">{skillDisplayName}</div>
+                      <div className="skill-value">
                         {totalValue} 
-                        {bonus > 0 && <span className="stat-bonus">+{bonus}</span>}
-                      </span>
-                      <button 
-                        onClick={() => handleUpgradeSkill(skill.skill_name)} 
-                        disabled={loading || playerData.skill_points <= 0} 
-                        className="skill-upgrade-btn" 
-                        title="Mejorar habilidad"
-                      >
-                        <ChevronUp size={14} />
-                      </button>
+                        {bonus > 0 && <span className="skill-bonus">+{bonus}</span>}
+                      </div>
                     </div>
+                    <button 
+                      onClick={() => handleUpgradeSkill(skill.skill_name)} 
+                      disabled={loading || playerData.skill_points <= 0} 
+                      className="skill-upgrade-btn" 
+                      title="Mejorar habilidad"
+                    >
+                      <ChevronUp size={16} />
+                    </button>
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Gráfico FIFA */}
-          <div className="radar-column">
-            <div className="card-header">
-              <h2>PERFIL DE JUGADOR</h2>
-              <div className="header-line"></div>
-            </div>
-            
-            <div className="fifa-radar-chart">
-              <div className="radar-container">
-                {/* Grid del radar */}
-                <div className="radar-grid"></div>
-                <div className="radar-grid"></div>
-                <div className="radar-grid"></div>
-                
-                {/* Ejes */}
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="radar-axis"></div>
-                ))}
-                
-                {/* Polígono del radar */}
-                <svg viewBox="0 0 200 200" className="radar-polygon">
-                  <polygon points={radarStats.map((stat, i) => {
-                    const point = calculateRadarPoint(stat, i, radarStats.length);
-                    return `${point.x},${point.y}`;
-                  }).join(' ')} />
-                </svg>
-                
-                {/* Puntos del radar */}
-                {radarStats.map((stat, i) => {
-                  const point = calculateRadarPoint(stat, i, radarStats.length);
-                  return (
-                    <div 
-                      key={i}
-                      className="radar-point"
-                      style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                    ></div>
-                  );
-                })}
-              </div>
-              
-              {/* Leyenda */}
-              <div className="radar-legend">
-                {radarStats.map((stat, i) => (
-                  <div key={i} className="legend-item">
-                    <span className="legend-dot"></span>
-                    <span className="legend-name">{stat.name}: {stat.value}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
