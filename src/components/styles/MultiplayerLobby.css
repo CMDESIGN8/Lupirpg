@@ -1,651 +1,1180 @@
-/* MultiplayerLobby.css - LAYOUT 70%/30% */
+/* src/components/styles/MultiplayerLobby.css */
 
+/* Variables CSS - Tema Deportivo Urbano Moderado */
+:root {
+  /* Colores principales - Versión más sobria */
+  --urban-primary: #2a2d3e;
+  --urban-secondary: #4a5568;
+  --urban-accent: #e53e3e;
+  --urban-success: #38a169;
+  --urban-warning: #d69e2e;
+  --urban-info: #3182ce;
+  
+  /* Colores de fondo */
+  --urban-bg-dark: #1a202c;
+  --urban-bg-darker: #0d1117;
+  --urban-bg-card: #2d3748;
+  
+  /* Colores de texto */
+  --urban-text: #e2e8f0;
+  --urban-text-secondary: #a0aec0;
+  --urban-text-muted: #718096;
+  
+  /* Colores de acento suaves */
+  --accent-orange: #ed8936;
+  --accent-blue: #4299e1;
+  --accent-green: #48bb78;
+  --accent-purple: #9f7aea;
+  
+  /* Colores para gamificación */
+  --xp-color: #ffd700;
+  --level-up-color: #00ff88;
+  --achievement-color: #ff6b35;
+  --streak-color: #ff00aa;
+  
+  /* Tamaños */
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Animaciones */
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes levelUp {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes xpGlow {
+  0%, 100% { box-shadow: 0 0 5px var(--xp-color); }
+  50% { box-shadow: 0 0 20px var(--xp-color), 0 0 30px var(--xp-color); }
+}
+
+@keyframes streakFire {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes moveTrail {
+  0% {
+    box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(66, 153, 225, 0);
+  }
+}
+
+@keyframes visualizerPulse {
+  0%, 100% { height: 5px; }
+  50% { height: 25px; }
+}
+
+/* Contenedor principal - Estilo Urbano Moderado */
 .lobby-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  color: white;
-  font-family: 'Arial', sans-serif;
-  overflow: hidden;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--urban-bg-darker) 0%, var(--urban-bg-dark) 100%);
+  min-height: 100vh;
+  color: var(--urban-text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  position: relative;
 }
 
+.lobby-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(66, 153, 225, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(237, 137, 54, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Header del lobby - Estilo Deportivo */
 .lobby-header {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px 20px;
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  flex-shrink: 0;
+  text-align: center;
+  margin-bottom: 30px;
+  background: var(--urban-bg-card);
+  padding: 25px;
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--accent-orange);
+  position: relative;
+  box-shadow: var(--shadow-lg);
 }
 
-.lobby-title h1 {
+.lobby-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-orange), transparent);
+}
+
+.lobby-header h1 {
+  margin: 0 0 12px 0;
+  font-size: 2.8em;
+  font-weight: 800;
+  color: var(--urban-text);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+}
+
+.lobby-header p {
+  font-size: 1.2em;
   margin: 0;
-  font-size: 1.8rem;
-  background: linear-gradient(45deg, #FFD700, #FFA500);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-orange);
+  font-weight: 600;
 }
 
-.lobby-title p {
-  margin: 5px 0 0 0;
-  opacity: 0.9;
-  font-size: 0.9rem;
+/* Stats del Jugador */
+.player-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--accent-orange);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, var(--accent-orange), #c05621);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: 700;
+  animation: subtlePulse 3s infinite;
+}
+
+.xp-bar-container {
+  width: 120px;
+  height: 8px;
+  background: var(--urban-bg-dark);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--urban-secondary);
+}
+
+.xp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-orange), var(--xp-color));
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  animation: xpGlow 2s infinite;
+}
+
+.streak-counter {
+  background: linear-gradient(135deg, var(--streak-color), var(--accent-orange));
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: 700;
+  animation: streakFire 2s ease infinite;
+  background-size: 200% 200%;
 }
 
 .lobby-info {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.lobby-stats {
-  display: flex;
-  gap: 12px;
+  justify-content: space-between;
   align-items: center;
+  margin-top: 20px;
   flex-wrap: wrap;
-}
-
-.stat-badge {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 6px 12px;
-  border-radius: 15px;
-  font-size: 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.lobby-control-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* LAYOUT PRINCIPAL 70%/30% */
-.main-content {
-  display: flex;
-  flex: 1;
-  gap: 0;
-  overflow: hidden;
-}
-
-/* SECCIÓN DEL JUEGO - 70% */
-.game-section {
-  flex: 0 0 70%;
-  display: flex;
-  flex-direction: column;
-  padding: 15px;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.game-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 12px;
-}
-
-.game-ui {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.player-info-card {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 12px;
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  min-width: 200px;
-}
-
-.player-info-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  color: #FFD700;
-}
-
-.player-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-}
-
-.stat-label {
-  opacity: 0.8;
-}
-
-.stat-value {
-  font-weight: bold;
-  color: #4CAF50;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-mobile-controls, .lobby-back-btn, .lobby-mobile-controls-btn {
-  background: linear-gradient(45deg, #4CAF50, #45a049);
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.btn-mobile-controls:hover, .lobby-back-btn:hover, .lobby-mobile-controls-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-}
-
-.btn-mobile-controls {
-  background: linear-gradient(45deg, #2196F3, #1976D2);
-}
-
-.game-world-container {
-  flex: 1;
-  border: 3px solid #2E8B57;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(46, 139, 87, 0.5);
-  overflow: hidden;
-  background: linear-gradient(135deg, #87CEEB, #98FB98);
-  min-height: 0;
-}
-
-.game-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-}
-
-/* PANEL LATERAL - 30% */
-.sidebar-section {
-  flex: 0 0 30%;
-  display: flex;
-  flex-direction: column;
   gap: 15px;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  overflow-y: auto;
-  min-width: 0;
+  background: rgba(45, 55, 72, 0.6);
+  padding: 15px 20px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--urban-secondary);
+  backdrop-filter: blur(5px);
 }
 
-/* Panel de Estadísticas */
-.stats-panel {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.lobby-info span {
+  background: var(--urban-bg-dark);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--accent-blue);
+  font-weight: 600;
+  color: var(--urban-text);
+  font-size: 0.9em;
 }
 
-.stats-panel h3 {
-  margin: 0 0 12px 0;
-  color: #FFD700;
-  font-size: 1rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.stat-icon {
-  font-size: 1.2rem;
-  width: 30px;
-  text-align: center;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-weight: bold;
-  font-size: 0.9rem;
-  color: #4CAF50;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-/* Chat Panel */
-.lobby-chat-panel {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 200px;
-}
-
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.chat-header h4 {
-  margin: 0;
-  color: #FFD700;
-  font-size: 0.95rem;
-}
-
-.chat-count {
-  font-size: 0.75rem;
-  opacity: 0.7;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 6px;
-  border-radius: 10px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-}
-
-.chat-message {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 8px;
-  border-radius: 8px;
-  border-left: 3px solid #4CAF50;
-  font-size: 0.8rem;
-}
-
-.chat-message.own-message {
-  background: rgba(76, 175, 80, 0.2);
-  border-left-color: #FFD700;
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  font-size: 0.7rem;
-}
-
-.message-username {
-  font-weight: bold;
-  color: #4CAF50;
-}
-
-.message-time {
-  opacity: 0.6;
-}
-
-.message-content {
-  word-wrap: break-word;
-  line-height: 1.3;
-}
-
-.chat-input-container {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.chat-input {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
+/* Botones - Estilo Deportivo Sólido */
+.lobby-back-btn {
+  background: linear-gradient(135deg, var(--accent-orange), #c05621);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-size: 0.85rem;
-}
-
-.chat-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.chat-input:focus {
-  outline: none;
-  border-color: #4CAF50;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.chat-send-btn {
-  background: #4CAF50;
   border: none;
-  color: white;
-  padding: 0 12px;
-  border-radius: 6px;
+  padding: 12px 24px;
+  border-radius: 25px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  min-width: 40px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-md);
+  font-size: 0.95em;
 }
 
-.chat-send-btn:hover:not(:disabled) {
-  background: #45a049;
+.lobby-back-btn:hover {
+  background: linear-gradient(135deg, #c05621, var(--accent-orange));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-/* Players Panel */
+.lobby-back-btn:active {
+  transform: translateY(0);
+}
+
+/* Mapa del juego - Cancha Urbana */
+.lobby-map-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  padding: 25px;
+  background: var(--urban-bg-card);
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--accent-green);
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.lobby-map-container::before {
+  content: "🏀 CANCHA URBANA 🏀";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-green);
+  color: white;
+  padding: 6px 20px;
+  border-radius: 15px;
+  font-weight: 700;
+  font-size: 0.9em;
+  z-index: 2;
+  border: 2px solid white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.lobby-game-map {
+  display: inline-block;
+  border: 3px solid var(--urban-secondary);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, #2d5016, #3a5f0b);
+  position: relative;
+}
+
+.lobby-game-map::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0.3) 51%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0.3) 51%, transparent 51%);
+  pointer-events: none;
+}
+
+.lobby-map-row {
+  display: flex;
+}
+
+.lobby-map-cell {
+  width: 45px;
+  height: 45px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(46, 125, 50, 0.6);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.lobby-map-cell:hover {
+  background: rgba(56, 142, 60, 0.8);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.lobby-map-cell.occupied {
+  background: rgba(229, 62, 62, 0.5);
+  animation: subtlePulse 2s infinite;
+}
+
+.lobby-map-cell.visited {
+  background: rgba(66, 153, 225, 0.3);
+}
+
+.lobby-map-cell.special {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 107, 53, 0.3));
+  animation: subtlePulse 2s infinite;
+  border: 2px solid var(--xp-color);
+}
+
+.cell-bonus {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: var(--xp-color);
+  border-radius: 50%;
+  animation: xpGlow 1.5s infinite;
+}
+
+.lobby-players-in-cell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Jugadores - Estilo Deportivo */
+.lobby-player-marker {
+  transition: all 0.3s ease;
+  will-change: transform;
+  position: relative;
+}
+
+.lobby-player-marker.my-player {
+  z-index: 10;
+  animation: bounceSubtle 2s ease-in-out infinite;
+}
+
+.lobby-player-marker.moving {
+  animation: bounceSubtle 0.3s ease, moveTrail 0.5s ease-out;
+}
+
+.lobby-player-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid white;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.lobby-player-marker.my-player .lobby-player-avatar {
+  border: 3px solid var(--accent-orange);
+  box-shadow: 0 0 0 2px var(--accent-orange);
+}
+
+.lobby-player-marker.other-player .lobby-player-avatar {
+  border: 3px solid var(--accent-blue);
+}
+
+.lobby-player-initial {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-orange), #c05621);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 3px solid white;
+  font-size: 0.95em;
+  box-shadow: var(--shadow-md);
+}
+
+.lobby-player-name-tag {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--urban-bg-dark);
+  color: var(--urban-text);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  white-space: nowrap;
+  display: none;
+  border: 1px solid var(--urban-secondary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(5px);
+}
+
+.lobby-player-marker:hover .lobby-player-name-tag {
+  display: block;
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Panel de jugadores - Lista Deportiva */
 .lobby-players-panel {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  flex: 1;
-  min-height: 150px;
+  background: var(--urban-bg-card);
+  padding: 25px;
+  border-radius: var(--border-radius-lg);
+  margin-bottom: 25px;
+  border: 2px solid var(--accent-blue);
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.lobby-players-panel::before {
+  content: "👥 JUGADORES CONECTADOS";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-blue);
+  color: white;
+  padding: 6px 20px;
+  border-radius: 15px;
+  font-weight: 700;
+  font-size: 0.9em;
+  z-index: 2;
+  border: 2px solid white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .lobby-players-panel h3 {
-  margin: 0 0 12px 0;
-  color: #FFD700;
-  font-size: 0.95rem;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: var(--accent-blue);
+  font-weight: 700;
+  font-size: 1.3em;
 }
 
 .lobby-players-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  max-height: 250px;
   overflow-y: auto;
 }
 
 .lobby-player-item {
+  background: var(--urban-bg-dark);
+  padding: 14px;
+  border-radius: var(--border-radius);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
   transition: all 0.3s ease;
-  border: 1px solid transparent;
-  font-size: 0.8rem;
+  border: 1px solid var(--urban-secondary);
+  position: relative;
 }
 
 .lobby-player-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(66, 153, 225, 0.1);
+  transform: translateX(5px);
+  border-color: var(--accent-blue);
 }
 
 .lobby-player-item.current-player {
-  background: rgba(76, 175, 80, 0.2);
-  border-color: #4CAF50;
+  background: rgba(237, 137, 54, 0.1);
+  border-left: 4px solid var(--accent-orange);
+  border-right: 4px solid var(--accent-orange);
 }
 
 .lobby-player-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1;
+  gap: 12px;
 }
 
-.lobby-player-avatar {
-  width: 28px;
-  height: 28px;
+.lobby-player-avatar-small {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: bold;
-}
-
-.lobby-player-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  object-fit: cover;
+  border: 2px solid var(--accent-orange);
+  box-shadow: var(--shadow-sm);
 }
 
 .lobby-player-name {
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-weight: 600;
+  color: var(--urban-text);
+  font-size: 1em;
 }
 
 .lobby-you-badge {
-  background: #4CAF50;
+  background: var(--accent-orange);
   color: white;
-  padding: 1px 4px;
-  border-radius: 6px;
-  font-size: 0.65rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .lobby-player-position {
-  font-size: 0.7rem;
-  opacity: 0.8;
+  font-size: 0.85em;
+  color: var(--urban-text-secondary);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 5px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--urban-secondary);
+  font-weight: 600;
 }
 
-/* Connection Status y otros estilos se mantienen igual */
-.connection-status {
-  padding: 6px 10px;
+/* Panel de Logros */
+.achievements-panel {
+  background: var(--urban-bg-card);
+  padding: 20px;
+  border-radius: var(--border-radius-lg);
+  margin-bottom: 20px;
+  border: 2px solid var(--accent-purple);
+  position: relative;
+}
+
+.achievements-panel::before {
+  content: "🏆 LOGROS";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-purple);
+  color: white;
+  padding: 6px 20px;
   border-radius: 15px;
-  font-weight: bold;
-  font-size: 0.8rem;
+  font-weight: 700;
+  font-size: 0.9em;
+  z-index: 2;
+  border: 2px solid white;
+}
+
+.achievements-panel h3 {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+  color: var(--accent-purple);
+  font-weight: 700;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.achievement-card {
+  background: var(--urban-bg-dark);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  border: 2px solid var(--urban-secondary);
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-card.unlocked {
+  border-color: var(--achievement-color);
+  background: linear-gradient(135deg, var(--urban-bg-dark), rgba(255, 107, 53, 0.1));
+}
+
+.achievement-card.locked {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+}
+
+.achievement-icon {
+  font-size: 2em;
+  margin-bottom: 8px;
+}
+
+.achievement-name {
+  font-weight: 700;
+  color: var(--urban-text);
+  margin-bottom: 5px;
+}
+
+.achievement-desc {
+  font-size: 0.8em;
+  color: var(--urban-text-secondary);
+  margin-bottom: 8px;
+}
+
+.achievement-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--urban-bg-dark);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.achievement-progress-text {
+  font-size: 0.75em;
+  color: var(--urban-text-secondary);
+  font-weight: 600;
+}
+
+/* Controles del lobby */
+.lobby-controls-help {
+  text-align: center;
+  background: var(--urban-bg-card);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  border: 2px solid var(--accent-purple);
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.lobby-controls-help p {
+  margin: 0;
+  font-weight: 600;
+  color: var(--urban-text);
+  font-size: 1.1em;
+}
+
+/* Burbujas de Chat - Estilo Moderno */
+.chat-bubble {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  z-index: 1000;
+  pointer-events: none;
+  animation: slideUp 0.3s ease-out;
+  max-width: 180px;
+  min-width: 80px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.chat-bubble-content {
+  background: var(--urban-bg-card) !important;
+  border: 2px solid var(--accent-blue) !important;
+  border-radius: 16px !important;
+  padding: 10px 14px !important;
+  box-shadow: var(--shadow-lg) !important;
+  position: relative;
+  word-wrap: break-word;
+  backdrop-filter: blur(5px);
+}
+
+.own-chat-bubble .chat-bubble-content {
+  background: rgba(72, 187, 120, 0.9) !important;
+  border-color: var(--accent-green) !important;
+}
+
+.other-chat-bubble .chat-bubble-content {
+  background: var(--urban-bg-dark) !important;
+  border-color: var(--accent-purple) !important;
+}
+
+.chat-bubble-username {
+  font-size: 0.7em !important;
+  font-weight: 700 !important;
+  color: var(--urban-text) !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+}
+
+.own-chat-bubble .chat-bubble-username {
+  color: white !important;
+}
+
+.chat-bubble-message {
+  font-size: 0.85em !important;
+  color: var(--urban-text) !important;
+  line-height: 1.3 !important;
+  font-weight: 500 !important;
+  display: block !important;
+}
+
+.own-chat-bubble .chat-bubble-message {
+  color: white !important;
+}
+
+.chat-bubble-tail {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid var(--accent-blue);
+}
+
+.own-chat-bubble .chat-bubble-tail {
+  border-top-color: var(--accent-green) !important;
+}
+
+.other-chat-bubble .chat-bubble-tail {
+  border-top-color: var(--accent-purple) !important;
+}
+
+/* Input de chat - Estilo Moderno */
+.lobby-chat-input-container {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  background: var(--urban-bg-card) !important;
+  padding: 16px 20px;
+  border-radius: 25px;
+  box-shadow: var(--shadow-lg) !important;
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  min-width: 350px;
+  max-width: 500px;
+  width: 90%;
+  border: 2px solid var(--accent-orange);
+}
+
+.lobby-chat-input {
+  flex: 1;
+  border: none;
+  background: transparent !important;
+  outline: none;
+  font-size: 14px;
+  color: var(--urban-text) !important;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 500;
+}
+
+.lobby-chat-input::placeholder {
+  color: var(--urban-text-muted) !important;
+  font-weight: normal;
+}
+
+.lobby-chat-send-btn {
+  background: var(--accent-green) !important;
+  border: none !important;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  color: white !important;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid white !important;
+  font-weight: 600;
 }
 
-.connection-status.connecting {
-  background: rgba(255, 165, 0, 0.3);
-  color: #FFA500;
+.lobby-chat-send-btn:hover:not(:disabled) {
+  background: #38a169 !important;
+  transform: scale(1.05);
 }
 
-.connection-status.connected {
-  background: rgba(33, 150, 243, 0.3);
-  color: #2196F3;
+.lobby-chat-send-btn:active {
+  transform: scale(0.95);
 }
 
-.connection-status.ready {
-  background: rgba(76, 175, 80, 0.3);
-  color: #4CAF50;
+.lobby-chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.connection-status.error {
-  background: rgba(244, 67, 54, 0.3);
-  color: #f44336;
+/* Estado cuando el chat está enfocado */
+.lobby-chat-input-container.chat-focused {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2) !important;
 }
 
-/* Mobile Controls y otros estilos se mantienen igual */
+/* Indicador de estado del chat */
+.chat-status-indicator {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-orange);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  white-space: nowrap;
+  animation: slideUp 0.3s ease-out;
+  border: 2px solid white;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+
+/* Sistema de Combo */
+.combo-meter {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: var(--urban-bg-card);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  border: 2px solid var(--accent-orange);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  min-width: 100px;
+}
+
+.combo-count {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--accent-orange);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.combo-timer {
+  width: 100%;
+  height: 6px;
+  background: var(--urban-bg-dark);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.combo-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-orange), var(--xp-color));
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+/* Notificaciones de Juego */
+.game-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+  color: white;
+  padding: 15px 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
+  animation: slideUp 0.3s ease-out;
+  border: 2px solid white;
+  max-width: 300px;
+  font-weight: 600;
+}
+
+.notification-xp {
+  background: linear-gradient(135deg, var(--xp-color), var(--accent-orange)) !important;
+}
+
+.notification-level {
+  background: linear-gradient(135deg, var(--level-up-color), var(--accent-green)) !important;
+}
+
+.notification-achievement {
+  background: linear-gradient(135deg, var(--achievement-color), var(--accent-orange)) !important;
+}
+
+/* Visualizador de Sonido */
+.sound-visualizer {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  display: flex;
+  gap: 3px;
+  align-items: end;
+  height: 30px;
+}
+
+.visualizer-bar {
+  width: 4px;
+  background: linear-gradient(to top, var(--accent-blue), var(--accent-purple));
+  border-radius: 2px;
+  animation: visualizerPulse 0.5s ease-in-out infinite;
+}
+
+.visualizer-bar:nth-child(2) { animation-delay: 0.1s; }
+.visualizer-bar:nth-child(3) { animation-delay: 0.2s; }
+.visualizer-bar:nth-child(4) { animation-delay: 0.3s; }
+.visualizer-bar:nth-child(5) { animation-delay: 0.4s; }
+
+/* Controles móviles - Estilo Sólido */
+.lobby-mobile-controls-btn {
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+.lobby-mobile-controls-btn:hover {
+  background: #3182ce;
+  transform: translateY(-2px);
+}
+
 .mobile-controls-overlay {
   position: fixed;
-  bottom: 15px;
-  left: 15px;
+  bottom: 20px;
+  left: 0;
+  right: 0;
   z-index: 1000;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .joystick-container {
   display: flex;
-  gap: 15px;
-  align-items: center;
+  align-items: flex-end;
+  gap: 20px;
+  pointer-events: auto;
+}
+
+.joystick-area {
+  background: var(--urban-bg-card);
+  border-radius: 50px;
+  padding: 18px;
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--accent-orange);
 }
 
 .joystick-background {
-  display: grid;
-  grid-template-rows: 1fr 1fr 1fr;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 12px;
-  border-radius: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 .joystick-middle-row {
   display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
-.joystick-center {
-  width: 45px;
-  height: 45px;
+  align-items: center;
+  gap: 6px;
 }
 
 .joystick-btn {
-  width: 45px;
-  height: 45px;
+  width: 60px;
+  height: 60px;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--urban-bg-dark);
+  color: var(--urban-text);
   font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   transition: all 0.2s ease;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--urban-secondary);
 }
 
 .joystick-btn:active {
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--accent-blue);
   transform: scale(0.95);
+}
+
+.joystick-center {
+  width: 60px;
+  height: 60px;
+  background: rgba(66, 153, 225, 0.1);
+  border-radius: 50%;
+  border: 2px dashed var(--urban-secondary);
 }
 
 .action-buttons-game {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .action-btn-game {
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 60px;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 20px;
+  background: var(--urban-bg-dark);
+  color: var(--urban-text);
+  font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--urban-secondary);
 }
 
 .action-btn-game:active {
-  background: rgba(255, 255, 255, 0.4);
   transform: scale(0.95);
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .main-content {
-    flex-direction: column;
-  }
-  
-  .game-section {
-    flex: 0 0 60%;
-    min-height: 400px;
-  }
-  
-  .sidebar-section {
-    flex: 0 0 40%;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-  
-  .stats-panel,
-  .lobby-chat-panel,
-  .lobby-players-panel {
-    flex: 0 0 300px;
-    min-height: 200px;
-  }
+.menu-btn {
+  background: var(--accent-green);
+  color: white;
 }
 
+.exit-btn {
+  background: var(--accent-orange);
+  color: white;
+}
+
+/* Scrollbars personalizadas */
+.lobby-players-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lobby-players-list::-webkit-scrollbar-track {
+  background: var(--urban-bg-dark);
+  border-radius: 4px;
+}
+
+.lobby-players-list::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+  border-radius: 4px;
+}
+
+.lobby-players-list::-webkit-scrollbar-thumb:hover {
+  background: #3182ce;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
+  .lobby-container {
+    padding: 15px;
   }
   
-  .game-section {
-    flex: 0 0 50%;
+  .lobby-header h1 {
+    font-size: 2.2em;
   }
   
-  .sidebar-section {
-    flex: 0 0 50%;
-    flex-direction: column;
+  .lobby-game-map {
+    transform: scale(0.85);
   }
   
-  .stats-panel,
-  .lobby-chat-panel,
-  .lobby-players-panel {
-    flex: 1;
-    min-width: auto;
+  .lobby-map-cell {
+    width: 35px;
+    height: 35px;
   }
   
-  .stats-grid {
+  .lobby-player-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .lobby-chat-input-container {
+    min-width: 300px;
+    padding: 14px 18px;
+  }
+  
+  .lobby-players-list {
     grid-template-columns: 1fr;
   }
   
-  .lobby-header {
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .player-stats {
+    gap: 10px;
+  }
+  
+  .stat-item {
+    font-size: 0.8em;
+    padding: 6px 12px;
+  }
+  
+  .joystick-btn,
+  .action-btn-game {
+    width: 55px;
+    height: 55px;
+    font-size: 16px;
+  }
+  
+  .combo-meter {
+    top: 10px;
+    left: 10px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lobby-header h1 {
+    font-size: 1.8em;
+  }
+  
+  .lobby-info {
     flex-direction: column;
     text-align: center;
   }
   
-  .lobby-info {
+  .lobby-map-cell {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .lobby-chat-input-container {
+    min-width: 280px;
+    padding: 12px 16px;
+  }
+  
+  .lobby-chat-send-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+  
+  .player-stats {
+    flex-direction: column;
     align-items: center;
   }
-}
-
-/* Scrollbars */
-.sidebar-section::-webkit-scrollbar,
-.chat-messages::-webkit-scrollbar,
-.lobby-players-list::-webkit-scrollbar {
-  width: 5px;
-}
-
-.sidebar-section::-webkit-scrollbar-track,
-.chat-messages::-webkit-scrollbar-track,
-.lobby-players-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.sidebar-section::-webkit-scrollbar-thumb,
-.chat-messages::-webkit-scrollbar-thumb,
-.lobby-players-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
 }

@@ -10,6 +10,8 @@ import CommonRoom from '../game/CommonRoom.jsx';
 import ClubChat from '../Clubs/ClubChat.jsx';
 import MarketView from '../Views/MarketView.jsx'; // ✅ Solo importación
 import "../styles/DashboardView.css";
+import CommonRoomModal from "./CommonRoomModal";
+
 
 
 const DashboardView = ({ 
@@ -39,6 +41,14 @@ const DashboardView = ({
   const [activeGame, setActiveGame] = useState(false);
   const [reward, setReward] = useState(null);
   const [gameLoading, setGameLoading] = useState(false);
+
+  const [showLobby, setShowLobby] = useState(false);
+    const [user] = useState({
+      id: 'user-id',
+      username: 'TuUsuario',
+      color: '#2E8B57',
+      sport: 'fútbol'
+    });
   
   const nextLevelXp = playerData.level * 100;
   const xpPercentage = (playerData.experience / nextLevelXp) * 100;
@@ -382,6 +392,12 @@ const handleBuyItem = async (listing) => {
             <h2>ACCIÓN RÁPIDA</h2>
             <div className="header-line"></div>
           </div>
+
+          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
+            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
+              <span className="nav-icon">🗺️</span>
+              <span>Mundo Lupi</span>
+            </button>
           
           <div className="action-buttons">
             <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
@@ -402,10 +418,13 @@ const handleBuyItem = async (listing) => {
               <span>Misiones</span>
             </button>
 
-           <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
-  <span className="nav-icon">🏠</span>
-  <span>SALA COMUN</span>
-</button>
+           <button 
+        className="action-btn secondary" 
+        onClick={() => setShowCommonRoom(true)}
+      >
+        <span className="nav-icon">🏠</span>
+        <span>SALA COMUN</span>
+      </button>
 
 <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
             <span className="nav-icon">➡️</span>
@@ -484,7 +503,7 @@ const handleBuyItem = async (listing) => {
     <div class="salacomun">
     <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)} disabled={loading}>
   <span className="nav-icon">🏠</span>
-  <span>INGRESAR A LA SALA DE EQUIPO</span>
+  <span>SALA COMUN</span>
 </button>
 </div>
   </section>
