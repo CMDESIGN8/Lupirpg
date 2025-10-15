@@ -295,8 +295,9 @@ const DashboardView = ({
 
       <MessageDisplay message={message} />
 
-      <div className="dashboard-content">
-        {/* Columna izquierda - Ficha del personaje */}
+      {/* Panel Superior: Ficha Técnica + Estadísticas + Premios */}
+      <div className="top-panel">
+        {/* Columna 1: Ficha Técnica */}
         <div className="player-card">
           <div className="card-header">
             <h2>FICHA TÉCNICA</h2>
@@ -402,61 +403,7 @@ const DashboardView = ({
           </div>
         </div>
 
-        {/* Columna derecha - Inventario */}
-        <div className="dashboard-right-column">
-          {/* Inventario */}
-          <div className="inventory-card">
-            <div className="card-header">
-              <h2>INVENTARIO</h2>
-              <div className="header-line"></div>
-            </div>
-            
-            <div className="inventory-grid">
-              {inventory && inventory.length > 0 ? (
-                inventory.map((item, index) => (
-                  <div key={index} className="inventory-item">
-                    <div className="item-icon">🎯</div>
-                    <div className="item-name">{item.items?.name || 'Item'}</div>
-                    {item.items?.bonus_value && (
-                      <div className="item-bonus">+{item.items.bonus_value}</div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="no-items">No hay items en el inventario</div>
-              )}
-            </div>
-
-            {/* Acciones rápidas debajo del inventario */}
-            <div className="quick-actions-panel">
-              <button className="quick-action-btn" onClick={handleGainXp}>
-                <span className="quick-action-icon">⚡</span>
-                <span className="quick-action-label">Entrenar</span>
-              </button>
-              <button className="quick-action-btn" onClick={handleFindItem}>
-                <span className="quick-action-icon">🔍</span>
-                <span className="quick-action-label">Buscar</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => { fetchMissions(); setView('missions'); }}>
-                <span className="quick-action-icon">⚽</span>
-                <span className="quick-action-label">Misiones</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setShowCommonRoom(true)}>
-                <span className="quick-action-icon">🏠</span>
-                <span className="quick-action-label">Sala Común</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setView('transfer')}>
-                <span className="quick-action-icon">➡️</span>
-                <span className="quick-action-label">Transferir</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Panel de 3 columnas: Estadísticas, Gráfico y Premios */}
-      <div className="stats-premium-panel">
-        {/* Columna 1: Estadísticas */}
+        {/* Columna 2: Estadísticas */}
         <div className="stats-column">
           <div className="card-header">
             <h2>ESTADÍSTICAS</h2>
@@ -511,7 +458,87 @@ const DashboardView = ({
           </div>
         </div>
 
-        {/* Columna 2: Gráfico FIFA */}
+        {/* Columna 3: Premios Disponibles */}
+        <div className="rewards-column">
+          <div className="card-header">
+            <h2>PREMIOS DISPONIBLES</h2>
+            <div className="header-line"></div>
+            <div className="skill-points">
+              Saldo: <span className="points-count">{lupiCoins} LUPI</span>
+            </div>
+          </div>
+          
+          <div className="rewards-grid">
+            {availableRewards.map(reward => (
+              <div key={reward.id} className="reward-item">
+                <div className="reward-icon">{reward.icon}</div>
+                <div className="reward-name">{reward.name}</div>
+                <div className="reward-description">{reward.description}</div>
+                <div className="reward-cost">{reward.cost} LUPI</div>
+                <button 
+                  className="redeem-btn"
+                  onClick={() => handleRedeemReward(reward)}
+                  disabled={lupiCoins < reward.cost}
+                >
+                  Canjear
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Panel Inferior: Inventario + Gráfico FIFA */}
+      <div className="bottom-panel">
+        {/* Inventario */}
+        <div className="inventory-card">
+          <div className="card-header">
+            <h2>INVENTARIO</h2>
+            <div className="header-line"></div>
+          </div>
+          
+          <div className="inventory-grid">
+            {inventory && inventory.length > 0 ? (
+              inventory.map((item, index) => (
+                <div key={index} className="inventory-item">
+                  <div className="item-icon">🎯</div>
+                  <div className="item-name">{item.items?.name || 'Item'}</div>
+                  {item.items?.bonus_value && (
+                    <div className="item-bonus">+{item.items.bonus_value}</div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="no-items">No hay items en el inventario</div>
+            )}
+          </div>
+
+          {/* Acciones rápidas debajo del inventario */}
+          <div className="quick-actions-panel">
+            <button className="quick-action-btn" onClick={handleGainXp}>
+              <span className="quick-action-icon">⚡</span>
+              <span className="quick-action-label">Entrenar</span>
+            </button>
+            <button className="quick-action-btn" onClick={handleFindItem}>
+              <span className="quick-action-icon">🔍</span>
+              <span className="quick-action-label">Buscar</span>
+            </button>
+            <button className="quick-action-btn" onClick={() => { fetchMissions(); setView('missions'); }}>
+              <span className="quick-action-icon">⚽</span>
+              <span className="quick-action-label">Misiones</span>
+            </button>
+            <button className="quick-action-btn" onClick={() => setShowCommonRoom(true)}>
+              <span className="quick-action-icon">🏠</span>
+              <span className="quick-action-label">Sala Común</span>
+            </button>
+            <button className="quick-action-btn" onClick={() => setView('transfer')}>
+              <span className="quick-action-icon">➡️</span>
+              <span className="quick-action-label">Transferir</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Gráfico FIFA */}
         <div className="radar-column">
           <div className="card-header">
             <h2>PERFIL DE JUGADOR</h2>
@@ -560,35 +587,6 @@ const DashboardView = ({
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Columna 3: Premios Disponibles */}
-        <div className="rewards-column">
-          <div className="card-header">
-            <h2>PREMIOS DISPONIBLES</h2>
-            <div className="header-line"></div>
-            <div className="skill-points">
-              Saldo: <span className="points-count">{lupiCoins} LUPI</span>
-            </div>
-          </div>
-          
-          <div className="rewards-grid">
-            {availableRewards.map(reward => (
-              <div key={reward.id} className="reward-item">
-                <div className="reward-icon">{reward.icon}</div>
-                <div className="reward-name">{reward.name}</div>
-                <div className="reward-description">{reward.description}</div>
-                <div className="reward-cost">{reward.cost} LUPI</div>
-                <button 
-                  className="redeem-btn"
-                  onClick={() => handleRedeemReward(reward)}
-                  disabled={lupiCoins < reward.cost}
-                >
-                  Canjear
-                </button>
-              </div>
-            ))}
           </div>
         </div>
       </div>
