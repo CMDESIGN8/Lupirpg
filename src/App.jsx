@@ -595,18 +595,20 @@ const getDailyMissionsCompleted = async (playerId) => {
   const handleUnequipItem = async (playerItemId) => {
   setLoading(true);
   try {
-    // Solo hacer el PATCH sin select()
-    await supabaseClient
+    // 1️⃣ Solo hacer el PATCH para actualizar el campo is_equipped
+    const { error } = await supabaseClient
       .from('player_items')
       .update({ is_equipped: false })
       .eq('id', playerItemId);
 
-    // Actualizar inventario local
+    if (error) throw error;
+
+    // 2️⃣ Actualizar el inventario local
     const updatedInventory = inventory.map(item => 
       item.id === playerItemId ? { ...item, is_equipped: false } : item
     );
 
-    // Actualizar items equipados
+    // 3️⃣ Actualizar el estado de items equipados
     const updatedEquipped = { ...equippedItems };
     const targetItem = inventory.find(item => item.id === playerItemId);
     if (targetItem) {
@@ -614,8 +616,10 @@ const getDailyMissionsCompleted = async (playerId) => {
       delete updatedEquipped[actualItem.skill_bonus];
     }
 
+    // 4️⃣ Guardar los cambios en el estado
     setInventory(updatedInventory);
     setEquippedItems(updatedEquipped);
+
     showMessage("¡Objeto desequipado con éxito!");
   } catch (err) {
     showMessage(err.message);
@@ -1180,3 +1184,4 @@ case 'clubs': return <ClubsSystem
 
 
 export default App;
+
