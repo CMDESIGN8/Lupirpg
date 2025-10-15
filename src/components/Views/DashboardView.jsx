@@ -393,47 +393,6 @@ const handleBuyItem = async (listing) => {
             <div className="header-line"></div>
           </div>
           </div>
-        
-    <div>
-    {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
-            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
-              <span className="nav-icon">🗺️</span>
-              <span>Mundo Lupi</span>
-            </button>
-          
-          <div className="action-buttons">
-            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
-              <span className="nav-icon">⚡</span>
-              <span>Entrenar</span>
-            </button>
-            
-            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
-              <span className="nav-icon">🔍</span>
-              <span>Buscar Objeto</span>
-            </button>
-            
-            <button className="action-btn secondary" onClick={() => { 
-              fetchMissions(); 
-              setView('missions'); 
-            }} disabled={loading}>
-              <span className="nav-icon">⚽</span>
-              <span>Misiones</span>
-            </button>
-
-           <button 
-        className="action-btn secondary" 
-        onClick={() => setShowCommonRoom(true)}
-      >
-        <span className="nav-icon">🏠</span>
-        <span>SALA COMUN</span>
-      </button>
-
-<button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
-            <span className="nav-icon">➡️</span>
-            <span>Transferir</span>
-          </button>
-      
-    </div>
       
   {/* Nueva sección: Club */}
 {playerData.clubs && (
@@ -510,14 +469,46 @@ const handleBuyItem = async (listing) => {
 )}
     <section className="Market-section">
          <div className="Market-line"></div>
-  <MarketView 
-    marketItems={marketItems} // ✅ Pasa los datos, no la función
-    handleBuyItem={handleBuyItem} // ✅ Añade esta prop
-    playerData={playerData} 
-    loading={loading} 
-    message={message} 
-    setView={setView}
-  />
+  <div>
+    {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
+            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
+              <span className="nav-icon">🗺️</span>
+              <span>Mundo Lupi</span>
+            </button>
+          
+          <div className="action-buttons">
+            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
+              <span className="nav-icon">⚡</span>
+              <span>Entrenar</span>
+            </button>
+            
+            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
+              <span className="nav-icon">🔍</span>
+              <span>Buscar Objeto</span>
+            </button>
+            
+            <button className="action-btn secondary" onClick={() => { 
+              fetchMissions(); 
+              setView('missions'); 
+            }} disabled={loading}>
+              <span className="nav-icon">⚽</span>
+              <span>Misiones</span>
+            </button>
+
+           <button 
+        className="action-btn secondary" 
+        onClick={() => setShowCommonRoom(true)}
+      >
+        <span className="nav-icon">🏠</span>
+        <span>SALA COMUN</span>
+      </button>
+
+<button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
+            <span className="nav-icon">➡️</span>
+            <span>Transferir</span>
+          </button>
+      
+    </div>
 </section>
   
      {/* Panel de navegación inferior */}
