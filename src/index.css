@@ -62,7 +62,7 @@
   color: #00ffcc;
 }
 
-/* NUEVO LAYOUT PRINCIPAL - Arriba: Ficha + Estadísticas + Gráfico + Misiones */
+/* NUEVO LAYOUT PRINCIPAL - Arriba: Ficha + Estadísticas/Gráfico + Misiones */
 .top-content-panel {
   display: grid;
   grid-template-columns: 350px 1fr 400px;
@@ -147,6 +147,221 @@
   transition: width 0.3s ease;
 }
 
+/* Panel de Estadísticas y Gráfico FUSIONADO */
+.stats-radar-combined {
+  background: rgba(0, 20, 40, 0.7);
+  border: 1px solid #00aaff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+}
+
+.stats-radar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.stats-radar-title {
+  color: #00ccff;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.skill-points-badge {
+  background: linear-gradient(135deg, #00aaff, #0066ff);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.points-count {
+  color: #00ffcc;
+}
+
+/* Gráfico FIFA Style */
+.fifa-radar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 20px;
+  background: rgba(0, 30, 60, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+.radar-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 15px 0;
+}
+
+.radar-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  border-radius: 50%;
+}
+
+.radar-grid:nth-child(2) {
+  transform: scale(0.75);
+  border-color: rgba(0, 170, 255, 0.2);
+}
+
+.radar-grid:nth-child(3) {
+  transform: scale(0.5);
+  border-color: rgba(0, 170, 255, 0.1);
+}
+
+.radar-axis {
+  position: absolute;
+  background: rgba(0, 170, 255, 0.3);
+  height: 1px;
+  width: 100%;
+  top: 50%;
+  left: 0;
+}
+
+.radar-axis:nth-child(4) { transform: rotate(60deg); }
+.radar-axis:nth-child(5) { transform: rotate(120deg); }
+.radar-axis:nth-child(6) { transform: rotate(30deg); }
+.radar-axis:nth-child(7) { transform: rotate(90deg); }
+.radar-axis:nth-child(8) { transform: rotate(150deg); }
+
+.radar-polygon {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  fill: rgba(0, 170, 255, 0.2);
+  stroke: #00ccff;
+  stroke-width: 2;
+}
+
+.radar-point {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #00ffcc;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px #00ffcc;
+}
+
+.radar-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ffcc;
+}
+
+.legend-name {
+  color: #88ddff;
+}
+
+/* Skills Grid */
+.skills-grid-section {
+  margin-top: 10px;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.skill-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(0, 30, 60, 0.5);
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.skill-item:hover {
+  background: rgba(0, 100, 200, 0.3);
+  border-color: #00ccff;
+  transform: translateY(-2px);
+}
+
+.skill-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.skill-name {
+  font-size: 0.85rem;
+  color: #88ddff;
+  margin-bottom: 4px;
+}
+
+.skill-value {
+  font-weight: bold;
+  color: #00ccff;
+  font-size: 1rem;
+}
+
+.skill-bonus {
+  color: #00ff99;
+  font-size: 0.75rem;
+  margin-left: 5px;
+}
+
+.skill-upgrade-btn {
+  background: linear-gradient(135deg, #00aaff, #0066ff);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.skill-upgrade-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00ccff, #0088ff);
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+}
+
+.skill-upgrade-btn:disabled {
+  background: #444;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Panel inferior: Inventario + Premios */
 .bottom-content-panel {
   display: grid;
@@ -225,144 +440,6 @@
   text-align: center;
   color: #88ddff;
   padding: 20px;
-}
-
-/* Panel de Estadísticas y Gráfico */
-.stats-radar-panel {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.stats-column, .radar-column {
-  background: rgba(0, 20, 40, 0.7);
-  border: 1px solid #00aaff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
-}
-
-.stats-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background: rgba(0, 30, 60, 0.3);
-  border-radius: 6px;
-}
-
-.stat-name {
-  color: #88ddff;
-  font-size: 0.9rem;
-}
-
-.stat-value {
-  font-weight: bold;
-  color: #00ccff;
-}
-
-.stat-bonus {
-  color: #00ff99;
-  font-size: 0.8rem;
-  margin-left: 5px;
-}
-
-/* Gráfico FIFA Style */
-.fifa-radar-chart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 15px;
-}
-
-.radar-container {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  margin: 20px 0;
-}
-
-.radar-grid {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 1px solid rgba(0, 170, 255, 0.3);
-  border-radius: 50%;
-}
-
-.radar-grid:nth-child(2) {
-  transform: scale(0.75);
-  border-color: rgba(0, 170, 255, 0.2);
-}
-
-.radar-grid:nth-child(3) {
-  transform: scale(0.5);
-  border-color: rgba(0, 170, 255, 0.1);
-}
-
-.radar-axis {
-  position: absolute;
-  background: rgba(0, 170, 255, 0.3);
-  height: 1px;
-  width: 100%;
-  top: 50%;
-  left: 0;
-}
-
-.radar-axis:nth-child(4) { transform: rotate(60deg); }
-.radar-axis:nth-child(5) { transform: rotate(120deg); }
-.radar-axis:nth-child(6) { transform: rotate(30deg); }
-.radar-axis:nth-child(7) { transform: rotate(90deg); }
-.radar-axis:nth-child(8) { transform: rotate(150deg); }
-
-.radar-polygon {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  fill: rgba(0, 170, 255, 0.2);
-  stroke: #00ccff;
-  stroke-width: 2;
-}
-
-.radar-point {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #00ffcc;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 8px #00ffcc;
-}
-
-.radar-legend {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 15px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.8rem;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #00ffcc;
-}
-
-.legend-name {
-  color: #88ddff;
 }
 
 /* Panel de Premios */
@@ -684,44 +761,6 @@
   100% { opacity: 0; left: 100%; }
 }
 
-.skill-points {
-  color: #88ddff;
-  font-size: 0.9rem;
-  margin-top: 5px;
-}
-
-.points-count {
-  color: #00ffcc;
-  font-weight: bold;
-}
-
-.skill-upgrade-btn {
-  background: linear-gradient(135deg, #00aaff, #0066ff);
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: 10px;
-}
-
-.skill-upgrade-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #00ccff, #0088ff);
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
-}
-
-.skill-upgrade-btn:disabled {
-  background: #444;
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
 /* Wallet Styles */
 .wallet-row {
   align-items: center;
@@ -1028,7 +1067,7 @@
     grid-template-columns: 1fr;
   }
 
-  .stats-radar-panel {
+  .skills-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1082,6 +1121,12 @@
 
   .radar-legend {
     grid-template-columns: 1fr;
+  }
+
+  .stats-radar-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
   }
 }
 
