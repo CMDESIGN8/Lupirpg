@@ -582,7 +582,7 @@
 
 .dashboard-content {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 20px;
   margin-bottom: 25px;
 }
@@ -1238,4 +1238,5 @@
   transform: scale(1.1);
   box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
 }
+
 
