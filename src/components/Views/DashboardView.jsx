@@ -371,37 +371,6 @@ const DashboardView = ({
             </div>
           </div>
 
-          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
-          <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
-            <span className="nav-icon">🗺️</span>
-            <span>Mundo Lupi</span>
-          </button>
-
-          {/* Botones de Acción */}
-          <div className="action-buttons">
-            <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
-              <span className="nav-icon">⚡</span>
-              <span>Entrenar</span>
-            </button>
-            <button className="action-btn secondary" onClick={handleFindItem} disabled={loading}>
-              <span className="nav-icon">🔍</span>
-              <span>Buscar Objeto</span>
-            </button>
-            <button className="action-btn secondary" onClick={() => { fetchMissions(); setView('missions'); }} disabled={loading}>
-              <span className="nav-icon">⚽</span>
-              <span>Misiones</span>
-            </button>
-            <button className="action-btn secondary" onClick={() => setShowCommonRoom(true)}>
-              <span className="nav-icon">🏠</span>
-              <span>SALA COMUN</span>
-            </button>
-            <button className="action-btn secondary" onClick={() => setView('transfer')} disabled={loading}>
-              <span className="nav-icon">➡️</span>
-              <span>Transferir</span>
-            </button>
-          </div>
-        </div>
-
         {/* Columna derecha - Inventario */}
         <div className="dashboard-right-column">
           {/* Inventario */}
