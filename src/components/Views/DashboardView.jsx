@@ -66,43 +66,35 @@ const DashboardView = ({
     return { x, y };
   };
 
-  // Misiones diarias de ejemplo
-  const dailyMissions = [
+  // Premios disponibles para canjear
+  const availableRewards = [
     {
       id: 1,
-      title: "⚽ Entrenamiento Diario",
-      description: "Completa 3 sesiones de entrenamiento",
-      progress: 1,
-      total: 3,
-      reward: "100 LUPI",
-      completed: false
+      name: "Avatar Épico",
+      description: "Avatar exclusivo de edición limitada",
+      cost: 5000,
+      icon: "👤"
     },
     {
       id: 2,
-      title: "🎯 Habilidad Maestra",
-      description: "Mejora cualquier habilidad 2 veces",
-      progress: 0,
-      total: 2,
-      reward: "150 LUPI",
-      completed: false
+      name: "Bono de Experiencia",
+      description: "+50% EXP por 24 horas",
+      cost: 3000,
+      icon: "⚡"
     },
     {
       id: 3,
-      title: "🔍 Cazador de Objetos",
-      description: "Encuentra 5 objetos en el minijuego",
-      progress: 2,
-      total: 5,
-      reward: "200 LUPI",
-      completed: false
+      name: "Cofre Legendario",
+      description: "Contiene items raros y exclusivos",
+      cost: 8000,
+      icon: "🎁"
     },
     {
       id: 4,
-      title: "💬 Socializar",
-      description: "Envía 10 mensajes en el chat del club",
-      progress: 10,
-      total: 10,
-      reward: "80 LUPI",
-      completed: true
+      name: "Título Especial",
+      description: "Título único para tu perfil",
+      cost: 2000,
+      icon: "🏆"
     }
   ];
 
@@ -257,6 +249,15 @@ const DashboardView = ({
     }
   };
 
+  const handleRedeemReward = (reward) => {
+    if (lupiCoins >= reward.cost) {
+      showMessage(`¡Has canjeado ${reward.name} por ${reward.cost} LUPI!`);
+      // Aquí iría la lógica para aplicar la recompensa
+    } else {
+      showMessage(`No tienes suficientes LUPI para canjear ${reward.name}`);
+    }
+  };
+
   return (
     <div className="game-dashboard">
       {/* Partículas globales */}
@@ -371,11 +372,13 @@ const DashboardView = ({
           </div>
 
           {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
+          <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
+            <span className="nav-icon">🗺️</span>
+            <span>Mundo Lupi</span>
+          </button>
+
+          {/* Botones de Acción */}
           <div className="action-buttons">
-            <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
-              <span className="nav-icon">🗺️</span>
-              <span>Mundo Lupi</span>
-            </button>
             <button className="action-btn primary" onClick={handleGainXp} disabled={loading}>
               <span className="nav-icon">⚡</span>
               <span>Entrenar</span>
@@ -399,7 +402,7 @@ const DashboardView = ({
           </div>
         </div>
 
-        {/* Columna derecha - Inventario y Misiones Diarias */}
+        {/* Columna derecha - Inventario */}
         <div className="dashboard-right-column">
           {/* Inventario */}
           <div className="inventory-card">
@@ -448,50 +451,12 @@ const DashboardView = ({
               </button>
             </div>
           </div>
-
-          {/* Misiones Diarias */}
-          <div className="daily-missions-card">
-            <div className="card-header">
-              <h2>MISIONES DIARIAS</h2>
-              <div className="header-line"></div>
-            </div>
-            
-            <div className="missions-grid">
-              {dailyMissions.map(mission => (
-                <div key={mission.id} className={`mission-item ${mission.completed ? 'completed' : ''}`}>
-                  <div className="mission-header">
-                    <span className="mission-title">
-                      {mission.completed ? '✅ ' : ''}
-                      {mission.title}
-                    </span>
-                    <span className="mission-reward">{mission.reward}</span>
-                  </div>
-                  <div className="mission-description">{mission.description}</div>
-                  <div className="mission-progress">
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: `${(mission.progress / mission.total) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="progress-text">{mission.progress}/{mission.total}</span>
-                    <button 
-                      className={`mission-btn ${mission.completed ? 'completed' : ''}`}
-                      disabled={mission.completed}
-                    >
-                      {mission.completed ? 'Completado' : 'Realizar'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Estadísticas Full Width */}
-      <div className="stats-full-width">
-        {/* Columna izquierda - Lista de estadísticas */}
+      {/* Panel de 3 columnas: Estadísticas, Gráfico y Premios */}
+      <div className="stats-premium-panel">
+        {/* Columna 1: Estadísticas */}
         <div className="stats-column">
           <div className="card-header">
             <h2>ESTADÍSTICAS</h2>
@@ -546,8 +511,8 @@ const DashboardView = ({
           </div>
         </div>
 
-        {/* Columna derecha - Gráfico FIFA */}
-        <div className="stats-column">
+        {/* Columna 2: Gráfico FIFA */}
+        <div className="radar-column">
           <div className="card-header">
             <h2>PERFIL DE JUGADOR</h2>
             <div className="header-line"></div>
@@ -595,6 +560,35 @@ const DashboardView = ({
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Columna 3: Premios Disponibles */}
+        <div className="rewards-column">
+          <div className="card-header">
+            <h2>PREMIOS DISPONIBLES</h2>
+            <div className="header-line"></div>
+            <div className="skill-points">
+              Saldo: <span className="points-count">{lupiCoins} LUPI</span>
+            </div>
+          </div>
+          
+          <div className="rewards-grid">
+            {availableRewards.map(reward => (
+              <div key={reward.id} className="reward-item">
+                <div className="reward-icon">{reward.icon}</div>
+                <div className="reward-name">{reward.name}</div>
+                <div className="reward-description">{reward.description}</div>
+                <div className="reward-cost">{reward.cost} LUPI</div>
+                <button 
+                  className="redeem-btn"
+                  onClick={() => handleRedeemReward(reward)}
+                  disabled={lupiCoins < reward.cost}
+                >
+                  Canjear
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -728,6 +722,11 @@ const DashboardView = ({
           <button className="nav-btn" onClick={() => setView('chat')} disabled={loading}>
             <span className="nav-icon">💬</span>
             <span>Chat</span>
+          </button>
+
+          <button className="nav-btn" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
+            <span className="nav-icon">🗺️</span>
+            <span>Mundo Lupi</span>
           </button>
           
           <button className="nav-btn logout" onClick={handleLogout}>
