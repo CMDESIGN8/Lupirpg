@@ -392,8 +392,12 @@ const handleBuyItem = async (listing) => {
             <h2>ACCIÓN RÁPIDA</h2>
             <div className="header-line"></div>
           </div>
+          </div>
+        </div>
+      </div>
 
-          {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
+    <section className="acciones">
+    {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
             <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
               <span className="nav-icon">🗺️</span>
               <span>Mundo Lupi</span>
@@ -430,10 +434,7 @@ const handleBuyItem = async (listing) => {
             <span className="nav-icon">➡️</span>
             <span>Transferir</span>
           </button>
-
-          </div>
-        </div>
-      </div>
+    </section>
 
   {/* Nueva sección: Club */}
 {playerData.clubs && (
