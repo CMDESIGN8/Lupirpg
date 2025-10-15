@@ -393,8 +393,7 @@ const handleBuyItem = async (listing) => {
             <div className="header-line"></div>
           </div>
           </div>
-        </div>
-      
+        
     <section>
     {/* ✨ NUEVO: Botón para entrar al Mundo Lupi */}
             <button className="action-btn primary" onClick={() => setView('multiplayer_lobby')} disabled={loading}>
